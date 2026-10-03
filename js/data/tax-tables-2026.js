@@ -48,7 +48,11 @@ TSIQ.TABLES_2026 = {
     // Rev. Proc. 2025-32 §4.26: $403,500 MFJ / $201,775 MFS / $201,750 all others.
     threshold: { single: 201750, mfj: 403500, mfs: 201775, hoh: 201750 },
     // OBBBA widened the phase-in range starting 2026: $75k single / $150k joint.
-    phaseInRange: { single: 75000, mfj: 150000, mfs: 75000, hoh: 75000 }
+    phaseInRange: { single: 75000, mfj: 150000, mfs: 75000, hoh: 75000 },
+    // §199A(i) (OBBBA, 2026+): minimum $400 deduction when aggregate QBI from
+    // active (materially participating) trades or businesses is at least $1,000.
+    minimumDeduction: 400,
+    minimumActiveQbi: 1000
   },
 
   // Self-employment tax (§1401) and payroll taxes.
@@ -86,6 +90,11 @@ TSIQ.TABLES_2026 = {
     phaseDownStart: { single: 505000, mfj: 505000, mfs: 252500, hoh: 505000 },
     phaseDownRate: 0.30
   },
+
+  // Charitable contributions (§170(b)(1)(I), OBBBA, tax years beginning after
+  // 12/31/2025): itemized charitable deductions are allowed only to the extent
+  // they exceed 0.5% of the contribution base (AGI).
+  charitable: { itemizedFloorRate: 0.005 },
 
   // Bonus depreciation: OBBBA restored permanent 100% bonus for qualified
   // property acquired and placed in service after Jan 19, 2025 (§168(k)).
@@ -127,7 +136,10 @@ TSIQ.TABLES_2026 = {
     },
     // Rev. Proc. 2025-32 / OBBBA §70301
     sec179: { max: 2560000, phaseOutStart: 4090000 },
-    mileageRateBusiness: 0.725,          // 2026 standard business mileage rate
+    // 2026 standard business mileage rate — raised midyear. 72.5¢ for miles
+    // driven Jan 1–Jun 30 (IR-2025-128); 76¢ for Jul 1–Dec 31 (IR-2026-29).
+    // Projection years after 2026 use the latest (Jul–Dec) rate.
+    mileageRateBusiness: { janJun: 0.725, julDec: 0.76 },
     kiddieTaxUnearnedThreshold: 2700,    // above this, taxed at parents' rate
     gift: { annualExclusion: 19000, estateExemption: 15000000 }, // OBBBA permanent
     // §1202 QSBS for stock acquired AFTER 7/4/2025 (OBBBA)
@@ -144,6 +156,33 @@ TSIQ.FILING_STATUS_LABELS = {
   mfj: 'Married Filing Jointly',
   mfs: 'Married Filing Separately',
   hoh: 'Head of Household'
+};
+
+/**
+ * Inflation-indexed copy of the tables for projection years after 2026.
+ * factor = (1 + inflation)^yearIndex. Indexes only amounts the Code adjusts
+ * annually: ordinary brackets, standard deduction, capital-gain breakpoints,
+ * the §199A threshold, and the Social Security wage base. Everything else
+ * (SALT cap, NIIT / Additional Medicare thresholds, CTC, plan limits) stays
+ * at 2026 values. Amounts are rounded to the nearest $50, as the IRS does.
+ */
+TSIQ.indexTables = function (tables, factor) {
+  if (!(factor > 0) || factor === 1) return tables;
+  var r50 = function (n) { return Math.round(n * factor / 50) * 50; };
+  var mapObj = function (o, fn) {
+    var out = {};
+    Object.keys(o).forEach(function (k) { out[k] = fn(o[k]); });
+    return out;
+  };
+  var t = Object.assign({}, tables);
+  t.brackets = mapObj(tables.brackets, function (rows) {
+    return rows.map(function (row) { return [r50(row[0]), row[1]]; });
+  });
+  t.standardDeduction = mapObj(tables.standardDeduction, r50);
+  t.ltcgBreakpoints = mapObj(tables.ltcgBreakpoints, function (bp) { return bp.map(r50); });
+  t.qbi = Object.assign({}, tables.qbi, { threshold: mapObj(tables.qbi.threshold, r50) });
+  t.fica = Object.assign({}, tables.fica, { ssWageBase: r50(tables.fica.ssWageBase) });
+  return t;
 };
 
 // Shared formatting helpers — round only at display, never in the engine.

@@ -129,9 +129,10 @@ TSIQ.strategyModules.push({
 
   /**
    * Above-the-line §162(l) deduction via `adjustments` (income tax only — no
-   * SE tax effect, correct per §1402). Capped at available business earned
-   * income (scheduleCNet + ownerWages + passthroughK1 — a simplification of
-   * the per-business earned-income limit). Also reduces QBI (Form 8995
+   * SE tax effect, correct per §1402). Capped at earned income from the
+   * business: Schedule C net profit plus the owner's W-2 wages from their own
+   * S corporation. K-1 ordinary income is NOT earned income for a >2% S-corp
+   * shareholder and does not raise the cap. Also reduces QBI (Form 8995
    * instructions) via `qbiReduction`. Baseline is assumed NOT to already
    * include the deduction — use for clients not currently claiming it.
    */
@@ -140,10 +141,11 @@ TSIQ.strategyModules.push({
     var notes = [];
     var premiums = params.annualPremiums || 0;
     var earnedCap = Math.max(0, p.scheduleCNet || 0) +
-                    Math.max(0, p.ownerWages || 0) +
-                    Math.max(0, p.passthroughK1 || 0);
+                    Math.max(0, p.ownerWages || 0);
     if (earnedCap <= 0) {
-      notes.push('§162(l) is limited to earned income from the business — no business earnings found in this profile. No benefit modeled.');
+      notes.push((p.passthroughK1 > 0)
+        ? '§162(l) for an S-corp owner is limited to their W-2 wages from the corporation (premiums run through the W-2 per Notice 2008-1) — K-1 income does not count. Enter owner W-2 wages in Section 1, or pair with the S-Corp Election strategy. Partners: the limit is K-1 self-employment earnings, which this profile does not carry. No benefit modeled.'
+        : '§162(l) is limited to earned income from the business — no business earnings found in this profile. No benefit modeled.');
       return { profile: p, notes: notes };
     }
     var deductible = Math.min(premiums, earnedCap);
@@ -152,7 +154,7 @@ TSIQ.strategyModules.push({
     if (yearIndex === 0) {
       notes.push(TSIQ.fmt.usd(deductible) + ' self-employed health insurance deducted above the line (§162(l)); also reduces QBI. Saves income tax only — no SE tax effect.');
       if (deductible < premiums) {
-        notes.push('Premiums capped at business earned income of ' + TSIQ.fmt.usd(earnedCap) + '; excess falls to Schedule A (7.5% AGI floor, not modeled).');
+        notes.push('Premiums capped at business earned income of ' + TSIQ.fmt.usd(earnedCap) + ' (Schedule C profit plus owner W-2 wages — K-1 income excluded); excess falls to Schedule A (7.5% AGI floor, not modeled).');
       }
       notes.push('No deduction for months eligible for a subsidized employer plan (either spouse); PTC interplay per Rev. Proc. 2014-41 not modeled.');
     }

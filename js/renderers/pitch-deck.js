@@ -38,7 +38,7 @@ TSIQ.render = TSIQ.render || {};
     var steps = [], runningSel = [], prevBurden = baseYr1;
     ordered.forEach(function (sel) {
       runningSel.push(sel);
-      var r = TSIQ.computeScenario(data.profile, runningSel, data.years, data.growthRate);
+      var r = TSIQ.computeScenario(data.profile, runningSel, data.years, data.growthRate, data.inflationRate);
       steps.push({
         strategy: sel.strategy,
         incremental: prevBurden - r.years[0].totalBurden

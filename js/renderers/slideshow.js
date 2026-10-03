@@ -199,7 +199,7 @@ TSIQ.render = TSIQ.render || {};
       var running = [], prevBurden = b0;
       ordered.forEach(function (sel) {
         running.push(sel);
-        var r = TSIQ.computeScenario(data.profile, running, data.years, data.growthRate);
+        var r = TSIQ.computeScenario(data.profile, running, data.years, data.growthRate, data.inflationRate);
         stepSavings[sel.strategy.id] = prevBurden - r.years[0].totalBurden;
         prevBurden = r.years[0].totalBurden;
       });

@@ -108,8 +108,10 @@ TSIQ.strategyModules.push({
   inputs: [
     { key: 'employeeDeferral', label: 'Employee deferral', type: 'currency', default: 24500 },
     { key: 'employerContribution', label: 'Employer contribution', type: 'currency', default: 20000 },
-    { key: 'age50Plus', label: 'Owner age 50 or older?', type: 'select', default: 'no',
-      options: [{ value: 'no', label: 'No' }, { value: 'yes', label: 'Yes (50+)' }] }
+    { key: 'age50Plus', label: 'Catch-up eligibility (owner age at year-end)', type: 'select', default: 'no',
+      options: [{ value: 'no', label: 'Under 50 — none' },
+        { value: 'yes', label: '50–59 or 64+ ($8,000)' },
+        { value: '60to63', label: '60–63 ($11,250)' }] }
   ],
 
   suggest: function (p) {
@@ -130,14 +132,16 @@ TSIQ.strategyModules.push({
    * employer contribution is an entity deduction against passthroughK1.
    * Caps: deferral at §402(g) (+catch-up if 50+); employer at the 25%/~20%
    * compensation-based max; combined at §415(c) $72,000 (+catch-up on top).
-   * 60–63 enhanced catch-up not modeled (no age detail beyond 50+).
+   * Ages 60–63 get the SECURE 2.0 enhanced catch-up ($11,250) in place of the
+   * regular age-50 amount.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
     var lim = TSIQ.TABLES_2026.limits.retirement;
-    var is50 = params.age50Plus === 'yes';
-    var catchUp = is50 ? lim.catchUp50 : 0;
+    var is60to63 = params.age50Plus === '60to63';
+    var is50 = params.age50Plus === 'yes' || is60to63;
+    var catchUp = is60to63 ? lim.catchUp60to63 : (is50 ? lim.catchUp50 : 0);
 
     var isSE = p.scheduleCNet > 0;
     var isW2Owner = !isSE && p.ownerWages > 0;
@@ -159,8 +163,9 @@ TSIQ.strategyModules.push({
     var deferral = Math.min(params.employeeDeferral || 0, lim.electiveDeferral401k + catchUp, comp);
     if ((params.employeeDeferral || 0) > lim.electiveDeferral401k + catchUp && yearIndex === 0) {
       notes.push('Employee deferral capped at ' + TSIQ.fmt.usd(lim.electiveDeferral401k + catchUp) +
-        ' (§402(g)' + (is50 ? ' + age-50 catch-up' : '') + ', 2026). Ages 60–63 allow ' +
-        TSIQ.fmt.usd(lim.catchUp60to63) + ' of catch-up — tell us if that applies.');
+        ' (§402(g)' + (is60to63 ? ' + ages 60–63 catch-up' : (is50 ? ' + age-50 catch-up' : '')) + ', 2026).' +
+        (is60to63 ? '' : ' Ages 60–63 allow ' + TSIQ.fmt.usd(lim.catchUp60to63) +
+          ' of catch-up — select that option if it applies.'));
     }
 
     var employer = Math.min(params.employerContribution || 0, employerMax);
@@ -193,6 +198,10 @@ TSIQ.strategyModules.push({
       notes.push(TSIQ.fmt.usd(total) + ' total Solo 401(k) contribution modeled (' +
         TSIQ.fmt.usd(deferral) + ' deferral + ' + TSIQ.fmt.usd(employer) + ' employer). ' +
         'Deferrals do not reduce SE/FICA tax.');
+      if (is60to63) {
+        notes.push('Ages 60–63 catch-up applies only in the years the owner is 60, 61, 62 or 63 at ' +
+          'year-end — the projection holds it for every year, so later years may be overstated.');
+      }
     }
     return { profile: p, notes: notes };
   }

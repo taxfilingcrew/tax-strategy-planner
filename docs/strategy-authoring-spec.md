@@ -65,7 +65,8 @@ rev ruls, notices, forms, IRS guides).
   cap for stock acquired after 7/4/25; residential clean energy credit (§25D)
   terminated after 2025; §174 domestic R&D expensing restored; misc 2% itemized
   deductions permanently gone; kiddie-tax threshold $2,700 (2026); DCFSA $7,500
-  (2026); business mileage $0.725/mi (2026).
+  (2026); business mileage $0.725/mi Jan–Jun 2026 and $0.76/mi Jul–Dec 2026
+  (midyear increase — `limits.mileageRateBusiness.janJun` / `.julDec`).
 
 ## MODELED vs ADVISORY strategies
 
@@ -108,15 +109,25 @@ unless the note is year-specific.
 | `qbiReduction` | ADD amounts that also reduce §199A QBI (e.g., SE retirement contributions) |
 | `otherCredits` | ADD nonrefundable federal credits (R&D, WOTC, 45F, §44, 45S) |
 | `corpTaxPaid` | ADD entity-level federal tax (C-corp modeling, 21% via `TSIQ.TABLES_2026.corporateRate`) |
-| `ptetPaid` | entity-level STATE tax (PTET pattern) |
+| `ptetPaid` | entity-level STATE tax (PTET pattern) — credited against personal state tax |
+| `entityStateTax` | ADD non-creditable entity-level state tax (e.g., CA 1.5% S-corp franchise tax); also subtract it from `passthroughK1` |
 | `kidsCTC`, `otherDeps` | dependents |
 | `stateRate` | flat state rate (decimal) |
 
 Multi-year memory: use the shared `state` object (see cost-segregation.js's
 suspended-loss pattern) — namespace your keys (`state.myStrategyThing`).
 
+Projection years: `state.tables` holds the current year's tables (brackets,
+standard deduction, §199A threshold, SS wage base indexed by the advisor's
+inflation input). Read indexed amounts from `(state && state.tables) ||
+TSIQ.TABLES_2026`; plan limits and other un-indexed constants stay on
+`TSIQ.TABLES_2026`.
+
 `inputs[]` entries: `{ key, label, type: 'currency'|'percent'|'number'|'select',
-default, max?, options? }`.
+default, max?, options?, defaultFrom? }`. Optional `defaultFrom(profile)` returns
+a default drawn from the client data (e.g., PTET rate from `profile.stateRate`);
+the app applies it until the advisor edits the field. Keep a plain `default` too
+— the validator and saved files use it.
 
 ## Modeling honesty rules
 

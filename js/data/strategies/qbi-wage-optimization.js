@@ -131,7 +131,7 @@ TSIQ.strategyModules.push({
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var f = TSIQ.TABLES_2026.fica;
+    var f = ((state && state.tables) || TSIQ.TABLES_2026).fica; // indexed in later years
 
     if ((p.passthroughK1 || 0) <= 0) {
       notes.push('Requires S-corp/partnership passthrough profit to convert into W-2 ' +

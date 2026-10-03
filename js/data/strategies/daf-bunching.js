@@ -134,8 +134,8 @@ TSIQ.strategyModules.push({
    * years (yearIndex % N === 0) charitable = bunchedContribution; in off
    * years charitable = 0 (the baseline annual gift is redirected through the
    * DAF cycle instead). The engine's standard-vs-itemized comparison then
-   * produces the benefit. AGI percentage limits and the OBBBA 0.5%-of-AGI
-   * floor are NOT modeled by the engine — flagged in notes.
+   * produces the benefit, net of the OBBBA 0.5%-of-AGI floor (applied by the
+   * engine). AGI percentage limits are NOT modeled — flagged in notes.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
@@ -152,9 +152,9 @@ TSIQ.strategyModules.push({
         '/yr of giving: ' + TSIQ.fmt.usd(bunched) + ' to the DAF every ' + n +
         ' year(s), $0 itemized in off years (standard deduction taken instead). ' +
         'Charities still receive grants annually from the DAF.');
-      notes.push('Not modeled: AGI percentage limits (60% cash / 30% appreciated stock) ' +
-        'and the OBBBA 0.5%-of-AGI charitable floor effective 2026 — verify headroom ' +
-        'and expect a small haircut in itemizing years.');
+      notes.push('The OBBBA 0.5%-of-AGI charitable floor (2026+) is applied in every ' +
+        'itemizing year. Not modeled: AGI percentage limits (60% cash / 30% ' +
+        'appreciated stock) — verify headroom in bunch years.');
       if (bunched < baselineGiving * n) {
         notes.push('Heads up: the bunched amount is less than ' + n + ' years of baseline ' +
           'giving (' + TSIQ.fmt.usd(baselineGiving * n) + ') — confirm that is intended.');

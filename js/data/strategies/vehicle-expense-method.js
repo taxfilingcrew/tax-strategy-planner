@@ -14,7 +14,8 @@ TSIQ.strategyModules.push({
   advisor: {
     summary:
       'A Schedule C proprietor deducts business use of a personal vehicle under ' +
-      '§162 using either the standard mileage rate ($0.725/mile for 2026) or ' +
+      '§162 using either the standard mileage rate (2026: $0.725/mile Jan–Jun, ' +
+      '$0.76/mile Jul–Dec after the midyear increase) or ' +
       'actual expenses (fuel, insurance, repairs, depreciation) multiplied by ' +
       'the business-use percentage. The election matters: standard mileage must ' +
       'be chosen in the FIRST year the vehicle is available for business use to ' +
@@ -25,7 +26,9 @@ TSIQ.strategyModules.push({
       'an entity owner should be reimbursed through an accountable plan rather ' +
       'than deducting vehicle costs personally.',
     mechanics: [
-      'Standard mileage: business miles × the IRS rate ($0.725/mi for 2026). ' +
+      'Standard mileage: business miles × the IRS rate — for 2026, $0.725/mi for ' +
+      'miles driven Jan 1–Jun 30 and $0.76/mi for Jul 1–Dec 31, so the log must ' +
+      'split miles by half-year. ' +
       'The rate bundles depreciation, fuel, insurance, and repairs; parking and ' +
       'tolls are deductible on top. Not available if 5+ vehicles are used ' +
       'simultaneously (fleet), or after MACRS/§179/bonus was claimed on the vehicle.',
@@ -53,7 +56,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §274(d)', note: 'Strict substantiation for listed property including autos: contemporaneous records of amount, time, place, and business purpose; no deduction without them.' },
       { type: 'Reg', cite: 'Reg. §1.274-5T', note: 'Adequate-records standard — account book/log/app maintained at or near the time of use.' },
       { type: 'Admin', cite: 'Rev. Proc. 2019-46', note: 'Rules for the standard mileage rate: first-year election requirement, straight-line deemed depreciation, fleet (5+ vehicles) exclusion, switching rules.' },
-      { type: 'Admin', cite: 'Annual IRS notice (2026 rate)', note: '2026 business standard mileage rate of $0.725/mi and the per-mile depreciation component used to reduce basis.' },
+      { type: 'Admin', cite: 'IR-2025-128; IR-2026-29 (2026 rates)', note: '2026 business standard mileage rate: $0.725/mi for Jan 1–Jun 30, raised midyear to $0.76/mi for Jul 1–Dec 31; also sets the per-mile depreciation component used to reduce basis.' },
       { type: 'IRC', cite: 'IRC §280F', note: 'Luxury-auto depreciation caps for passenger automobiles and listed-property rules, including the >50% business-use requirement for accelerated methods.' }
     ],
     requirements: [
@@ -116,7 +119,8 @@ TSIQ.strategyModules.push({
     { key: 'businessMiles', label: 'Substantiated business miles per year', type: 'number', default: 12000 },
     { key: 'method', label: 'Method', type: 'select', default: 'standard',
       options: [{ value: 'standard', label: 'Standard mileage rate' }, { value: 'actual', label: 'Actual expenses × business %' }] },
-    { key: 'actualAmount', label: 'Actual-method deduction (if actual)', type: 'currency', default: 10000 }
+    { key: 'actualAmount', label: 'Actual-method deduction (if actual)', type: 'currency', default: 10000 },
+    { key: 'janJunPct', label: '2026 miles driven Jan–Jun (%) — rate rose Jul 1', type: 'percent', default: 50 }
   ],
 
   appliesTo: function (profile) {
@@ -124,8 +128,9 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Standard: miles × TABLES_2026.limits.mileageRateBusiness. Actual: advisor-
-   * entered amount. Reduces scheduleCNet (income + SE tax savings). If there is
+   * Standard: miles × TABLES_2026.limits.mileageRateBusiness — 2026 has two
+   * rates (Jan–Jun / Jul–Dec), blended by the janJunPct input; projection years
+   * after 2026 use the Jul–Dec rate. Actual: advisor-entered amount. Reduces scheduleCNet (income + SE tax savings). If there is
    * only passthroughK1, the deduction is modeled there with a note that the
    * proper mechanism is an accountable-plan reimbursement (same math).
    */
@@ -133,11 +138,18 @@ TSIQ.strategyModules.push({
     var p = Object.assign({}, profile);
     var notes = [];
     var tb = TSIQ.TABLES_2026;
+    var rates = tb.limits.mileageRateBusiness;
+    var h1 = Math.min(100, Math.max(0,
+      params.janJunPct === undefined ? 50 : params.janJunPct)) / 100;
+    // 2026: blend the two half-year rates. Later years: latest published rate.
+    var rate = (yearIndex === 0)
+      ? rates.janJun * h1 + rates.julDec * (1 - h1)
+      : rates.julDec;
     var amt;
     if (params.method === 'actual') {
       amt = params.actualAmount || 0;
     } else {
-      amt = (params.businessMiles || 0) * tb.limits.mileageRateBusiness;
+      amt = (params.businessMiles || 0) * rate;
     }
 
     if (p.scheduleCNet > 0) {
@@ -146,7 +158,10 @@ TSIQ.strategyModules.push({
         notes.push(TSIQ.fmt.usd(amt) + ' vehicle deduction (' +
           (params.method === 'actual'
             ? 'actual expenses'
-            : (params.businessMiles || 0).toLocaleString('en-US') + ' mi × $' + tb.limits.mileageRateBusiness + '/mi standard rate') +
+            : (params.businessMiles || 0).toLocaleString('en-US') + ' mi at the 2026 standard rates — ' +
+              Math.round(h1 * 100) + '% at $' + rates.janJun + '/mi (Jan–Jun), ' +
+              Math.round((1 - h1) * 100) + '% at $' + rates.julDec.toFixed(2) + '/mi (Jul–Dec); later years use $' +
+              rates.julDec.toFixed(2)) +
           ') reduces Schedule C profit — requires a §274(d) contemporaneous mileage log.');
       }
     } else if (p.passthroughK1 > 0) {

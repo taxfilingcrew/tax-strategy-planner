@@ -31,7 +31,11 @@ TSIQ.strategyModules.push({
       'deduction) but creates W-2 wages that support the deduction above the ' +
       'taxable-income threshold ($403,500 MFJ / $201,750 single, 2026).',
       'Adds real compliance cost: payroll processing, Form 1120-S, W-2/941s, ' +
-      'state unemployment, and possibly a state franchise tax.'
+      'state unemployment, and possibly a state franchise tax.',
+      'State entity-level tax: some states tax the S corporation itself. ' +
+      'California charges 1.5% of net income with an $800 minimum franchise tax ' +
+      '(R&TC §§23802, 23153) — enter the rate and minimum below so the savings ' +
+      'shown are net of it. The tax is deductible on the federal 1120-S.'
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §1362; Form 2553', note: 'Election mechanics; due 2 months + 15 days into the year (late-election relief under Rev. Proc. 2013-30 is routinely available).' },
@@ -100,7 +104,9 @@ TSIQ.strategyModules.push({
 
   inputs: [
     { key: 'salary', label: 'Reasonable compensation (W-2 salary)', type: 'currency', default: 80000 },
-    { key: 'adminCost', label: 'Annual payroll + 1120-S compliance cost', type: 'currency', default: 2500 }
+    { key: 'adminCost', label: 'Annual payroll + 1120-S compliance cost', type: 'currency', default: 2500 },
+    { key: 'entityTaxRatePct', label: 'State S-corp tax on net income (%) — CA is 1.5', type: 'percent', default: 0 },
+    { key: 'entityTaxMin', label: 'State minimum franchise tax — CA is $800', type: 'currency', default: 0 }
   ],
 
   suggest: function (p) {
@@ -118,6 +124,9 @@ TSIQ.strategyModules.push({
    * profit. Employer FICA and admin costs are deducted from entity profit.
    * The engine then charges payroll tax (both halves) on ownerWages instead
    * of SE tax, and gives the profit QBI treatment with W-2 wage support.
+   * Optional state entity-level tax (e.g., California's 1.5% / $800 minimum):
+   * computed on entity net income, deducted from the federal K-1, and carried
+   * to the engine as profile.entityStateTax (a non-creditable state cost).
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
@@ -126,7 +135,7 @@ TSIQ.strategyModules.push({
       notes.push('No Schedule C (sole proprietorship) profit found — nothing to convert.');
       return { profile: p, notes: notes };
     }
-    var f = TSIQ.TABLES_2026.fica;
+    var f = ((state && state.tables) || TSIQ.TABLES_2026).fica; // indexed in later years
     var salary = Math.min(params.salary, p.scheduleCNet); // can't pay more than profit
     if (salary < params.salary) {
       notes.push('Salary capped at business profit of ' + TSIQ.fmt.usd(p.scheduleCNet) + '.');
@@ -134,6 +143,13 @@ TSIQ.strategyModules.push({
     var employerFICA = Math.min(salary, f.ssWageBase) * (f.ssRate / 2) +
       salary * (f.medicareRate / 2);
     var entityProfit = p.scheduleCNet - salary - employerFICA - (params.adminCost || 0);
+
+    // State entity-level tax on S-corp net income (rate and minimum default to 0).
+    var entityTaxRate = Math.max(0, params.entityTaxRatePct || 0) / 100;
+    var entityTaxMin = Math.max(0, params.entityTaxMin || 0);
+    var entityStateTax = Math.max(entityTaxMin, entityTaxRate * Math.max(0, entityProfit));
+    entityProfit -= entityStateTax;          // deductible on the federal 1120-S
+    p.entityStateTax = (p.entityStateTax || 0) + entityStateTax;
 
     p.ownerWages = (p.ownerWages || 0) + salary;
     p.entityW2Wages = (p.entityW2Wages || 0) + salary;
@@ -144,6 +160,12 @@ TSIQ.strategyModules.push({
       notes.push('Reasonable compensation set at ' + TSIQ.fmt.usd(salary) +
         '; ' + TSIQ.fmt.usd(Math.max(0, entityProfit)) +
         ' of profit passes through free of employment tax.');
+      if (entityStateTax > 0) {
+        notes.push('State S-corp entity tax of ' + TSIQ.fmt.usd(entityStateTax) +
+          ' included as a cost (' + (entityTaxRate * 100) + '% of entity net income' +
+          (entityTaxMin > 0 ? ', ' + TSIQ.fmt.usd(entityTaxMin) + ' minimum' : '') +
+          '); savings shown are net of it.');
+      }
       if (entityProfit < 0) {
         notes.push('Warning: salary + payroll costs exceed profit — election is not beneficial at this income level.');
       }

@@ -38,6 +38,15 @@ Two ways to get a return into the app:
 - **Import Client File** — loads a `.tsiq.json` produced by the Claude review
   workflow (which also suggests strategies with reasons) or by Export.
 
+**Export Client File** saves the client's figures *and* the strategies checked
+in each scenario with their parameters, so importing the file later reopens the
+plan where you left it. Keep client files out of this repository — they belong
+in the client's folder.
+
+**Existing S-corp owners:** enter the owner's own salary in **Owner W-2 wages
+from own S-corp**, not in outside W-2 wages. The tool charges payroll tax on it
+and uses it for retirement-plan and health-insurance limits.
+
 ## How to use it
 
 1. **Section 1** — enter the client's tax return data (2026 figures or projections).
@@ -76,7 +85,8 @@ in Section 2 to find anything fast.
    `docs/strategy-authoring-spec.md` for the full authoring rules).
 2. Fill in the advisor content, client content, inputs, and the `apply()` math.
 3. Run `node scripts/build-index.js` (registers it in index.html), then
-   `node scripts/validate-strategies.js` (schema + math smoke tests).
+   `node scripts/validate-strategies.js` (schema + math smoke tests) and
+   `node scripts/test-engine.js` (hand-checked engine and strategy figures).
 
 The library cards, scenario checkboxes, PDF, slideshow, and pitch deck all
 pick it up automatically.
@@ -94,6 +104,18 @@ Just open a session in this folder and ask for what you want, e.g.:
 
 ## Scope notes (v1)
 
-Federal 2026 law per Rev. Proc. 2025-32 / OBBBA. State tax uses a flat effective
-rate. Not yet modeled: AMT, depreciation recapture on sale, §461(l). See
-`CLAUDE.md` for the full list.
+Federal 2026 law per Rev. Proc. 2025-32 / OBBBA, including the 0.5%-of-AGI
+charitable floor, the $400 minimum QBI deduction, and both 2026 business
+mileage rates (72.5¢ Jan–Jun, 76¢ Jul–Dec). State tax uses a flat effective
+rate; a state S-corp entity tax (e.g., California's 1.5% / $800 minimum) can be
+entered on the S-Corp Election strategy.
+
+The multi-year projection applies 2026 law to every year. Brackets, the
+standard deduction, capital-gain breakpoints, the §199A threshold, and the
+Social Security wage base are indexed at the **Bracket inflation indexing**
+rate in Section 1 (set it to 0 to hold 2026 amounts). The SALT cap is held at
+its 2026 amount in every year.
+
+Not yet modeled: AMT, depreciation recapture on sale, §461(l), the 2/37
+itemized-deduction limitation for 37%-bracket filers, AGI percentage limits on
+charitable gifts, and the scheduled SALT-cap changes after 2026.

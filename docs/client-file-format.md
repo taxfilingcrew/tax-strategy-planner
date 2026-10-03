@@ -1,7 +1,9 @@
 # Client File Format (`*.tsiq.json`)
 
 The interchange format between Claude (reading a prior-year tax return) and the
-app's **Import Client File** button. One file per client.
+app's **Import Client File** button. One file per client. **Export Client File**
+writes the same format, including the strategies checked in each scenario and
+their parameters, so a plan can be reopened exactly as it was left.
 
 ## Rules for producing a client file from a tax return
 
@@ -32,7 +34,10 @@ app's **Import Client File** button. One file per client.
     "wages": 0,                      // W-2 wages from outside jobs
     "scheduleCNet": 0,               // Schedule C net profit
     "passthroughK1": 0,              // S-corp/partnership ordinary income
-    "entityW2Wages": 0,              // W-2 wages paid by the entity (§199A)
+    "ownerWages": 0,                 // client's own W-2 salary from their S-corp
+                                     //   (NOT also in "wages")
+    "entityW2Wages": 0,              // total W-2 wages paid by the entity,
+                                     //   including the owner's (§199A)
     "isSSTB": false,
     "rentalNet": 0,                  // Schedule E net rental
     "rentalLossesUsable": true,
@@ -43,7 +48,19 @@ app's **Import Client File** button. One file per client.
     "fedWithholding": 0, "fedEstimates": 0,
     "stateWithholding": 0, "stateEstimates": 0,
     "stateRatePct": 5,               // percent, not decimal
-    "years": 10, "growthPct": 3
+    "years": 10, "growthPct": 3,
+    "inflationPct": 2.5              // bracket indexing for projection years
+  },
+  "scenarios": {                     // optional — written by Export
+    "sc2": {
+      "label": "Scenario 2",
+      "strategies": [
+        { "id": "s-corp-election",
+          "params": { "salary": 95000, "adminCost": 2500,
+                      "entityTaxRatePct": 1.5, "entityTaxMin": 800 } }
+      ]
+    },
+    "sc3": { "label": "Scenario 3 (optional)", "strategies": [] }
   },
   "suggestedStrategies": [
     {
@@ -58,6 +75,21 @@ app's **Import Client File** button. One file per client.
   ]
 }
 ```
+
+## Notes on specific keys
+
+- **`wages` vs. `ownerWages`** — Form 1040 line 1 combines them. Split the
+  owner's salary from their own S corporation into `ownerWages` (the engine
+  charges both halves of FICA on it, and it drives retirement and
+  self-employed-health-insurance limits). If the split is not determinable from
+  the return, leave it all in `wages` and add a question to `notes`.
+- **`scenarios`** — optional. When present, importing clears both scenario
+  pickers and restores the saved strategies and parameters; strategy ids no
+  longer in the library are skipped and reported. Files without it (older
+  exports, or files produced from a return review) leave the pickers alone.
+  `params` keys match each strategy's `inputs` keys.
+- Any key left out keeps the app's default, so files written before a field
+  existed still import.
 
 ## Confidentiality
 

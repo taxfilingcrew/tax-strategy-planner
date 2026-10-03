@@ -149,7 +149,7 @@ TSIQ.strategyModules.push({
       return { profile: p, notes: notes };
     }
     var tb = TSIQ.TABLES_2026;
-    var f = tb.fica;
+    var f = ((state && state.tables) || tb).fica; // indexed in later years
     var salary = Math.min(params.ownerSalary, p.scheduleCNet); // can't pay more than profit
     if (salary < params.ownerSalary) {
       notes.push('Salary capped at business profit of ' + TSIQ.fmt.usd(p.scheduleCNet) + '.');

@@ -7,8 +7,11 @@
 window.TSIQ = window.TSIQ || {};
 
 (function () {
-  // Income fields that grow with the client's assumed growth rate.
-  var GROWTH_FIELDS = ['wages', 'scheduleCNet', 'passthroughK1', 'rentalNet',
+  // Income fields that grow with the client's assumed growth rate. Owner and
+  // entity W-2 wages grow with the business so the §199A wage limit and the
+  // payroll-tax layer keep pace with K-1 income in later years.
+  var GROWTH_FIELDS = ['wages', 'ownerWages', 'entityW2Wages', 'scheduleCNet',
+    'passthroughK1', 'rentalNet',
     'ltcg', 'qualDiv', 'interest', 'otherIncome',
     'propertyTax', 'mortgageInterest', 'charitable', 'otherItemized'];
 
@@ -30,9 +33,12 @@ window.TSIQ = window.TSIQ || {};
   /**
    * Run one scenario across `years` years.
    * selections: [{ strategy, params }] — strategy is the library object.
+   * inflationRate (optional, decimal) indexes brackets, standard deduction,
+   * capital-gain breakpoints, the §199A threshold, and the SS wage base for
+   * projection years 2+; omitted or 0 = 2026 amounts in every year.
    * Returns { years: [yearResult...], totals: {...}, notes: [...] }.
    */
-  TSIQ.computeScenario = function (baseProfile, selections, years, growthRate) {
+  TSIQ.computeScenario = function (baseProfile, selections, years, growthRate, inflationRate) {
     var ordered = selections.slice().sort(function (a, b) {
       return a.strategy.applyOrder - b.strategy.applyOrder;
     });
@@ -42,7 +48,11 @@ window.TSIQ = window.TSIQ || {};
 
     for (var y = 0; y < years; y++) {
       var profile = grownProfile(baseProfile, growthRate, y);
+      // Current-year tables — strategies read state.tables for indexed amounts.
+      var tables = TSIQ.indexTables(TSIQ.TABLES_2026, Math.pow(1 + (inflationRate || 0), y));
+      state.tables = tables;
       profile.ptetPaid = 0;
+      profile.entityStateTax = 0;
       profile.ownerWages = profile.ownerWages || 0;
       profile.entityW2Wages = profile.entityW2Wages || 0;
 
@@ -55,7 +65,7 @@ window.TSIQ = window.TSIQ || {};
         });
       });
 
-      var result = TSIQ.computeYear(profile, state);
+      var result = TSIQ.computeYear(profile, state, tables);
       result.yearIndex = y;
       result.taxYear = TSIQ.TABLES_2026.taxYear + y;
       yearResults.push(result);
@@ -72,7 +82,7 @@ window.TSIQ = window.TSIQ || {};
   };
 
   /** Convenience: baseline is a scenario with no strategies. */
-  TSIQ.computeBaseline = function (baseProfile, years, growthRate) {
-    return TSIQ.computeScenario(baseProfile, [], years, growthRate);
+  TSIQ.computeBaseline = function (baseProfile, years, growthRate, inflationRate) {
+    return TSIQ.computeScenario(baseProfile, [], years, growthRate, inflationRate);
   };
 })();

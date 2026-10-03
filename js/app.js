@@ -171,7 +171,7 @@
         }).join('') + '</select></div>';
     }
     return '<div class="param">' + label +
-      '<input id="' + id + '" type="number" value="' + inp.default + '"' +
+      '<input id="' + id + '" type="number" step="any" value="' + inp.default + '"' +
       (inp.max !== undefined ? ' max="' + inp.max + '"' : '') + '></div>';
   }
 
@@ -194,14 +194,53 @@
     TSIQ.STRATEGIES.forEach(function (s) {
       $(scKey + '-' + s.id).addEventListener('change', function (e) {
         $(scKey + '-' + s.id + '-params').style.display = e.target.checked ? 'grid' : 'none';
+        if (e.target.checked) syncProfileDefaults(scKey, s);
+      });
+      // Once the advisor edits a parameter, profile-driven defaults leave it alone.
+      s.inputs.forEach(function (inp) {
+        var el = $(scKey + '-' + s.id + '-' + inp.key);
+        el.addEventListener('input', function () { el.setAttribute('data-touched', '1'); });
+        el.addEventListener('change', function () { el.setAttribute('data-touched', '1'); });
       });
     });
+  }
+
+  // Inputs may declare defaultFrom(profile) — a default drawn from the client
+  // data in Section 1 (e.g., PTET rate starts at the client's state rate).
+  // Applied until the advisor edits the field.
+  function syncProfileDefaults(scKey, strategy) {
+    var profile = null;
+    strategy.inputs.forEach(function (inp) {
+      if (typeof inp.defaultFrom !== 'function') return;
+      var el = $(scKey + '-' + strategy.id + '-' + inp.key);
+      if (el.getAttribute('data-touched')) return;
+      profile = profile || readProfile();
+      var v = inp.defaultFrom(profile);
+      if (v !== undefined && v !== null && isFinite(v)) el.value = v;
+    });
+  }
+
+  // Programmatic check/uncheck (import, suggestions) — keeps the params panel in step.
+  function setPick(scKey, id, checked) {
+    var box = $(scKey + '-' + id);
+    if (!box) return false;
+    box.checked = !!checked;
+    $(scKey + '-' + id + '-params').style.display = checked ? 'grid' : 'none';
+    return true;
+  }
+
+  function setParam(scKey, id, key, value) {
+    var el = $(scKey + '-' + id + '-' + key);
+    if (!el) return;
+    el.value = value;
+    el.setAttribute('data-touched', '1');
   }
 
   function readSelections(scKey) {
     var out = [];
     TSIQ.STRATEGIES.forEach(function (s) {
       if (!$(scKey + '-' + s.id).checked) return;
+      syncProfileDefaults(scKey, s);
       var params = {};
       s.inputs.forEach(function (inp) {
         var el = $(scKey + '-' + s.id + '-' + inp.key);
@@ -221,7 +260,9 @@
       wages: num('wages'),
       scheduleCNet: num('scheduleCNet'),
       passthroughK1: num('passthroughK1'),
-      entityW2Wages: num('entityW2Wages'),
+      ownerWages: num('ownerWages'),
+      // The owner's own salary is part of the entity's W-2 wages for §199A.
+      entityW2Wages: Math.max(num('entityW2Wages'), num('ownerWages')),
       isSSTB: $('isSSTB').checked,
       rentalNet: num('rentalNet'),
       rentalLossesUsable: $('rentalLossesUsable').checked,
@@ -254,7 +295,8 @@
       ['NIIT (3.8%)', function (r) { return r.niit; }],
       ['Total federal', function (r) { return r.totalFederal; }],
       ['State tax (personal)', function (r) { return r.personalStateTax; }],
-      ['PTET (entity-level state)', function (r) { return r.ptetPaid; }]
+      ['PTET (entity-level state)', function (r) { return r.ptetPaid; }],
+      ['State S-corp entity tax (franchise)', function (r) { return r.entityStateTax; }]
     ];
     var html = '';
     lines.forEach(function (line) {
@@ -341,7 +383,8 @@
 
     // multi-year projection
     html += '<h3>' + run.years + '-Year Projection (' + (run.growthRate * 100).toFixed(1) +
-      '% annual income growth)</h3>' +
+      '% annual income growth, ' + ((run.inflationRate || 0) * 100).toFixed(1) +
+      '% bracket indexing)</h3>' +
       '<table class="results-table"><thead><tr><th>Year</th><th>Baseline</th>' +
       run.scenarios.map(function (sc) {
         return '<th>' + esc(sc.label) + '</th><th class="sav">Savings</th>';
@@ -377,8 +420,12 @@
         allNotes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>';
     }
     html += '<p class="fine-print">2026 federal figures per Rev. Proc. 2025-32 as amended by OBBBA. ' +
-      'Projection applies 2026 law to all years. State tax modeled at a flat effective rate. ' +
-      'AMT, recapture on sale, and §461(l) not modeled — see CLAUDE.md scope notes.</p>';
+      'Projection applies 2026 law to all years; brackets, standard deduction, capital-gain ' +
+      'breakpoints, the §199A threshold, and the Social Security wage base are indexed at the ' +
+      'inflation rate entered in Section 1 (SALT cap held at its 2026 amount). ' +
+      'State tax modeled at a flat effective rate. ' +
+      'AMT, recapture on sale, §461(l), and the 2/37 itemized-deduction limit for 37% filers ' +
+      'are not modeled — see the README scope notes.</p>';
 
     $('results').innerHTML = html;
     $('output-actions').style.display = 'flex';
@@ -415,6 +462,7 @@
     var profile = readProfile();
     var years = Math.max(1, Math.round(num('years'))) || 10;
     var growthRate = num('growthPct') / 100;
+    var inflationRate = Math.max(0, num('inflationPct')) / 100;
 
     var scenarios = [];
     var selA = readSelections('sc2');
@@ -423,7 +471,7 @@
         label: $('sc2-label').value || 'Scenario 2',
         selections: selA,
         strategies: selA.map(function (s) { return s.strategy; }),
-        result: TSIQ.computeScenario(profile, selA, years, growthRate)
+        result: TSIQ.computeScenario(profile, selA, years, growthRate, inflationRate)
       });
     }
     var selB = readSelections('sc3');
@@ -432,7 +480,7 @@
         label: $('sc3-label').value || 'Scenario 3',
         selections: selB,
         strategies: selB.map(function (s) { return s.strategy; }),
-        result: TSIQ.computeScenario(profile, selB, years, growthRate)
+        result: TSIQ.computeScenario(profile, selB, years, growthRate, inflationRate)
       });
     }
     if (!scenarios.length) {
@@ -444,10 +492,11 @@
       clientName: $('clientName').value || 'Client',
       firmName: $('firmName').value || TSIQ.brand.name,
       profile: profile,
-      baseline: TSIQ.computeBaseline(profile, years, growthRate),
+      baseline: TSIQ.computeBaseline(profile, years, growthRate, inflationRate),
       scenarios: scenarios,
       years: years,
-      growthRate: growthRate
+      growthRate: growthRate,
+      inflationRate: inflationRate
     };
     renderResults(lastRun);
     $('results-section').scrollIntoView({ behavior: 'smooth' });
@@ -456,11 +505,45 @@
   /* --------------------- client file import / export --------------------- */
   // Format documented in docs/client-file-format.md (tsiq-client-v1).
   var PROFILE_FIELD_IDS = ['filingStatus', 'wages', 'scheduleCNet', 'passthroughK1',
-    'entityW2Wages', 'rentalNet', 'ltcg', 'qualDiv', 'interest', 'otherIncome',
+    'ownerWages', 'entityW2Wages', 'rentalNet', 'ltcg', 'qualDiv', 'interest', 'otherIncome',
     'propertyTax', 'mortgageInterest', 'charitable', 'otherItemized',
     'kidsCTC', 'otherDeps', 'fedWithholding', 'fedEstimates',
-    'stateWithholding', 'stateEstimates', 'stateRatePct', 'years', 'growthPct'];
+    'stateWithholding', 'stateEstimates', 'stateRatePct', 'years', 'growthPct',
+    'inflationPct'];
   var PROFILE_CHECKBOX_IDS = ['isSSTB', 'rentalLossesUsable'];
+  var SCENARIO_KEYS = ['sc2', 'sc3'];
+
+  // Scenario picks as plain data: { label, strategies: [{ id, params }] }.
+  function scenarioToData(scKey) {
+    return {
+      label: $(scKey + '-label').value,
+      strategies: readSelections(scKey).map(function (sel) {
+        return { id: sel.strategy.id, params: sel.params };
+      })
+    };
+  }
+
+  // Restore a saved scenario: clears the picker first, then re-checks the saved
+  // strategies with their parameters. Unknown ids (a strategy since removed or
+  // renamed) are skipped and reported.
+  function applyScenarioData(scKey, sc, skipped) {
+    TSIQ.STRATEGIES.forEach(function (s) { setPick(scKey, s.id, false); });
+    var details = $(scKey + '-strategies').querySelectorAll('details');
+    for (var d = 0; d < details.length; d++) details[d].open = false;
+    if (!sc) return;
+    if (sc.label) $(scKey + '-label').value = sc.label;
+    (sc.strategies || []).forEach(function (item) {
+      if (!item || !TSIQ.getStrategy(item.id) || !setPick(scKey, item.id, true)) {
+        if (item && item.id) skipped.push(item.id);
+        return;
+      }
+      Object.keys(item.params || {}).forEach(function (k) {
+        setParam(scKey, item.id, k, item.params[k]);
+      });
+      var det = $(scKey + '-' + item.id).closest('details');
+      if (det) det.open = true;
+    });
+  }
 
   function exportClientFile() {
     var data = { format: 'tsiq-client-v1', clientName: $('clientName').value || 'Client', profile: {} };
@@ -469,6 +552,9 @@
       data.profile[id] = (el.type === 'number') ? (parseFloat(el.value) || 0) : el.value;
     });
     PROFILE_CHECKBOX_IDS.forEach(function (id) { data.profile[id] = $(id).checked; });
+    // Strategy picks and their parameters travel with the client file.
+    data.scenarios = {};
+    SCENARIO_KEYS.forEach(function (k) { data.scenarios[k] = scenarioToData(k); });
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -508,8 +594,7 @@
           if (!box) return;
           if (!box.checked) box.click();
           Object.keys(s.params || {}).forEach(function (k) {
-            var input = $('sc2-' + s.id + '-' + k);
-            if (input) input.value = s.params[k];
+            setParam('sc2', s.id, k, s.params[k]);
           });
           var det = box.closest('details'); if (det) det.open = true;
         });
@@ -529,8 +614,31 @@
       }
       if (data.clientName) $('clientName').value = data.clientName;
       var p = data.profile || {};
-      PROFILE_FIELD_IDS.forEach(function (id) { if (p[id] !== undefined) $(id).value = p[id]; });
-      PROFILE_CHECKBOX_IDS.forEach(function (id) { if (p[id] !== undefined) $(id).checked = !!p[id]; });
+      // A key the file leaves out goes back to the form's default, so figures
+      // from a previously loaded client never carry into this one.
+      PROFILE_FIELD_IDS.forEach(function (id) {
+        var el = $(id);
+        if (p[id] !== undefined) { el.value = p[id]; return; }
+        if (el.tagName === 'SELECT') {
+          for (var i = 0; i < el.options.length; i++) {
+            if (el.options[i].defaultSelected) { el.selectedIndex = i; return; }
+          }
+          el.selectedIndex = 0;
+        } else { el.value = el.defaultValue; }
+      });
+      PROFILE_CHECKBOX_IDS.forEach(function (id) {
+        $(id).checked = (p[id] !== undefined) ? !!p[id] : $(id).defaultChecked;
+      });
+      // Saved scenarios (files exported since scenarios were added). Older
+      // files have no `scenarios` key — the pickers are left as they are.
+      if (data.scenarios) {
+        var skipped = [];
+        SCENARIO_KEYS.forEach(function (k) { applyScenarioData(k, data.scenarios[k], skipped); });
+        if (skipped.length) {
+          alert('These saved strategies are not in this version of the library and were skipped: ' +
+            skipped.join(', '));
+        }
+      }
       renderSuggestions(data.suggestedStrategies, data.notes);
       window.scrollTo(0, 0);
     };
@@ -606,7 +714,14 @@
         if (target) target.value = el.value;
       });
       $('pdf-review-modal').classList.remove('open');
-      runSuggestions(result.warnings);
+      // Form 1040 line 1 lumps an S-corp owner's own salary in with outside wages.
+      var pdfNotes = result.warnings.slice();
+      if (num('passthroughK1') > 0 && num('wages') > 0 && !(num('ownerWages') > 0)) {
+        pdfNotes.push('K-1 income and W-2 wages are both present. If any of those wages are the ' +
+          'client\'s own salary from their S-corp, move that amount from "W-2 wages (outside jobs)" ' +
+          'to "Owner W-2 wages from own S-corp" so payroll tax, QBI, and retirement limits compute correctly.');
+      }
+      runSuggestions(pdfNotes);
       window.scrollTo(0, 0);
     });
   }

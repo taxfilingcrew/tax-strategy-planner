@@ -95,12 +95,16 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'ptetRatePct', label: 'State PTET rate (%) — often equals your state rate', type: 'percent', default: 5 }
+    // defaultFrom: the app pre-fills this from the client's state rate in
+    // Section 1 when the strategy is checked (until the advisor edits it).
+    { key: 'ptetRatePct', label: 'State PTET rate (%) — starts at the client\'s state rate; CA elective tax is 9.3', type: 'percent', default: 5,
+      defaultFrom: function (profile) { return Math.round((profile.stateRate || 0) * 10000) / 100; } }
   ],
 
   suggest: function (p) {
     if (!(p.passthroughK1 > 0 && p.stateRate > 0)) return null;
-    return { reason: TSIQ.fmt.usd(p.passthroughK1) + ' of pass-through income in a state with an income tax — the entity-level deduction is usually free money.' };
+    return { reason: TSIQ.fmt.usd(p.passthroughK1) + ' of pass-through income in a state with an income tax — the entity-level deduction is usually free money.',
+      params: { ptetRatePct: Math.round(p.stateRate * 10000) / 100 } };
   },
 
   appliesTo: function (profile) {
@@ -121,7 +125,9 @@ TSIQ.strategyModules.push({
         'or S corporation. Pair with the S-Corp Election strategy, or enter K-1 income.');
       return { profile: p, notes: notes };
     }
-    var rate = (params.ptetRatePct !== undefined ? params.ptetRatePct : 5) / 100;
+    // No rate supplied → fall back to the client's own state rate.
+    var rate = (params.ptetRatePct !== undefined
+      ? params.ptetRatePct : (p.stateRate || 0) * 100) / 100;
     var ptet = p.passthroughK1 * rate;
     p.passthroughK1 = p.passthroughK1 - ptet;
     p.ptetPaid = (p.ptetPaid || 0) + ptet;

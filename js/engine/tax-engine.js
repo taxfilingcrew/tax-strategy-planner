@@ -16,7 +16,9 @@
  *   ltcg, qualDiv, interest, otherIncome,
  *   propertyTax, mortgageInterest, charitable, otherItemized,
  *   stateRate,        // flat effective state rate, decimal (simplification)
- *   ptetPaid          // entity-level state tax paid (PTET strategy)
+ *   ptetPaid,         // entity-level state tax paid (PTET strategy) — creditable
+ *   entityStateTax    // non-creditable entity-level state tax (e.g., CA 1.5%
+ *                     // S-corp franchise tax) — added to the state burden
  * }
  * ==========================================================================*/
 window.TSIQ = window.TSIQ || {};
@@ -38,8 +40,8 @@ window.TSIQ = window.TSIQ || {};
 
   // Preferential-rate tax on LTCG + qualified dividends, stacked on top of
   // ordinary taxable income against the 0/15/20 breakpoints.
-  function prefRateTax(ordinaryTaxable, prefIncome, fs) {
-    var bp = T().ltcgBreakpoints[fs];
+  function prefRateTax(ordinaryTaxable, prefIncome, fs, tb) {
+    var bp = tb.ltcgBreakpoints[fs];
     var tax = 0, remaining = prefIncome, stackTop = ordinaryTaxable;
     // 0% band
     var room0 = Math.max(0, bp[0] - stackTop);
@@ -59,8 +61,11 @@ window.TSIQ = window.TSIQ || {};
   // - W-2 wage limit (50% of wages; UBIA prong not modeled) phased in above it
   // - SSTB benefit phased out entirely across the phase-in range
   // - overall cap: 20% of (taxable income before QBI − net capital gain)
-  function qbiDeduction(p, agi, deduction, seDeduction) {
-    var t = T().qbi, fs = p.filingStatus;
+  // - §199A(i) minimum: $400 when active QBI is at least $1,000 (2026+).
+  //   Material participation is assumed; for an SSTB in the phase-out only the
+  //   applicable percentage of its QBI counts toward the $1,000 test.
+  function qbiDeduction(p, agi, deduction, seDeduction, tb) {
+    var t = tb.qbi, fs = p.filingStatus;
     var qbiIncome = Math.max(0,
       (p.scheduleCNet - seDeduction) + p.passthroughK1 - (p.qbiReduction || 0));
     if (qbiIncome <= 0) return 0;
@@ -73,12 +78,14 @@ window.TSIQ = window.TSIQ || {};
     var range = t.phaseInRange[fs];
     var excess = tiBeforeQBI - threshold;
     var applicable;
+    var activeQbi = qbiIncome;
 
     if (excess <= 0) {
       applicable = tentative;
     } else {
       var phasePct = Math.min(1, excess / range);
       if (p.isSSTB) {
+        activeQbi = qbiIncome * (1 - phasePct);
         // SSTB: the whole deduction phases out across the range.
         var reducedTentative = tentative * (1 - phasePct);
         var reducedWageLimit = wageLimit * (1 - phasePct);
@@ -98,21 +105,28 @@ window.TSIQ = window.TSIQ || {};
     }
     var netCapGain = Math.max(0, (p.ltcg || 0)) + Math.max(0, (p.qualDiv || 0));
     var overallCap = t.rate * Math.max(0, tiBeforeQBI - netCapGain);
-    return Math.max(0, Math.min(applicable, overallCap));
+    var allowed = Math.max(0, Math.min(applicable, overallCap));
+    if (t.minimumDeduction && activeQbi >= t.minimumActiveQbi) {
+      // Greater-of rule; can never exceed taxable income before the deduction.
+      allowed = Math.max(allowed, Math.min(t.minimumDeduction, tiBeforeQBI));
+    }
+    return allowed;
   }
 
   /**
    * Compute one tax year. `state` carries multi-year memory (suspended
    * passive losses) and belongs to the scenario, not the profile.
+   * `tables` is optional — the scenario engine passes an inflation-indexed
+   * copy for projection years; omitted, the 2026 tables are used.
    * Returns a detailed breakdown object.
    */
-  TSIQ.computeYear = function (profile, state) {
+  TSIQ.computeYear = function (profile, state, tables) {
     var p = Object.assign({
       wages: 0, ownerWages: 0, scheduleCNet: 0, passthroughK1: 0,
       entityW2Wages: 0, isSSTB: false, rentalNet: 0, rentalLossesUsable: true,
       ltcg: 0, qualDiv: 0, interest: 0, otherIncome: 0,
       propertyTax: 0, mortgageInterest: 0, charitable: 0, otherItemized: 0,
-      stateRate: 0, ptetPaid: 0,
+      stateRate: 0, ptetPaid: 0, entityStateTax: 0,
       kidsCTC: 0, otherDeps: 0,
       fedWithholding: 0, fedEstimates: 0, stateWithholding: 0, stateEstimates: 0,
       // Generic hooks set by strategies:
@@ -124,7 +138,7 @@ window.TSIQ = window.TSIQ || {};
                          // (e.g., FICA on kids' S-corp wages)
     }, profile);
     state = state || {};
-    var tb = T(), fs = p.filingStatus, f = tb.fica;
+    var tb = tables || T(), fs = p.filingStatus, f = tb.fica;
 
     // ---- Self-employment tax (§1401/1402), coordinated with W-2 SS wages ----
     var seNetEarnings = Math.max(0, p.scheduleCNet) * f.seNetEarningsFactor;
@@ -179,18 +193,22 @@ window.TSIQ = window.TSIQ || {};
       s.cap[fs] - s.phaseDownRate * Math.max(0, agi - s.phaseDownStart[fs])
     );
     var saltDeduction = Math.min(saltPaid, effectiveCap);
-    var itemized = saltDeduction + p.mortgageInterest + p.charitable + p.otherItemized;
+    // OBBBA (2026+): itemized charitable giving counts only above 0.5% of AGI.
+    var charitableFloor = Math.min(Math.max(0, p.charitable),
+      tb.charitable.itemizedFloorRate * Math.max(0, agi));
+    var charitableAllowed = Math.max(0, p.charitable) - charitableFloor;
+    var itemized = saltDeduction + p.mortgageInterest + charitableAllowed + p.otherItemized;
     var standardDed = tb.standardDeduction[fs];
     var deduction = Math.max(standardDed, itemized);
     var usedItemized = itemized > standardDed;
 
     // ---- QBI, taxable income, income tax ----
-    var qbi = qbiDeduction(p, agi, deduction, seDeduction);
+    var qbi = qbiDeduction(p, agi, deduction, seDeduction, tb);
     var taxableIncome = Math.max(0, agi - deduction - qbi);
     var prefIncome = Math.min(taxableIncome, Math.max(0, p.ltcg) + Math.max(0, p.qualDiv));
     var ordinaryTaxable = taxableIncome - prefIncome;
     var ordinaryTax = bracketTax(ordinaryTaxable, tb.brackets[fs]);
-    var capGainsTax = prefRateTax(ordinaryTaxable, prefIncome, fs);
+    var capGainsTax = prefRateTax(ordinaryTaxable, prefIncome, fs, tb);
     var incomeTaxBeforeCredits = ordinaryTax + capGainsTax;
 
     // ---- Child tax credit / other-dependent credit (§24, OBBBA amounts).
@@ -214,7 +232,7 @@ window.TSIQ = window.TSIQ || {};
 
     var totalFederal = incomeTax + seTax + addlMedicare + niit + ownerPayrollTax +
       p.corpTaxPaid + p.otherTaxes;
-    var totalState = personalStateTax + p.ptetPaid;
+    var totalState = personalStateTax + p.ptetPaid + p.entityStateTax;
     var totalBurden = totalFederal + totalState;
 
     // ---- Payments to date → remaining balance due (current year only;
@@ -229,6 +247,7 @@ window.TSIQ = window.TSIQ || {};
       totalIncome: totalIncome, agi: agi,
       deduction: deduction, usedItemized: usedItemized,
       saltDeduction: saltDeduction, saltEffectiveCap: effectiveCap,
+      charitableAllowed: charitableAllowed, charitableFloor: charitableFloor,
       qbiDeduction: qbi, taxableIncome: taxableIncome,
       ordinaryTax: ordinaryTax, capGainsTax: capGainsTax,
       incomeTaxBeforeCredits: incomeTaxBeforeCredits,
@@ -242,6 +261,7 @@ window.TSIQ = window.TSIQ || {};
       addlMedicare: addlMedicare, niit: niit,
       totalFederal: totalFederal,
       personalStateTax: personalStateTax, ptetPaid: p.ptetPaid,
+      entityStateTax: p.entityStateTax,
       totalState: totalState, totalBurden: totalBurden,
       suspendedRentalLossAdded: suspendedAdded,
       suspendedRentalLossUsed: suspendedUsed,
