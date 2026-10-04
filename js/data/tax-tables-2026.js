@@ -137,6 +137,7 @@ TSIQ.TABLES_2026 = {
   // the straight-line baseline a cost segregation study accelerates against.
   residentialRentalRecoveryYears: 27.5,
   commercialRecoveryYears: 39,
+  qipRecoveryYears: 15,            // qualified improvement property, §168(e)(6)
 
   // AMT exemptions (2026) — engine does not compute AMT in v1; kept here so the
   // data file is complete when AMT support is added.

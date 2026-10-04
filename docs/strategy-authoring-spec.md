@@ -172,6 +172,16 @@ own. A default must not assume an amount the client may not have: default to
 0, or derive it from Section 1 with `defaultFrom(profile)` (which may also
 return a select value).
 
+"Already deducted" inputs: when a client may already take the deduction a
+strategy models (home office, vehicle, health premiums), give the strategy an
+input for the amount on the return today and count only the difference.
+
+Timing strategies must show their give-back inside the projection (reverse
+the acceleration in later years, or in the final year when the reversal date
+is open) so the per-strategy figure is classed as timing. A strategy that only
+reports the value of something the client already has (an NOL carryforward)
+sets `existingBenefit: true` and is labeled that way on client slides.
+
 ## Projection context
 
 `state.yearIndex`, `state.projectionYears` and `state.growthFactor`

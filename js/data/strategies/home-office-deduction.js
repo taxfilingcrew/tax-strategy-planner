@@ -119,7 +119,9 @@ TSIQ.strategyModules.push({
   inputs: [
     { key: 'method', label: 'Method', type: 'select', default: 'actual',
       options: [{ value: 'actual', label: 'Actual expenses (Form 8829)' }, { value: 'simplified', label: 'Simplified ($5/sq ft, $1,500 max)' }] },
-    { key: 'annualAmount', label: 'Annual home-office deduction', type: 'currency', default: 6000 }
+    { key: 'annualAmount', label: 'Annual home-office deduction', type: 'currency', default: 6000 },
+    { key: 'alreadyClaimed', label: 'Home-office deduction the return already takes', type: 'currency', default: 0 },
+    { key: 'officeSharePct', label: 'Office share of the home (%) — actual method', type: 'percent', default: 10 }
   ],
 
   appliesTo: function (profile) {
@@ -127,40 +129,75 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Reduces scheduleCNet (income tax + SE tax savings). Enforces the $1,500
-   * simplified-method cap (Rev. Proc. 2013-13) and the §280A(c)(5) gross-income
-   * limitation (cannot create a loss). Sole-prop only: without Schedule C
-   * income the advisor is pointed to the accountable plan.
+   * Reduces scheduleCNet (income tax + SE tax savings) by the part of the
+   * deduction the return does not already take. Enforces the $1,500
+   * simplified-method cap (Rev. Proc. 2013-13) and the §280A(c)(5)
+   * gross-income limitation (cannot create a loss).
+   * Actual method: the office share of mortgage interest and property tax
+   * moves from Schedule A to Form 8829, so it comes off the itemized
+   * deductions in Section 1 (no effect for a non-itemizer or a client over the
+   * SALT cap — the engine works that out). The simplified method leaves
+   * Schedule A alone.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
     var amt = params.annualAmount || 0;
 
     if (!(p.scheduleCNet > 0)) {
-      notes.push('Requires Schedule C profit. No sole-prop income on this profile — ' +
-        'for S-corp/partnership owners, run home-office costs through the Accountable ' +
-        'Plan strategy instead. No benefit modeled.');
+      if (first) {
+        notes.push('Requires Schedule C profit. No sole-prop income on this profile — ' +
+          'for S-corp/partnership owners, run home-office costs through the Accountable ' +
+          'Plan strategy instead. No benefit modeled.');
+      }
       return { profile: p, notes: notes };
     }
 
-    if (params.method === 'simplified' && amt > 1500) {
+    var simplified = params.method === 'simplified';
+    if (simplified && amt > 1500) {
       amt = 1500; // Rev. Proc. 2013-13: $5/sq ft × 300 sq ft max
-      notes.push('Simplified method capped at $1,500 ($5/sq ft × 300 sq ft max, Rev. Proc. 2013-13).');
+      if (first) notes.push('Simplified method capped at $1,500 ($5/sq ft × 300 sq ft max, Rev. Proc. 2013-13).');
     }
-    if (amt > p.scheduleCNet) {
+    var already = Math.max(0, params.alreadyClaimed || 0);
+    var added = Math.max(0, amt - already);
+    if (added > p.scheduleCNet) {
       // §280A(c)(5): cannot create/increase a Schedule C loss.
-      notes.push('Deduction limited to Schedule C profit (§280A(c)(5) gross-income limitation)' +
-        (params.method === 'simplified' ? ' — no carryover under the simplified method.' : ' — excess carries forward (not modeled).'));
-      amt = p.scheduleCNet;
+      if (first) {
+        notes.push('Deduction limited to Schedule C profit (§280A(c)(5) gross-income limitation)' +
+          (simplified ? ' — no carryover under the simplified method.' : ' — excess carries forward (not modeled).'));
+      }
+      added = p.scheduleCNet;
+    }
+    p.scheduleCNet = p.scheduleCNet - added;
+
+    // Actual method: the office share of interest and tax leaves Schedule A.
+    var moved = 0;
+    if (!simplified && added > 0 && amt > 0) {
+      var share = Math.max(0, Math.min(100, params.officeSharePct === undefined ? 10 : params.officeSharePct)) / 100;
+      var newFraction = added / amt;
+      var mi = share * (p.mortgageInterest || 0) * newFraction;
+      var pt = share * (p.propertyTax || 0) * newFraction;
+      if (mi + pt > added) { var k = added / (mi + pt); mi *= k; pt *= k; }
+      p.mortgageInterest = (p.mortgageInterest || 0) - mi;
+      p.propertyTax = (p.propertyTax || 0) - pt;
+      moved = mi + pt;
     }
 
-    p.scheduleCNet = p.scheduleCNet - amt;
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(amt) + ' home-office deduction (' +
-        (params.method === 'simplified' ? 'simplified method' : 'actual expenses, Form 8829') +
-        ') reduces Schedule C profit — saves income tax and SE tax.');
-      if (params.method !== 'simplified') {
+    if (first) {
+      notes.push(TSIQ.fmt.usd(added) + ' of new home-office deduction (' +
+        (simplified ? 'simplified method' : 'actual expenses, Form 8829') +
+        ') reduces Schedule C profit — saves income tax and SE tax.' +
+        (already > 0 ? ' The ' + TSIQ.fmt.usd(Math.min(already, amt)) + ' the return already takes is not counted again.' : ''));
+      if (already <= 0) {
+        notes.push('This counts the whole deduction as new. If the return already claims a home office, enter that amount in "the return already takes".');
+      }
+      if (moved > 0) {
+        notes.push(TSIQ.fmt.usd(moved) + ' of mortgage interest and property tax (the office share) moves from ' +
+          'Schedule A to Form 8829, so it is taken off the itemized deductions — for an itemizer, ' +
+          'that part of the home-office deduction saves SE tax only.');
+      }
+      if (!simplified) {
         notes.push('Actual method claims home depreciation — unrecaptured §1250 gain on a future home sale is not modeled.');
       }
     }

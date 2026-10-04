@@ -111,35 +111,63 @@ TSIQ.strategyModules.push({
     ]
   },
 
-  inputs: [],
+  inputs: [
+    { key: 'otherRentalNet', label: 'Net income or loss of the client\'s OTHER (long-term) rentals', type: 'currency', default: 0 }
+  ],
 
   appliesTo: function (profile) {
     return true; // the unlock is meaningful whenever rental losses exist or are planned
   },
 
   /**
-   * Same engine effect as REPS — flips the §469 gate — but through the
-   * short-term-rental doorway (avg stay ≤ 7 days + material participation),
-   * so no real-estate-professional hour tests are needed. Flag set every
-   * projection year; notes only in year 1.
+   * Short-term rental doorway out of §469 (average stay of 7 days or less
+   * plus material participation). It frees the losses of THAT property only.
+   * With no other rentals (input 0) the whole rental figure is the short-term
+   * property and the usable flag is set. With other rentals, their net stays
+   * in rentalNet under the passive rules and the short-term property's loss
+   * is moved to nonpassive income. California follows this rule (it departs
+   * from §469 only for real estate professionals).
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
     var alreadyUsable = !!p.rentalLossesUsable;
-    p.rentalLossesUsable = true;
-    if (yearIndex === 0) {
-      if (alreadyUsable) {
+    var g = (state && state.growthFactor) || 1;
+    var other = (params.otherRentalNet || 0) * g;
+
+    if (alreadyUsable) {
+      if (first) {
         notes.push('Rental losses were already flagged usable — short-term rental ' +
           'treatment documented as the supporting position (avg stay ≤ 7 days, Reg. ' +
           '§1.469-1T(e)(3)(ii)(A), plus material participation).');
-      } else {
-        notes.push('Short-term rental treatment unlocks the losses: avg guest stay ≤ 7 ' +
-          'days means the activity is NOT per-se passive (Reg. §1.469-1T(e)(3)(ii)(A)); ' +
-          'with material participation (100-hr/most or 500-hr tests), losses from this ' +
-          'and paired depreciation strategies offset nonpassive income. No REPS needed. ' +
-          'Keep services below the substantial-services line to stay off Schedule C/SE tax.');
       }
+      return { profile: p, notes: notes };
+    }
+    if (!other) {
+      p.rentalLossesUsable = true;
+    } else {
+      var strNet = (p.rentalNet || 0) - other;
+      if (strNet < 0) {
+        p.rentalNet = other;                                  // long-term rentals stay passive
+        p.otherIncome = (p.otherIncome || 0) + strNet;        // short-term loss is nonpassive
+      }
+      if (first) {
+        notes.push(strNet < 0
+          ? TSIQ.fmt.usd(-strNet) + ' of loss belongs to the short-term rental and is freed; the other ' +
+            'rentals\' ' + TSIQ.fmt.usd(other) + ' stays under the passive loss rules.'
+          : 'The short-term rental shows no loss after setting aside the other rentals — nothing to free.');
+      }
+    }
+    if (first) {
+      notes.push('Short-term rental treatment unlocks the losses: avg guest stay ≤ 7 ' +
+        'days means the activity is NOT per-se passive (Reg. §1.469-1T(e)(3)(ii)(A)); ' +
+        'with material participation (100-hr/most or 500-hr tests), losses from this ' +
+        'property offset nonpassive income. No REPS needed. ' +
+        'Keep services below the substantial-services line to stay off Schedule C/SE tax.');
+      notes.push('This is acceleration, not a new deduction: without it the same losses are suspended ' +
+        'and used against later rental income or on sale. It applies only to the short-term property — ' +
+        'enter the net of any long-term rentals so their losses are not freed with it.');
     }
     return { profile: p, notes: notes };
   }

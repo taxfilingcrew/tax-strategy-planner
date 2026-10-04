@@ -120,7 +120,8 @@ TSIQ.strategyModules.push({
     { key: 'method', label: 'Method', type: 'select', default: 'standard',
       options: [{ value: 'standard', label: 'Standard mileage rate' }, { value: 'actual', label: 'Actual expenses × business %' }] },
     { key: 'actualAmount', label: 'Actual-method deduction (if actual)', type: 'currency', default: 10000 },
-    { key: 'janJunPct', label: '2026 miles driven Jan–Jun (%) — rate rose Jul 1', type: 'percent', default: 50 }
+    { key: 'janJunPct', label: '2026 miles driven Jan–Jun (%) — rate rose Jul 1', type: 'percent', default: 50 },
+    { key: 'alreadyClaimed', label: 'Vehicle deduction the return already takes', type: 'currency', default: 0 }
   ],
 
   appliesTo: function (profile) {
@@ -152,9 +153,14 @@ TSIQ.strategyModules.push({
       amt = (params.businessMiles || 0) * rate;
     }
 
+    // Only the part the return does not already take is a new deduction.
+    var first = yearIndex === 0;
+    var already = Math.max(0, params.alreadyClaimed || 0);
+    var added = Math.max(0, amt - already);
+
     if (p.scheduleCNet > 0) {
-      p.scheduleCNet = p.scheduleCNet - amt;
-      if (yearIndex === 0) {
+      p.scheduleCNet = p.scheduleCNet - added;
+      if (first) {
         notes.push(TSIQ.fmt.usd(amt) + ' vehicle deduction (' +
           (params.method === 'actual'
             ? 'actual expenses'
@@ -162,14 +168,29 @@ TSIQ.strategyModules.push({
               Math.round(h1 * 100) + '% at $' + rates.janJun + '/mi (Jan–Jun), ' +
               Math.round((1 - h1) * 100) + '% at $' + rates.julDec.toFixed(2) + '/mi (Jul–Dec); later years use $' +
               rates.julDec.toFixed(2)) +
-          ') reduces Schedule C profit — requires a §274(d) contemporaneous mileage log.');
+          ') — requires a §274(d) contemporaneous mileage log. ' + TSIQ.fmt.usd(added) +
+          ' of it is counted as new' + (already > 0 ? ' (the return already takes ' + TSIQ.fmt.usd(already) + ').' : '.'));
+        if (already <= 0) {
+          notes.push('This counts the whole deduction as new. Most Schedule C clients already claim their ' +
+            'vehicle — enter today\'s deduction in "the return already takes" so only the method ' +
+            'difference (or the missed miles) shows as a saving.');
+        }
       }
     } else if (p.passthroughK1 > 0) {
-      p.passthroughK1 = p.passthroughK1 - amt;
-      notes.push('Entity income detected — vehicle costs of an owner should be reimbursed ' +
-        'through an accountable plan (see Accountable Plan strategy); modeled here as an ' +
-        'entity-level deduction with the same effect.');
-    } else {
+      if (state && state.applied && state.applied['accountable-plan'] && state.accountablePlanAmount > 0) {
+        if (first) {
+          notes.push('Not counted: the Accountable Plan strategy in this scenario already reimburses the ' +
+            'owner\'s vehicle costs through the corporation. Put the mileage in that amount instead.');
+        }
+        return { profile: p, notes: notes };
+      }
+      p.passthroughK1 = p.passthroughK1 - added;
+      if (first) {
+        notes.push('Entity income detected — vehicle costs of an owner should be reimbursed ' +
+          'through an accountable plan (see Accountable Plan strategy); ' + TSIQ.fmt.usd(added) +
+          ' modeled here as an entity-level deduction with the same effect.');
+      }
+    } else if (first) {
       notes.push('Requires business income (Schedule C or entity). No benefit modeled.');
     }
     return { profile: p, notes: notes };

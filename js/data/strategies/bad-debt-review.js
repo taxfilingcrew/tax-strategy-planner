@@ -32,7 +32,7 @@ TSIQ.strategyModules.push({
       '§166(a)(2): PARTIALLY worthless business debts are deductible only up ' +
       'to the amount actually charged off on the books during the year — the ' +
       'specific charge-off is a statutory prerequisite (Reg. §1.166-3).',
-      'Basis requirement (Reg. §1.166-1(e)): the deduction is limited to basis ' +
+      'Basis requirement (§166(b); Reg. §1.166-1(d), with the prior-inclusion rule in §1.166-1(e)): the deduction is limited to basis ' +
       'in the debt. Accrual receivables have basis (the income was recognized); ' +
       'a cash-method taxpayer\'s unbilled or unpaid revenue has none.',
       'Worthlessness is evidenced by objective facts: collection letters, ' +
@@ -48,7 +48,7 @@ TSIQ.strategyModules.push({
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §166', note: 'Bad debt deduction: wholly worthless debts (a)(1); partially worthless business debts to the extent charged off (a)(2); nonbusiness bad debts of individuals limited to short-term capital loss treatment (d).' },
-      { type: 'Reg', cite: 'Reg. §1.166-1(e)', note: 'Basis limitation — worthless debts arising from unpaid wages, rents, or fees are not deductible unless the income was previously included; the cash-method exclusion.' },
+      { type: 'Reg', cite: 'Reg. §1.166-1(d), (e)', note: '(d): the deduction is limited to the adjusted basis of the debt (§166(b)). (e): worthless debts arising from unpaid wages, rents, or fees are not deductible unless the income was previously included — the cash-method exclusion.' },
       { type: 'Reg', cite: 'Reg. §1.166-2', note: 'Evidence of worthlessness: all pertinent facts; bankruptcy as an indicator; no legal action required where it would be futile.' },
       { type: 'Reg', cite: 'Reg. §1.166-3', note: 'Partial worthlessness — deduction conditioned on a charge-off on the books during the year.' }
     ],

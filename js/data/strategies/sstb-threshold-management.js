@@ -51,8 +51,10 @@ TSIQ.strategyModules.push({
       'one year spikes.',
       'OBBBA also added a $400 minimum deduction (indexed) for taxpayers with at ' +
       'least $1,000 of active QBI beginning 2026 — a floor, not a planning ' +
-      'target, but it means even a fully phased-out SSTB owner with active ' +
-      'participation keeps a token deduction.'
+      'target. It does NOT rescue a fully phased-out SSTB: above the phase-in ' +
+      'range the SSTB is not a qualified business at all, so it produces no ' +
+      'QBI to meet the $1,000 test. The minimum helps only an owner with ' +
+      'active QBI from some other, non-SSTB business.'
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §199A(d)(2), (d)(3)', note: 'SSTB definition and the phase-out: SSTB owners above threshold + range get no deduction; inside the range the benefit is scaled down.' },
@@ -121,8 +123,16 @@ TSIQ.strategyModules.push({
   ],
 
   suggest: function (p) {
-    var inc = (p.scheduleCNet || 0) + (p.passthroughK1 || 0) + (p.wages || 0);
-    if (!(p.isSSTB && inc > 300000)) return null;
+    // Only for an SSTB owner whose taxable income is in or near the phase-out
+    // range (from $25,000 below the threshold to $50,000 above its top).
+    if (!p.isSSTB) return null;
+    var tb = TSIQ.TABLES_2026, fs = p.filingStatus || 'single';
+    var inc = (p.scheduleCNet || 0) + (p.passthroughK1 || 0) + (p.wages || 0) + (p.ownerWages || 0) +
+      (p.ltcg || 0) + (p.qualDiv || 0) + (p.interest || 0) + (p.otherIncome || 0) + Math.max(0, p.rentalNet || 0);
+    var est = inc - (tb.standardDeduction[fs] || 0);
+    var start = tb.qbi.threshold[fs] || tb.qbi.threshold.single;
+    var range = tb.qbi.phaseInRange[fs] || tb.qbi.phaseInRange.single;
+    if (!(est > start - 25000 && est < start + range + 50000)) return null;
     return { reason: 'SSTB with income near the §199A phase-out zone — deduction-stacking to stay under the threshold protects the QBI deduction.' };
   },
 

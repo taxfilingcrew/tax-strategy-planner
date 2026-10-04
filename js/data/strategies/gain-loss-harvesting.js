@@ -113,13 +113,16 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'lossesHarvested', label: 'Capital losses harvested', type: 'currency', default: 25000 },
-    { key: 'gainsHarvested', label: 'Gains harvested at 0% (low-income years)', type: 'currency', default: 0 }
+    { key: 'lossesHarvested', label: 'Unrealized losses available to harvest', type: 'currency', default: 0 },
+    { key: 'gainsHarvested', label: 'Gains harvested at 0% (low-income years)', type: 'currency', default: 0 },
+    { key: 'outcome', label: 'The replacement positions are later', type: 'select', default: 'sold',
+      options: [{ value: 'sold', label: 'Sold (the gain comes back)' },
+        { value: 'held', label: 'Held until death or given to charity' }] }
   ],
 
   suggest: function (p) {
-    if (!((p.ltcg || 0) >= 50000)) return null;
-    return { reason: TSIQ.fmt.usd(p.ltcg) + ' of capital gains — check the portfolio for harvestable losses and 0%-bracket gain-harvesting room.' };
+    if (!((p.ltcg || 0) + (p.oneTimeGain || 0) >= 50000)) return null;
+    return { reason: TSIQ.fmt.usd((p.ltcg || 0) + (p.oneTimeGain || 0)) + ' of capital gains — check the portfolio for unrealized losses to harvest and 0%-bracket gain-harvesting room. Enter only losses that actually exist.' };
   },
 
   appliesTo: function (profile) {
@@ -127,44 +130,69 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Year 1 only (harvesting is a discrete year-end action). Losses reduce
-   * ltcg; the engine treats negative ltcg as reducing income, so net ltcg is
-   * floored at −3,000 (§1211(b)) with the excess noted as a carryforward
-   * (the carryforward itself is not modeled in later projection years).
-   * Harvested gains ADD to ltcg — genuinely tax-free only within the 0%
-   * bracket; the engine's stacking shows any spillover into 15% honestly.
-   * The basis-reset benefit of gain harvesting (lower FUTURE gains) is not
-   * modeled — the shown cost is the conservative view.
+   * Year 1: harvested losses offset the year's capital gains (recurring and
+   * one-time); a net loss is limited to $3,000 against ordinary income
+   * (§1211(b)) and the excess carries forward and is used in later
+   * projection years. Harvested gains ADD to ltcg — tax-free only within the
+   * 0% bracket; the engine shows any spillover.
+   * Harvesting lowers (losses) or raises (gains) the basis of the replacement
+   * positions, so it is a deferral unless they are held until death or given
+   * away. With outcome 'sold' the projection reverses both in its final year.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    if (yearIndex !== 0) return { profile: p, notes: notes };
+    state = state || {};
+    var tb = state.tables || TSIQ.TABLES_2026;
+    var losses = Math.max(0, params.lossesHarvested || 0);
+    var gains = Math.max(0, params.gainsHarvested || 0);
+    var horizon = state.projectionYears || 1;
+    var sold = params.outcome !== 'held';
 
-    var tb = TSIQ.TABLES_2026;
-    var losses = params.lossesHarvested || 0;
-    var gains = params.gainsHarvested || 0;
-
-    if (losses > 0) {
-      var newLtcg = (p.ltcg || 0) - losses;
-      if (newLtcg < -3000) {
-        var carryforward = -3000 - newLtcg;
-        newLtcg = -3000;
-        notes.push('Net capital loss limited to $3,000 against ordinary income (§1211(b)); ' +
-          TSIQ.fmt.usd(carryforward) + ' carries forward (carryforward years not modeled).');
-      }
-      p.ltcg = newLtcg;
-      notes.push(TSIQ.fmt.usd(losses) + ' of losses harvested against capital gains. ' +
-        'Observe §1091: no substantially identical repurchase within 30 days before/after.');
+    function absorb(amount) {
+      // Use `amount` of capital loss against this year's gains, down to −$3,000.
+      var total = (p.ltcg || 0) + (p.oneTimeGain || 0);
+      var use = Math.max(0, Math.min(amount, total + 3000));
+      p.ltcg = (p.ltcg || 0) - use;
+      return amount - use;
     }
 
-    if (gains > 0) {
-      p.ltcg = (p.ltcg || 0) + gains;
-      var zeroBp = (tb.ltcgBreakpoints[p.filingStatus] || tb.ltcgBreakpoints.mfj)[0];
-      notes.push(TSIQ.fmt.usd(gains) + ' of gains harvested. Tax-free ONLY within the 0% LTCG bracket ' +
-        '(taxable income up to ' + TSIQ.fmt.usd(zeroBp) + ' for this filing status, 2026) — ' +
-        'the columns show any spillover into 15%. Basis resets to market (future-gain benefit not modeled); ' +
-        'most states still tax the gain.');
+    if (yearIndex === 0) {
+      if (losses <= 0 && gains <= 0) {
+        notes.push('Nothing entered. Enter the unrealized losses actually sitting in the taxable ' +
+          'portfolio (or gains to realize in a 0%-bracket year).');
+        return { profile: p, notes: notes };
+      }
+      state.harvestCarry = 0;
+      if (losses > 0) {
+        state.harvestCarry = absorb(losses);
+        notes.push(TSIQ.fmt.usd(losses) + ' of losses harvested against capital gains. ' +
+          'Observe §1091: no substantially identical repurchase within 30 days before/after.');
+        if (state.harvestCarry > 0) {
+          notes.push('Net capital loss limited to $3,000 against ordinary income (§1211(b)); ' +
+            TSIQ.fmt.usd(state.harvestCarry) + ' carries forward and is used in later projection years.');
+        }
+      }
+      if (gains > 0) {
+        p.ltcg = (p.ltcg || 0) + gains;
+        var zeroBp = (tb.ltcgBreakpoints[p.filingStatus] || tb.ltcgBreakpoints.mfj)[0];
+        notes.push(TSIQ.fmt.usd(gains) + ' of gains harvested. Tax-free ONLY within the 0% LTCG bracket ' +
+          '(taxable income up to ' + TSIQ.fmt.usd(zeroBp) + ' for this filing status, 2026) — ' +
+          'the columns show any spillover into 15%. Basis resets to market; ' +
+          'California taxes the gain as ordinary income whatever the federal rate.');
+      }
+      notes.push(sold
+        ? 'Harvesting changes WHEN gain is taxed, not whether: the replacement positions carry a ' +
+          (losses > 0 ? 'lower' : 'higher') + ' basis. The projection assumes they are sold in its final year, ' +
+          'so the total shows the value of the deferral' + (horizon > 1 ? '' : ' (run more than one year to see it)') +
+          '. Choose "held until death or given to charity" only if that is the real plan.'
+        : 'Shown as permanent because the replacement positions are assumed to be held until death ' +
+          '(basis step-up) or given to charity. If they are ever sold, the harvested loss comes back as gain.');
+    } else {
+      if (sold && horizon > 1 && yearIndex === horizon - 1) {
+        p.ltcg = (p.ltcg || 0) + losses - gains; // basis difference realized on sale
+      }
+      if ((state.harvestCarry || 0) > 0) state.harvestCarry = absorb(state.harvestCarry);
     }
     return { profile: p, notes: notes };
   }

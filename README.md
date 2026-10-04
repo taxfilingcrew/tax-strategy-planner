@@ -145,13 +145,9 @@ limits on charitable gifts, the 25% rate on unrecaptured §1250 gain, and the
 scheduled SALT-cap changes after 2026.
 
 **Library status:** an October 2026 review found problems in most strategies.
-Fixed so far: the engine-level problems, the sale strategies, spouse payroll,
-C-corp conversion, WOTC, the California treatment of the depreciation, HSA,
-PTET and real-estate-professional strategies, and all of the retirement,
-health/fringe and credit strategies (shared plan limits, pay-based ceilings,
-premiums counted once, staff benefits shown at their real cost, credit limits
-and add-backs). Still open: the business-expense strategies (accountable plan,
-Augusta rule, home office, vehicle, donor-advised fund, aircraft, prepaid
-expenses), a handful of others (NOL planning, gain/loss harvesting, hiring
-children, QBI aggregation, partial disposition, short-term rental), and the
-advisory write-ups — check those figures before a client sees them.
+Every finding on the 56 modeled strategies has now been fixed (engine-level
+problems, California treatment, shared limits, eligibility checks, defaults
+that assumed amounts the client may not have, costs shown as costs, and timing
+strategies shown as timing). Still open: 40 of the 44 advisory write-ups have
+text errors, 12 of them serious (wrong law or written for another state) —
+they do not change any numbers, but read them before handing one to a client.

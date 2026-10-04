@@ -113,7 +113,8 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'aggregatedW2Wages', label: 'W-2 wages from aggregated sibling entity', type: 'currency', default: 40000 }
+    { key: 'aggregatedW2Wages', label: 'W-2 wages paid by the sibling business', type: 'currency', default: 0 },
+    { key: 'siblingQbi', label: 'Sibling business\'s own profit (already in Section 1 income)', type: 'currency', default: 0 }
   ],
 
   appliesTo: function (profile) {
@@ -121,34 +122,52 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Adds the sibling entity's W-2 wages to entityW2Wages so the §199A
-   * 50%-of-wages limit sees the combined payroll. No income change: the
-   * sibling's own QBI is assumed already reflected (or immaterial) — this
-   * models only the wage support the aggregation makes available. Effect
-   * appears only when taxable income is above the threshold (below it there
-   * is no wage limit to relieve).
+   * Aggregation lets a wage-rich business lend its spare W-2 wages to a
+   * wage-poor one. Section 1 holds the income of BOTH businesses and the W-2
+   * wages of the MAIN business only. The sibling first needs wages equal to
+   * 40% of its own profit to support its own 20% deduction; only wages above
+   * that are spare, and they help only up to the main business's shortfall
+   * (40% of its profit less its own wages). That amount is added to
+   * entityW2Wages. The effect appears only above the §199A threshold.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
 
     if (p.isSSTB) {
-      notes.push('Profile is flagged SSTB — an SSTB may not be aggregated with any other ' +
-        'business (Reg. §1.199A-4(b)(1)). No benefit modeled; consider SSTB Threshold Management instead.');
+      if (first) {
+        notes.push('Profile is flagged SSTB — an SSTB may not be aggregated with any other ' +
+          'business (Reg. §1.199A-4(b)(1)). No benefit modeled; consider SSTB Threshold Management instead.');
+      }
       return { profile: p, notes: notes };
     }
-    if ((p.passthroughK1 || 0) <= 0 && (p.scheduleCNet || 0) <= 0) {
-      notes.push('No positive business income found for the §199A deduction to apply to. No benefit modeled.');
+    var totalQbi = Math.max(0, p.passthroughK1 || 0) + Math.max(0, p.scheduleCNet || 0);
+    if (totalQbi <= 0) {
+      if (first) notes.push('No positive business income found for the §199A deduction to apply to. No benefit modeled.');
       return { profile: p, notes: notes };
     }
+    var w = Math.max(0, params.aggregatedW2Wages || 0);
+    if (w <= 0) {
+      if (first) notes.push('Nothing entered. Enter the sibling business\'s W-2 wages and its own profit.');
+      return { profile: p, notes: notes };
+    }
+    var g = (state && state.growthFactor) || 1;
+    var sibQbi = Math.min(totalQbi, Math.max(0, params.siblingQbi || 0) * g);
+    w = w * g;
+    var spare = Math.max(0, w - 0.4 * sibQbi);                      // wages the sibling does not need
+    var shortfall = Math.max(0, 0.4 * (totalQbi - sibQbi) - (p.entityW2Wages || 0)); // wages the main business lacks
+    var added = Math.min(spare, shortfall);
+    p.entityW2Wages = (p.entityW2Wages || 0) + added;
 
-    var w = params.aggregatedW2Wages || 0;
-    p.entityW2Wages = (p.entityW2Wages || 0) + w;
-
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(w) + ' of sibling-entity W-2 wages aggregated (Reg. §1.199A-4), ' +
-        'raising the 50%-of-wages limit by ' + TSIQ.fmt.usd(w * 0.5) + '. No income change modeled — ' +
-        'the sibling\'s own profit/loss is assumed already reflected in the profile.');
+    if (first) {
+      notes.push(TSIQ.fmt.usd(added) + ' of the sibling\'s W-2 wages counted toward the main business\'s wage ' +
+        'limit (Reg. §1.199A-4): the sibling has ' + TSIQ.fmt.usd(spare) + ' of wages beyond what its own ' +
+        'deduction needs, and the main business is short ' + TSIQ.fmt.usd(shortfall) + '. The gain is up to ' +
+        TSIQ.fmt.usd(added * 0.5) + ' of extra QBI deduction.');
+      notes.push('Assumes Section 1 business income covers both businesses and "W-2 wages paid by the ' +
+        'business" covers the main business only. If the sibling\'s wages are already in that field, ' +
+        'the baseline already reflects aggregation and this strategy adds nothing.');
       notes.push('Benefit appears only when taxable income exceeds the §199A threshold — below it ' +
         'the wage limit does not apply and this election changes nothing.');
     }

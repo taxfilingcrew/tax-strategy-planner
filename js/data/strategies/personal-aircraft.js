@@ -120,7 +120,8 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'annualDeduction', label: 'Annual deduction (from separate aircraft analysis)', type: 'currency', default: 100000 }
+    { key: 'purchaseYearDeduction', label: 'Purchase-year depreciation, business-use share (year 1 only)', type: 'currency', default: 0 },
+    { key: 'annualDeduction', label: 'Annual operating costs, business-use share', type: 'currency', default: 0 }
   ],
 
   appliesTo: function (profile) {
@@ -128,29 +129,59 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Reduces business income by the advisor-entered annual amount from the
-   * separate aircraft analysis. Depreciation timing/recapture, entertainment
-   * disallowance, and SIFL income are handled in that analysis, not here —
-   * this file only translates the supported deduction into the scenario.
+   * Figures come from the separate aircraft analysis. Year 1: purchase-year
+   * depreciation plus operating costs; later years: operating costs only.
+   * The deduction is held to the business's income for the year — a loss
+   * created by an aircraft raises hobby-loss, at-risk and excess-business-
+   * loss questions the tool does not model. California allows no bonus
+   * depreciation: the state takes the purchase-year amount over five years.
+   * Entertainment disallowance, SIFL income and recapture on sale live in the
+   * separate analysis.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var amt = params.annualDeduction || 0;
+    var first = yearIndex === 0;
+    var purchase = Math.max(0, params.purchaseYearDeduction || 0);
+    var annual = Math.max(0, params.annualDeduction || 0);
 
-    if (p.scheduleCNet > 0) {
-      p.scheduleCNet = p.scheduleCNet - amt;
-    } else if (p.passthroughK1 > 0) {
-      p.passthroughK1 = p.passthroughK1 - amt;
-    } else {
-      notes.push('Requires business income (Schedule C or entity). No benefit modeled.');
+    var route = p.scheduleCNet > 0 ? 'scheduleCNet' : (p.passthroughK1 > 0 ? 'passthroughK1' : null);
+    if (!route) {
+      if (first) notes.push('Requires business income (Schedule C or entity). No benefit modeled.');
       return { profile: p, notes: notes };
     }
+    if (purchase + annual <= 0) {
+      if (first) {
+        notes.push('No figures entered. Enter the purchase-year depreciation and the annual operating ' +
+          'costs for the business-use share from the aircraft analysis.');
+      }
+      return { profile: p, notes: notes };
+    }
+    var want = annual + (first ? purchase : 0);
+    var amt = Math.min(want, p[route]);
+    p[route] = p[route] - amt;
+    // California: no bonus depreciation — five-year recovery for the state.
+    if (purchase > 0) {
+      var usedPurchase = first ? Math.max(0, Math.min(purchase, amt - Math.min(annual, amt))) : 0;
+      if (first && state) state.aircraftStateBasis = usedPurchase;
+      var basis = (state && state.aircraftStateBasis) || usedPurchase;
+      if (first) TSIQ.stateAdjust(p, route, basis * 0.8);
+      else if (yearIndex <= 4) TSIQ.stateAdjust(p, route, -basis * 0.2);
+    }
 
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(amt) + '/yr aircraft deduction applied per the separate ' +
-        'analysis — depreciation schedule, entertainment-use disallowance, and SIFL ' +
-        'imputation live in that analysis, not in this model.');
+    if (first) {
+      notes.push(TSIQ.fmt.usd(amt) + ' aircraft deduction in ' + TSIQ.TABLES_2026.taxYear + ' (' +
+        TSIQ.fmt.usd(Math.min(purchase, amt)) + ' purchase-year depreciation, the rest operating costs); ' +
+        TSIQ.fmt.usd(annual) + ' a year after that. Depreciation schedule, entertainment-use ' +
+        'disallowance, SIFL imputation and recapture on sale live in the separate analysis.');
+      if (want > amt) {
+        notes.push('Deduction held to the business\'s ' + TSIQ.fmt.usd(amt) + ' of income. The other ' +
+          TSIQ.fmt.usd(want - amt) + ' would create a loss — whether that loss is usable turns on the ' +
+          'hobby-loss, at-risk, passive and excess-business-loss rules, which are not modeled.');
+      }
+      if (p.caRules && purchase > 0) {
+        notes.push('California allows no bonus depreciation — the state deducts the purchase-year amount over five years.');
+      }
       notes.push('High-scrutiny position: >50% business use (listed property), flight-by-' +
         'flight logs, and the 2024 IRS aircraft audit campaign all apply — see advisor detail.');
     }

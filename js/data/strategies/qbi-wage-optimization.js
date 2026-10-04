@@ -23,7 +23,8 @@ TSIQ.strategyModules.push({
       'raises the wage cap by $0.50, and the net deduction can INCREASE until ' +
       'the two prongs cross. The optimum sits where the marginal QBI benefit ' +
       'equals the marginal payroll-tax cost — roughly the classic 2/7 ' +
-      '(≈28.6%) wages-to-QBI ratio before payroll-tax drag. This is inseparable ' +
+      '(≈28.6%) of profit BEFORE owner wages, which is the same as wages equal ' +
+      'to 40% of QBI, before payroll-tax drag. This is inseparable ' +
       'from the S-corp reasonable-compensation analysis: the same salary number ' +
       'drives payroll tax, reasonable-comp exposure, and the wage limit.',
     mechanics: [
@@ -81,7 +82,7 @@ TSIQ.strategyModules.push({
       'Solve for the wage level where marginal QBI benefit equals marginal payroll-tax cost; sanity-check against the reasonable-compensation study.',
       'Adjust salary via a Q4 payroll run or bonus before December 31 — W-2 wages must be paid and reported within the calendar year.',
       'Confirm Rev. Proc. 2019-11 wage computation ties to the W-3/941 filings.',
-      'Re-run annually: profit, thresholds, and the phase-in range (indexed) move the optimum every year.'
+      'Re-run annually: profit and the indexed threshold move the optimum every year (the $75,000 / $150,000 phase-in range itself is a fixed amount, not indexed).'
     ]
   },
 

@@ -13,8 +13,8 @@ TSIQ.strategyModules.push({
   advisor: {
     summary:
       'Under §280A(g), a taxpayer who rents their personal residence for fewer ' +
-      'than 15 days per year excludes the rental income entirely — no reporting, ' +
-      'no tax. The business entity rents the owner\'s home for legitimate business ' +
+      'than 15 days per year excludes the rental income entirely — no ' +
+      'tax (the business still issues a 1099-MISC once the rent reaches $2,000). The business entity rents the owner\'s home for legitimate business ' +
       'meetings (board meetings, planning retreats, trainings) at a documented ' +
       'market rate and deducts the rent under §162. Result: deductible to the ' +
       'entity, tax-free to the owner. Sinopoli (2023) shows the IRS will attack ' +
@@ -72,7 +72,7 @@ TSIQ.strategyModules.push({
     teaser: 'Moves money from your business to your pocket — completely tax-free',
     headline: 'Rent your home to your business — tax-free',
     plainEnglish: [
-      'There is a little-known rule, nicknamed the "Augusta Rule" after homeowners in Augusta, Georgia who rent their homes during the Masters golf tournament: if you rent out your home for 14 days or fewer in a year, the rent you collect is completely tax-free. You do not even report it.',
+      'There is a little-known rule, nicknamed the "Augusta Rule" after homeowners in Augusta, Georgia who rent their homes during the Masters golf tournament: if you rent out your home for 14 days or fewer in a year, the rent you collect is completely tax-free.',
       'Your business, meanwhile, needs places to meet — board meetings, annual planning sessions, team trainings. Instead of paying a hotel conference room, your business can rent your home for those meetings at the going local rate.',
       'The business deducts the rent as a normal business expense. You receive the money personally and pay zero tax on it. It is one of the cleanest ways to move money from your business to your pocket.'
     ],
@@ -80,7 +80,7 @@ TSIQ.strategyModules.push({
     benefits: [
       'Up to 14 days of rental income per year, completely tax-free to you',
       'Fully deductible to your business',
-      'No special filings — just good records',
+      'One simple form from the business each year, plus good records',
       'Repeats every year'
     ],
     steps: [
@@ -97,12 +97,12 @@ TSIQ.strategyModules.push({
 
   inputs: [
     { key: 'days', label: 'Rental days per year (max 14)', type: 'number', default: 12, max: 14 },
-    { key: 'dailyRate', label: 'Documented daily rate', type: 'currency', default: 1000 }
+    { key: 'dailyRate', label: 'Documented daily rate', type: 'currency', default: 500 }
   ],
 
   suggest: function (p) {
     if (!(p.passthroughK1 > 0)) return null;
-    return { reason: 'A business entity exists — up to 14 days of home rental can move money out tax-free.' };
+    return { reason: 'A business entity exists — up to 14 days of home rental for real business meetings can move money out tax-free. Rate must be supported by local comparables.' };
   },
 
   appliesTo: function (profile) {
@@ -117,17 +117,28 @@ TSIQ.strategyModules.push({
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
     var days = Math.min(params.days || 0, 14);
-    if ((params.days || 0) > 14) {
+    if ((params.days || 0) > 14 && first) {
       notes.push('Days capped at 14 — the §280A(g) exclusion is lost entirely at 15+ days.');
     }
-    var rent = days * (params.dailyRate || 0);
+    var rate = params.dailyRate || 0;
+    var rent = days * rate;
     if (p.passthroughK1 > 0) {
       p.passthroughK1 = p.passthroughK1 - rent;
-      if (yearIndex === 0) {
-        notes.push(TSIQ.fmt.usd(rent) + ' rent (' + days + ' days) deducted by the entity; excluded from personal income under §280A(g).');
+      if (first) {
+        notes.push(TSIQ.fmt.usd(rent) + ' rent (' + days + ' days at ' + TSIQ.fmt.usd(rate) + ') deducted by the entity; excluded from personal income under §280A(g).');
+        if (rate > 500) {
+          notes.push('Rate check: in Sinopoli (T.C. Memo 2023-105) the court cut $3,000-a-meeting rents to $500 ' +
+            'where there was no evidence of comparable rates. A rate above $500 a day needs written ' +
+            'quotes for comparable meeting space in the file.');
+        }
+        if (rent >= 2000) {
+          notes.push('The business must issue the owner a Form 1099-MISC for the rent (2026 threshold: $2,000). ' +
+            'The owner reports it on Schedule E and backs it out as excluded under §280A(g).');
+        }
       }
-    } else {
+    } else if (first) {
       notes.push('Requires a separate business entity as the tenant — a sole proprietor ' +
         'renting from themselves is not respected. Pair with the S-Corp Election strategy. No benefit modeled.');
     }

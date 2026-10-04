@@ -10,6 +10,7 @@ TSIQ.strategyModules.push({
   name: 'NOL Carryforward Planning',
   category: 'Income Timing & Character',
   applyOrder: 4,
+  existingBenefit: true, // value of a carryforward the client already has — not plan savings
   modeled: true,
 
   advisor: {
@@ -73,7 +74,7 @@ TSIQ.strategyModules.push({
     ],
     implementation: [
       'Reconstruct and document the carryforward by vintage (pre-2018 vs. post-2017) with the Pub. 536 computation for each loss year.',
-      'Project the next 3–5 years of brackets in this tool; pick the absorption year(s) with the highest marginal rates.',
+      'Project the next 3–5 years in this tool. The NOL is absorbed in the earliest years automatically (§172(b)(2)) — the client cannot pick the year, so plan which income lands in those years.',
       'Accelerate discretionary income into the shielded year (Roth conversion sized to the NOL after the 80% cap; harvest gains; time bonuses).',
       'Attach the NOL statement to each return; recompute the remaining carryforward annually.',
       'Track the separate §199A qualified business loss carryover and reflect it in QBI projections.'
@@ -97,7 +98,7 @@ TSIQ.strategyModules.push({
     ],
     steps: [
       'We verify and document exactly how much loss carryforward you have',
-      'We project your next several years and pick the smartest year to use it',
+      'We project your next several years — the loss is used in the first years it can be, so we plan what income to bring into those years',
       'We time income events into the shielded year when it helps',
       'Each year we file the supporting schedule and update the remaining balance'
     ],
@@ -108,7 +109,7 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'nolAvailable', label: 'NOL carryforward used this year', type: 'currency', default: 100000 }
+    { key: 'nolAvailable', label: 'NOL carryforward available (post-2017 losses)', type: 'currency', default: 0 }
   ],
 
   appliesTo: function (profile) {
@@ -116,25 +117,49 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * SIMPLIFICATION (stated honestly): the engine applies the NOL as an
-   * above-the-line adjustment and does NOT enforce the §172(a)(2) 80%-of-
-   * taxable-income cap. The advisor must cap the input at 80% of projected
-   * taxable income (before the NOL). Applied in year 1 only — a one-time
-   * absorption, not a recurring deduction. Does not reduce QBI (correct:
-   * routed through `adjustments`, not the business income fields).
+   * The carryforward is absorbed in the earliest year, as §172(b)(2)
+   * requires: each year the deduction is the lesser of what is left and 80%
+   * of taxable income figured without the NOL and without the QBI deduction
+   * (§172(a)(2)); the rest carries to the next projection year. Routed
+   * through `adjustments`, so it does not reduce QBI.
+   * existingBenefit: the client already owns this deduction. Section 1 has
+   * no NOL field, so the baseline does not include it — the figure is the
+   * value of the carryforward, shown as such, not a saving the plan creates.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var nol = params.nolAvailable || 0;
+    state = state || {};
+    if (yearIndex === 0) state.nolRemaining = Math.max(0, params.nolAvailable || 0);
+    var remaining = state.nolRemaining || 0;
+    if (yearIndex === 0 && remaining <= 0) {
+      notes.push('No NOL entered. Enter the carryforward from the prior-year return (Form 1040 Schedule 1 ' +
+        'statement, or the NOL worksheet).');
+      return { profile: p, notes: notes };
+    }
+    if (remaining <= 0) return { profile: p, notes: notes };
 
-    if (yearIndex === 0 && nol > 0) {
-      p.adjustments = (p.adjustments || 0) + nol;
-      notes.push('Year 1: ' + TSIQ.fmt.usd(nol) + ' NOL carryforward deducted. ' +
-        'IMPORTANT: the engine does not enforce the §172(a)(2) 80%-of-taxable-income cap — ' +
-        'cap this input at 80% of projected taxable income before the NOL.');
-      notes.push('The NOL deduction does not reduce the §199A QBI base (modeled correctly here); ' +
-        'any separate §199A qualified business loss carryover must be handled in the QBI inputs.');
+    var tb = state.tables || TSIQ.TABLES_2026;
+    var probe = TSIQ.computeYear(p, Object.assign({}, state), tb);
+    var limit = 0.8 * Math.max(0, probe.taxableIncome + probe.qbiDeduction);
+    var used = Math.min(remaining, limit);
+    p.adjustments = (p.adjustments || 0) + used;
+    state.nolRemaining = remaining - used;
+
+    if (yearIndex === 0) {
+      notes.push(TSIQ.fmt.usd(used) + ' of the NOL is absorbed in ' + TSIQ.TABLES_2026.taxYear +
+        ' (limit: 80% of taxable income before the NOL = ' + TSIQ.fmt.usd(limit) + ')' +
+        (state.nolRemaining > 0 ? '; ' + TSIQ.fmt.usd(state.nolRemaining) + ' carries to later years and is used the same way.' : '.'));
+      notes.push('This is the value of a deduction the client already owns, not a saving created by ' +
+        'planning — the law requires it to be used in the earliest year (§172(b)(2)); the client ' +
+        'cannot hold it for a better year. The planning gain is in what income is moved INTO the ' +
+        'years it shelters (Roth conversions, gain harvesting) and in keeping 20% of income from ' +
+        'surprising the client. Client slides label this figure as an existing carryforward.');
+      notes.push('The NOL deduction does not reduce the §199A QBI base; any separate §199A qualified ' +
+        'business loss carryover must be handled in the QBI inputs. Pre-2018 NOLs are not subject ' +
+        'to the 80% limit.' + (p.caRules ? ' California computes its own NOL (FTB 3805V) and suspended ' +
+        'NOL deductions for 2024–2026 for taxpayers with $1 million or more of income — check the ' +
+        'state figure separately.' : ''));
     }
     return { profile: p, notes: notes };
   }

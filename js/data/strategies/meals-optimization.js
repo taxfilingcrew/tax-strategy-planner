@@ -48,7 +48,11 @@ TSIQ.strategyModules.push({
       '2026 note: TCJA\'s scheduled disallowance of employer-operated eating ' +
       'facility costs and §119 convenience-of-employer meals takes effect for ' +
       'amounts paid after 12/31/2025 (§274(o)) — clients with on-site meal ' +
-      'programs need those costs reviewed separately.'
+      'programs need those costs reviewed separately. OBBBA added two ' +
+      'exceptions: businesses that sell meals to customers (restaurants, ' +
+      'caterers — the food-sold-to-customers exception, Reg. ' +
+      '§1.274-12(c)(2)(v)) keep the deduction for meals they provide to staff, ' +
+      'and so do fishing boats and fish processing facilities (§274(n)(2)(C)).'
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §274(a)(1)', note: 'Entertainment, amusement, and recreation expenses disallowed entirely post-TCJA.' },

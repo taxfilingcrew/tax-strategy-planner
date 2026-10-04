@@ -114,8 +114,8 @@ TSIQ.strategyModules.push({
 
   suggest: function (p) {
     if (!(p.scheduleCNet >= 75000)) return null;
-    return { reason: TSIQ.fmt.usd(p.scheduleCNet) + ' of Schedule C profit bears SE tax on every dollar — the election typically pencils above ~$75k.',
-      params: { salary: Math.round(p.scheduleCNet * 0.4 / 1000) * 1000 } };
+    return { reason: TSIQ.fmt.usd(p.scheduleCNet) + ' of Schedule C profit bears SE tax on every dollar — the election typically pencils above ~$75k. Salary is set at half of profit as a placeholder; replace it with a reasonable-compensation figure.',
+      params: { salary: Math.round(p.scheduleCNet * 0.5 / 1000) * 1000 } };
   },
 
   appliesTo: function (profile) {

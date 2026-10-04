@@ -82,6 +82,11 @@ TSIQ.render = TSIQ.render || {};
             '<div class="big-label">Improves cash flow — not a permanent saving</div>') +
           '<p class="sub" style="margin-top:2vh">Moves ' + usd(step.firstYear) +
           ' of tax out of ' + TSIQ.TABLES_2026.taxYear + ' into later years</p>';
+      } else if (step.kind === 'existing') {
+        // Not created by the plan — e.g. a loss carryforward the client already owns.
+        numberBlock = '<div class="big">' + usd(step.cumulative) + '</div>' +
+          '<div class="big-label">Value of a carryforward you already have</div>' +
+          '<p class="sub" style="margin-top:2vh">Used in the earliest years the law allows — our job is to plan around it</p>';
       } else if (step.kind === 'cost') {
         // A benefit the business pays for (staff health, retirement for the team).
         numberBlock = '<div class="big">' + usd(-step.firstYear) + '</div>' +

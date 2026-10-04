@@ -495,5 +495,123 @@ near('§45S: wage deduction added back', pf.years[0].profile.passthroughK1, 2010
 near('§45S: 12.5% at half pay', run(staffP, 'pfml-credit-45s', { leaveWages: 4000, replacementPct: 50 }).years[0].otherCreditsAllowed, 500);
 near('energy credit: needs a business or rental', run({ filingStatus: 'single', wages: 150000 }, 'energy-credits', { creditAmount: 30000 }).years[0].otherCreditsAllowed, 0);
 
+/* ---------------------------------------------------------------------------
+ * Business-expense strategies and the remaining modeled strategies (third round).
+ * ------------------------------------------------------------------------- */
+
+/* 40. Accountable plan: only expenses nobody deducts today are new. A sole
+ *     proprietor converting to an S corp already has them on Schedule C. */
+near('accountable plan: new expenses', run(sP, 'accountable-plan', { annualAmount: 6000, status: 'new' }).years[0].profile.passthroughK1, 144000);
+near('accountable plan: already deducted', run(sP, 'accountable-plan', { annualAmount: 6000, status: 'already' }).years[0].profile.passthroughK1, 150000);
+is('accountable plan: default for a Schedule C client', S('accountable-plan').inputs[1].defaultFrom({ scheduleCNet: 150000 }), 'already');
+near('Augusta rule: default 12 days × $500', run(sP, 'augusta-rule', defaults('augusta-rule')).years[0].profile.passthroughK1, 144000);
+var apv = runMany(sP, [['accountable-plan', { annualAmount: 6000, status: 'new' }], ['vehicle-expense-method', defaults('vehicle-expense-method')]]);
+near('accountable plan + vehicle: mileage not deducted twice', apv.years[0].profile.passthroughK1, 144000);
+
+/* 41. Home office, actual method, 10% office: 10% of mortgage interest
+ *     (22,000) and property tax (9,000) leaves Schedule A. */
+var hoP = { filingStatus: 'mfj', scheduleCNet: 150000, mortgageInterest: 22000, propertyTax: 9000 };
+var ho = run(hoP, 'home-office-deduction', { method: 'actual', annualAmount: 6000, alreadyClaimed: 0, officeSharePct: 10 });
+near('home office: Schedule C', ho.years[0].profile.scheduleCNet, 144000);
+near('home office: mortgage interest off Schedule A', ho.years[0].profile.mortgageInterest, 19800);
+near('home office: property tax off Schedule A', ho.years[0].profile.propertyTax, 8100);
+var hoS = run(hoP, 'home-office-deduction', { method: 'simplified', annualAmount: 6000, alreadyClaimed: 0, officeSharePct: 10 });
+near('home office simplified: $1,500 cap', hoS.years[0].profile.scheduleCNet, 148500);
+near('home office simplified: Schedule A untouched', hoS.years[0].profile.mortgageInterest, 22000);
+near('home office: already claimed → nothing new', run(hoP, 'home-office-deduction', { method: 'actual', annualAmount: 6000, alreadyClaimed: 6000, officeSharePct: 10 }).years[0].profile.scheduleCNet, 150000);
+
+/* 42. Vehicle: 12,000 miles, half at each rate = 8,910; the return already
+ *     takes 7,000 → 1,910 new. */
+var veh = run({ filingStatus: 'single', scheduleCNet: 100000 }, 'vehicle-expense-method',
+  { businessMiles: 12000, method: 'standard', actualAmount: 0, janJunPct: 50, alreadyClaimed: 7000 });
+near('vehicle: only the difference is new', veh.years[0].profile.scheduleCNet, 98090);
+
+/* 43. DAF bunching re-times existing giving. None → nothing. 8,000 a year →
+ *     24,000 default, 0 in off years, last bunch scaled to the years left. */
+near('DAF: no giving, no benefit', run({ filingStatus: 'mfj', wages: 200000 }, 'daf-bunching', { bunchedContribution: 30000, bunchEveryNYears: 3 }).years[0].profile.charitable || 0, 0);
+near('DAF: default is three years of giving', S('daf-bunching').inputs[0].defaultFrom({ charitable: 8000 }), 24000);
+var daf = run({ filingStatus: 'mfj', wages: 200000, charitable: 8000 }, 'daf-bunching', { bunchedContribution: 24000, bunchEveryNYears: 3 }, 10);
+near('DAF: bunch year', daf.years[0].profile.charitable, 24000);
+near('DAF: off year', daf.years[1].profile.charitable, 0);
+near('DAF: final bunch scaled to one year', daf.years[9].profile.charitable, 8000);
+
+/* 44. Aircraft: nothing by default; held to business income; purchase-year
+ *     depreciation in year 1 only. */
+var airP = { filingStatus: 'mfj', scheduleCNet: 150000 };
+near('aircraft: nothing by default', run(airP, 'personal-aircraft', defaults('personal-aircraft')).years[0].profile.scheduleCNet, 150000);
+var air = run(airP, 'personal-aircraft', { purchaseYearDeduction: 400000, annualDeduction: 30000 }, 2);
+near('aircraft: no loss created', air.years[0].profile.scheduleCNet, 0);
+near('aircraft: later years operating costs only', air.years[1].profile.scheduleCNet, 120000);
+
+/* 45. Prepaid expenses: pulled forward in year 1, reversed in the last year
+ *     unless the client keeps prepaying. */
+var pre = run(airP, 'prepaid-expenses', { prepaidAmount: 15000, keepsPrepaying: 'no' }, 3);
+near('prepaid: year 1', pre.years[0].profile.scheduleCNet, 135000);
+near('prepaid: middle year unchanged', pre.years[1].profile.scheduleCNet, 150000);
+near('prepaid: unwinds in the last year', pre.years[2].profile.scheduleCNet, 165000);
+near('prepaid: no unwind if permanent', run(airP, 'prepaid-expenses', { prepaidAmount: 15000, keepsPrepaying: 'yes' }, 3).years[2].profile.scheduleCNet, 150000);
+
+/* 46. NOL: 80% of taxable income before the NOL, earliest years first.
+ *     Single, wages 100,000: 80% × (100,000 − 16,100) = 67,120 a year;
+ *     200,000 → 67,120 + 67,120 + 65,760. Labeled as an existing carryforward. */
+var nolP = { filingStatus: 'single', wages: 100000 };
+var nol = run(nolP, 'nol-planning', { nolAvailable: 200000 }, 4);
+near('NOL: 80% limit, year 1', nol.years[0].profile.adjustments, 67120);
+near('NOL: year 2', nol.years[1].profile.adjustments, 67120);
+near('NOL: remainder in year 3', nol.years[2].profile.adjustments, 65760);
+near('NOL: used up', nol.years[3].profile.adjustments || 0, 0);
+is('NOL: shown as an existing carryforward',
+  TSIQ.incrementalSavings(nolP, [{ strategy: S('nol-planning'), params: { nolAvailable: 200000 } }], 4, 0, 0)[0].kind, 'existing');
+
+/* 47. Loss harvesting: 100,000 of losses against 60,000 of gains → −3,000 this
+ *     year, 37,000 carried and used next year; the gain comes back when the
+ *     replacement positions are sold (final year) unless held until death. */
+var ghP = { filingStatus: 'mfj', wages: 200000, ltcg: 60000 };
+near('harvesting: nothing by default', run(ghP, 'gain-loss-harvesting', defaults('gain-loss-harvesting')).years[0].profile.ltcg, 60000);
+var gh = run(ghP, 'gain-loss-harvesting', { lossesHarvested: 100000, gainsHarvested: 0, outcome: 'sold' }, 3);
+near('harvesting: $3,000 limit', gh.years[0].profile.ltcg, -3000);
+near('harvesting: carryforward used', gh.years[1].profile.ltcg, 23000);
+near('harvesting: gain returns on sale', gh.years[2].profile.ltcg, 160000);
+near('harvesting: held until death', run(ghP, 'gain-loss-harvesting', { lossesHarvested: 100000, gainsHarvested: 0, outcome: 'held' }, 3).years[2].profile.ltcg, 60000);
+
+/* 48. Hiring children through an S corp: 8,000 wages + 612 employer FICA off
+ *     K-1; 1,224 of payroll tax; stops after the years entered. */
+is('hire children: S corp owner defaults to payroll', S('hire-children').inputs[2].defaultFrom({ passthroughK1: 150000 }), 'scorp');
+is('hire children: sole proprietor pays directly', S('hire-children').inputs[2].defaultFrom({ scheduleCNet: 150000 }), 'fmc');
+var hk = run(sP, 'hire-children', { numChildren: 1, wagesPerChild: 8000, payer: 'scorp', years: 2 }, 3);
+near('hire children: K-1', hk.years[0].profile.passthroughK1, 141388);
+near('hire children: payroll tax', hk.years[0].otherTaxes, 1224);
+near('hire children: ends after the years entered', hk.years[2].profile.passthroughK1, 150000);
+
+/* 49. QBI aggregation. Single, 600,000 of income of which 100,000 is the
+ *     sibling's; main wages 50,000, sibling wages 100,000. Separate:
+ *     min(100,000, 25,000) + min(20,000, 50,000) = 45,000. Aggregated:
+ *     min(120,000, 75,000) = 75,000. Gain 30,000 = 50% × 60,000 spare wages. */
+var agP = { filingStatus: 'single', passthroughK1: 600000, entityW2Wages: 50000 };
+var ag = run(agP, 'qbi-aggregation', { aggregatedW2Wages: 100000, siblingQbi: 100000 });
+near('QBI aggregation: gain is the spare wages only', ag.years[0].qbiDeduction - run(agP).years[0].qbiDeduction, 30000);
+near('QBI aggregation: nothing by default', run(agP, 'qbi-aggregation', defaults('qbi-aggregation')).years[0].qbiDeduction, run(agP).years[0].qbiDeduction);
+
+/* 50. Partial disposition: 25,000 with 20 years left → 23,750 net in year 1,
+ *     1,250 a year given back. Short-term rental frees only its own loss.
+ *     QIP: baseline is 15-year straight-line (150,000 → 10,000 a year). */
+var pad = run({ filingStatus: 'mfj', wages: 100000, rentalNet: 30000 }, 'partial-asset-disposition', { abandonedBasis: 25000, remainingYears: 20 }, 2);
+near('partial disposition: year 1 net of baseline depreciation', pad.years[0].profile.rentalNet, 6250);
+near('partial disposition: give-back', pad.years[1].profile.rentalNet, 31250);
+var str = run({ filingStatus: 'mfj', wages: 300000, rentalNet: -50000 }, 'str-loophole', { otherRentalNet: -20000 });
+near('short-term rental: only its own loss is freed', str.years[0].agi, 270000);
+near('short-term rental: whole portfolio when no other rentals', run({ filingStatus: 'mfj', wages: 300000, rentalNet: -50000 }, 'str-loophole', { otherRentalNet: 0 }).years[0].agi, 250000);
+var qip = run({ filingStatus: 'mfj', scheduleCNet: 300000 }, 'qip-bonus', { qipBasis: 150000, targetIncome: 'business' }, 2);
+near('QIP: year 1 vs 15-year straight-line', qip.years[0].profile.scheduleCNet, 160000);
+near('QIP: give-back', qip.years[1].profile.scheduleCNet, 310000);
+
+/* 51. PTET is figured after the other entity deductions: K-1 150,000 less a
+ *     20,000 employer 401(k) contribution = 130,000 × 9.3% = 12,090. */
+var ptAfter = runMany(sP, [['ptet', { ptetRatePct: 9.3 }], ['solo-401k', defaults('solo-401k')]]);
+near('PTET: on income after retirement contributions', ptAfter.years[0].ptetPaid, 12090);
+is('SSTB suggestion: not below the phase-out', S('sstb-threshold-management').suggest({ filingStatus: 'mfj', isSSTB: true, passthroughK1: 300000 }), null);
+is('SSTB suggestion: inside the phase-out', !!S('sstb-threshold-management').suggest({ filingStatus: 'single', isSSTB: true, passthroughK1: 250000 }), true);
+near('S-corp suggestion: salary placeholder is half of profit', S('s-corp-election').suggest({ scheduleCNet: 150000 }).params.salary, 75000);
+
 console.log('Engine tests: ' + passed + ' passed, ' + failures + ' failed.');
 if (failures) process.exit(1);

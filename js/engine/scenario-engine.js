@@ -125,7 +125,8 @@ window.TSIQ = window.TSIQ || {};
    * strategy (deferral, accelerated depreciation) has a large first-year
    * figure and a small or negative total — the total is the honest number.
    * Returns [{ strategy, firstYear, cumulative, kind }], kind being
-   * 'savings' | 'timing' | 'foundation' | 'cost' (a benefit the business pays for).
+   * 'savings' | 'timing' | 'foundation' | 'cost' (a benefit the business pays
+   * for) | 'existing' (the value of something the client already has).
    */
   TSIQ.incrementalSavings = function (baseProfile, selections, years, growthRate, inflationRate) {
     var ordered = selections.slice().sort(function (a, b) {
@@ -140,7 +141,8 @@ window.TSIQ = window.TSIQ || {};
       var firstYear = prevFirst - r.years[0].totalBurden;
       var cumulative = prevTotal - r.totals.totalBurden;
       var kind = 'savings';
-      if (firstYear <= -500 && cumulative <= -500) kind = 'cost';        // e.g. a new staff benefit
+      if (sel.strategy.existingBenefit && cumulative >= 500) kind = 'existing'; // e.g. an NOL the client already has
+      else if (firstYear <= -500 && cumulative <= -500) kind = 'cost';   // e.g. a new staff benefit
       else if (firstYear < 500 && cumulative < 500) kind = 'foundation';
       else if (firstYear >= 500 && cumulative < 0.5 * firstYear) kind = 'timing';
       steps.push({ strategy: sel.strategy, firstYear: firstYear, cumulative: cumulative, kind: kind });

@@ -198,6 +198,7 @@ TSIQ.render = TSIQ.render || {};
         return sv.cumulative >= 500 ? usd(sv.cumulative) + ' net' : 'Timing';
       }
       if (sv && sv.kind === 'cost') return usd(-sv.firstYear) + ' cost';
+      if (sv && sv.kind === 'existing') return usd(sv.cumulative) + ' carryforward';
       return s.modeled === false ? 'Foundation' : '&mdash;';
     }
 
@@ -364,6 +365,10 @@ TSIQ.render = TSIQ.render || {};
           : '<div class="serif" style="font-size:34px;font-weight:700;line-height:1.25">Improves cash flow</div>') +
           '<div style="font-size:20px;margin-top:8px">Moves ' + usd(sv.firstYear) + ' of tax out of ' +
           year + ' into later years</div>';
+      } else if (sv !== undefined && sv.kind === 'existing') {
+        calloutLabel = 'Value of a carryforward you already have';
+        calloutValue = '<div class="mono" style="font-size:64px;font-weight:700">' + usd(sv.cumulative) + '</div>' +
+          '<div style="font-size:20px;margin-top:8px">Used in the earliest years the law allows</div>';
       } else if (sv !== undefined && sv.kind === 'cost') {
         calloutLabel = 'Net cost per year, after tax savings';
         calloutValue = '<div class="mono" style="font-size:64px;font-weight:700">' + usd(-sv.firstYear) + '</div>' +

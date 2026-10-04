@@ -112,7 +112,7 @@ TSIQ.strategyModules.push({
 
   inputs: [
     { key: 'vehicleCost', label: 'Vehicle cost (>6,000 lbs GVWR)', type: 'currency', default: 90000 },
-    { key: 'businessUsePct', label: 'Business-use %', type: 'percent', default: 100 }
+    { key: 'businessUsePct', label: 'Business-use % (from the mileage log)', type: 'percent', default: 80 }
   ],
 
   appliesTo: function (profile) {
@@ -168,6 +168,11 @@ TSIQ.strategyModules.push({
         notes.push('California allows no bonus depreciation and caps §179 at $25,000 — the ' +
           'state saving is counted on the first $25,000 only.');
       }
+    }
+    if (yearIndex === 0 && state && state.applied && state.applied['vehicle-expense-method']) {
+      notes.push('The Vehicle Expense Method strategy is also in this scenario. A vehicle written off ' +
+        'under §179 or bonus depreciation cannot use the standard mileage rate — keep both only if ' +
+        'they are different vehicles.');
     }
     return { profile: p, notes: notes };
   }

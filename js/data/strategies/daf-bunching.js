@@ -116,7 +116,9 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'bunchedContribution', label: 'Bunched DAF contribution (bunch years)', type: 'currency', default: 30000 },
+    // defaultFrom: three years of the giving entered in Section 1.
+    { key: 'bunchedContribution', label: 'Bunched DAF contribution (bunch years)', type: 'currency', default: 30000,
+      defaultFrom: function (profile) { return Math.round(3 * Math.max(0, profile.charitable || 0)); } },
     { key: 'bunchEveryNYears', label: 'Bunch every N years', type: 'number', default: 3 }
   ],
 
@@ -134,20 +136,39 @@ TSIQ.strategyModules.push({
    * years (yearIndex % N === 0) charitable = bunchedContribution; in off
    * years charitable = 0 (the baseline annual gift is redirected through the
    * DAF cycle instead). The engine's standard-vs-itemized comparison then
-   * produces the benefit, net of the OBBBA 0.5%-of-AGI floor (applied by the
-   * engine). AGI percentage limits are NOT modeled — flagged in notes.
+   * produces the benefit, net of the OBBBA 0.5%-of-AGI floor. Needs existing
+   * giving in Section 1 — bunching re-times gifts, it does not create them.
+   * A bunch whose cycle runs past the end of the projection is pro-rated to
+   * the years left, so the total never includes a deduction for giving that
+   * belongs to years outside the window. Gifts to a donor-advised fund do not
+   * get the non-itemizer charitable deduction. AGI percentage limits are NOT
+   * modeled — flagged in notes.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
     var n = Math.max(1, Math.round(params.bunchEveryNYears || 1));
-    var bunched = params.bunchedContribution || 0;
-    var isBunchYear = (yearIndex % n) === 0;
+    // Baseline giving grows with the projection; the bunch grows with it.
+    var bunched = Math.max(0, params.bunchedContribution || 0) * ((state && state.growthFactor) || 1);
     var baselineGiving = p.charitable || 0;
 
-    p.charitable = isBunchYear ? bunched : 0;
+    if (!(baselineGiving > 0)) {
+      if (first) {
+        notes.push('No charitable giving is entered in Section 1. Bunching re-times gifts the client ' +
+          'already makes — it does not create a saving for a client who gives nothing. No benefit modeled.');
+      }
+      return { profile: p, notes: notes };
+    }
 
-    if (yearIndex === 0) {
+    var isBunchYear = (yearIndex % n) === 0;
+    var horizon = (state && state.projectionYears) || 0;
+    var yearsCovered = n;
+    if (isBunchYear && horizon > 0) yearsCovered = Math.min(n, horizon - yearIndex);
+    p.charitable = isBunchYear ? bunched * yearsCovered / n : 0;
+    p.charitableToDAF = true;
+
+    if (first) {
       notes.push('Bunching replaces the baseline ' + TSIQ.fmt.usd(baselineGiving) +
         '/yr of giving: ' + TSIQ.fmt.usd(bunched) + ' to the DAF every ' + n +
         ' year(s), $0 itemized in off years (standard deduction taken instead). ' +
@@ -155,9 +176,17 @@ TSIQ.strategyModules.push({
       notes.push('The OBBBA 0.5%-of-AGI charitable floor (2026+) is applied in every ' +
         'itemizing year. Not modeled: AGI percentage limits (60% cash / 30% ' +
         'appreciated stock) — verify headroom in bunch years.');
+      if (horizon > 0 && horizon % n !== 0) {
+        notes.push('The last bunch in the projection is scaled to the ' + (horizon % n) + ' year(s) left in the ' +
+          'window, so the total is not inflated by giving that belongs to later years.');
+      }
       if (bunched < baselineGiving * n) {
         notes.push('Heads up: the bunched amount is less than ' + n + ' years of baseline ' +
           'giving (' + TSIQ.fmt.usd(baselineGiving * n) + ') — confirm that is intended.');
+      } else if (bunched > baselineGiving * n * 1.05) {
+        notes.push('The bunched amount is more than ' + n + ' years of the client\'s current giving (' +
+          TSIQ.fmt.usd(baselineGiving * n) + '). The extra ' + TSIQ.fmt.usd(bunched - baselineGiving * n) +
+          ' is new money given away — its deduction is not a saving.');
       }
     }
     return { profile: p, notes: notes };

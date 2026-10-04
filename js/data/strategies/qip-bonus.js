@@ -122,21 +122,19 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Model vs. baseline (delta pattern like cost-segregation.js): the baseline
-   * is assumed to have MISSED the QIP classification and depreciated the
-   * improvement straight-line over 39 years. QIP + 100% bonus deducts it all
-   * in year 1:
-   *   Year 1: extra deduction = qipBasis − (qipBasis / 39)
-   *   Years 2+: income HIGHER than baseline by qipBasis / 39 (that slice was
-   *   used up). 39 years exceeds the projection, so the give-back runs every
-   *   later year. (QIP's actual 15-year life only matters if electing OUT of
-   *   bonus — not the modeled path; kept simple deliberately.)
+   * Model vs. baseline (delta pattern like cost-segregation.js): without
+   * bonus, qualified improvement property is 15-year straight-line property
+   * (§168(e)(6)) — that is the baseline. QIP + 100% bonus deducts it all in
+   * year 1:
+   *   Year 1: extra deduction = qipBasis − (qipBasis / 15)
+   *   Years 2–15: income HIGHER than baseline by qipBasis / 15 (that slice
+   *   was used up).
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
     var tb = TSIQ.TABLES_2026;
-    var baselineRecovery = tb.commercialRecoveryYears; // 39-yr baseline assumption
+    var baselineRecovery = tb.qipRecoveryYears; // 15-year straight-line without bonus
     var basis = params.qipBasis || 0;
     var sl = basis / baselineRecovery;
 
@@ -169,7 +167,8 @@ TSIQ.strategyModules.push({
       }
       notes.push('Year 1: ' + TSIQ.fmt.usd(bonus) + ' bonus depreciation on QIP ' +
         '(15-year property, §168(e)(6); 100% bonus, §168(k)) — modeled net of the ' +
-        TSIQ.fmt.usd(sl) + ' straight-line slice a 39-year baseline would have taken. ' +
+        TSIQ.fmt.usd(sl) + ' a year of 15-year straight-line depreciation the improvement gets ' +
+        'without bonus (given back in years 2–15), so the projection shows the timing value. ' +
         'Interior improvements to NONresidential property only; enlargements, ' +
         'elevators/escalators, and structural framework are excluded.');
       if (route === 'rentalNet' && !p.rentalLossesUsable && (p.rentalNet || 0) < 0) {
@@ -177,8 +176,8 @@ TSIQ.strategyModules.push({
           'suspended and carried forward. Consider REPS / short-term rental strategies, ' +
           'or the §168(k)(7) elect-out to 15-year straight-line.');
       }
-    } else if (state.qipRoute && state.qipRoute !== 'none') {
-      // Baseline still deducts its 39-yr straight-line slice; bonus used it up.
+    } else if (state.qipRoute && state.qipRoute !== 'none' && yearIndex < baselineRecovery) {
+      // Baseline still deducts its 15-year straight-line slice; bonus used it up.
       p[state.qipRoute] = (p[state.qipRoute] || 0) + sl;
       TSIQ.stateAdjust(p, state.qipRoute, -sl);
     }

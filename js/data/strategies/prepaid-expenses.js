@@ -118,7 +118,10 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'prepaidAmount', label: 'Qualifying costs prepaid in December (≤12 months)', type: 'currency', default: 15000 }
+    { key: 'prepaidAmount', label: 'Qualifying costs prepaid in December (≤12 months)', type: 'currency', default: 15000 },
+    { key: 'keepsPrepaying', label: 'After this year the client', type: 'select', default: 'no',
+      options: [{ value: 'no', label: 'May stop prepaying (show it as timing)' },
+        { value: 'yes', label: 'Prepays every December from now on' }] }
   ],
 
   appliesTo: function (profile) {
@@ -126,35 +129,40 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Honest timing model: the deduction doubles up ONLY in year 0 (first
-   * adoption pulls next year's 12 months into this year). Years 1+ are
-   * unchanged versus baseline — each subsequent December's prepayment simply
-   * replaces the deduction that was accelerated out of that year. The
-   * unwind-year risk (stopping the practice) is disclosed, not modeled.
+   * Timing model: the deduction doubles up ONLY in year 1 (first adoption
+   * pulls next year's 12 months into this year). Middle years are unchanged
+   * versus baseline — each December's prepayment replaces the deduction that
+   * was accelerated out of that year. Unless the client keeps prepaying
+   * indefinitely, the practice unwinds: the last projection year loses the
+   * deduction, so the projection total shows the real (timing) value.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var amt = params.prepaidAmount || 0;
+    var amt = Math.max(0, params.prepaidAmount || 0);
+    var horizon = (state && state.projectionYears) || 1;
+    var unwind = params.keepsPrepaying !== 'yes' && horizon > 1;
+    var route = (state && state.prepaidRoute) || null;
 
-    if (yearIndex !== 0) {
-      return { profile: p, notes: notes }; // steady state: no change vs. baseline
+    if (yearIndex === 0) {
+      route = p.scheduleCNet > 0 ? 'scheduleCNet' : (p.passthroughK1 > 0 ? 'passthroughK1' : null);
+      if (state) state.prepaidRoute = route;
+      if (!route) {
+        notes.push('Requires business income (Schedule C or entity). No benefit modeled.');
+        return { profile: p, notes: notes };
+      }
+      p[route] = p[route] - amt;
+      notes.push(TSIQ.fmt.usd(amt) + ' of next year\'s costs prepaid and deducted this year ' +
+        '(12-month rule, Reg. §1.263(a)-4(f)).');
+      notes.push(unwind
+        ? 'Timing only: the deduction is pulled forward one year. The projection reverses it in the ' +
+          'final year (the year the client stops prepaying), so the total shows the value of the ' +
+          'deferral, not the first-year figure. Choose "prepays every December" if the practice is permanent.'
+        : 'One-time acceleration: later years are unchanged (each year\'s prepayment replaces the ' +
+          'deduction pulled forward). Stopping the practice would create a lean deduction year.');
+    } else if (unwind && route && yearIndex === horizon - 1) {
+      p[route] = (p[route] || 0) + amt; // the year the prepayment is not repeated
     }
-
-    if (p.scheduleCNet > 0) {
-      p.scheduleCNet = p.scheduleCNet - amt;
-    } else if (p.passthroughK1 > 0) {
-      p.passthroughK1 = p.passthroughK1 - amt;
-    } else {
-      notes.push('Requires business income (Schedule C or entity). No benefit modeled.');
-      return { profile: p, notes: notes };
-    }
-
-    notes.push(TSIQ.fmt.usd(amt) + ' of next year\'s costs prepaid and deducted this year ' +
-      '(12-month rule, Reg. §1.263(a)-4(f)).');
-    notes.push('One-time acceleration: later years are unchanged (each year\'s prepayment ' +
-      'replaces the deduction pulled forward); stopping the practice would create a ' +
-      'lean deduction year — disclosed, not modeled.');
     return { profile: p, notes: notes };
   }
 });

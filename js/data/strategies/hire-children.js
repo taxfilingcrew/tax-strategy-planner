@@ -113,19 +113,21 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'numChildren', label: 'Number of children employed', type: 'number', default: 1 },
-    { key: 'wagesPerChild', label: 'Annual wages per child', type: 'currency', default: 16100 },
+    { key: 'numChildren', label: 'Children old enough to do real work', type: 'number', default: 1 },
+    { key: 'wagesPerChild', label: 'Annual wages per child (hours × a market rate)', type: 'currency', default: 8000 },
+    // defaultFrom: a sole proprietor pays the child directly; an S corp runs payroll.
     { key: 'payer', label: 'Who pays the kids', type: 'select', default: 'fmc',
       options: [
-        { value: 'fmc', label: 'Sole prop / Family Mgmt Co (no FICA)' },
+        { value: 'fmc', label: 'Sole proprietor (no FICA under 18) / family management company' },
         { value: 'scorp', label: 'S-corp direct payroll (FICA applies)' }
-      ] }
+      ],
+      defaultFrom: function (profile) { return (profile.scheduleCNet || 0) > 0 ? 'fmc' : 'scorp'; } },
+    { key: 'years', label: 'Years the arrangement runs', type: 'number', default: 5 }
   ],
 
   suggest: function (p) {
     if (!(p.kidsCTC > 0 && (p.scheduleCNet > 0 || p.passthroughK1 > 0))) return null;
-    return { reason: p.kidsCTC + ' child(ren) under 17 and business income — wages to the kids convert parent-rate dollars to 0% dollars.',
-      params: { numChildren: p.kidsCTC } };
+    return { reason: p.kidsCTC + ' child(ren) under 17 and business income — wages for real work shift income to the child\'s 0% bracket. Count only children old enough to do the work.' };
   },
 
   appliesTo: function (profile) {
@@ -165,6 +167,9 @@ TSIQ.strategyModules.push({
     var totalWages = kids * perChild;
     var payer = params.payer || 'fmc';
     if (totalWages <= 0) return { profile: p, notes: notes };
+    // Children age out (18 for the FICA exemption) or are too young to start.
+    var runYears = Math.max(1, Math.round(params.years === undefined ? 5 : params.years));
+    if (yearIndex >= runYears) return { profile: p, notes: notes };
 
     if (payer === 'scorp') {
       // ---- S-corp direct payroll: FICA applies (kids' wages are far below
@@ -189,8 +194,9 @@ TSIQ.strategyModules.push({
         notes.push(TSIQ.fmt.usd(totalWages) + ' of S-corp wages to ' + kids +
           ' child(ren): deductible to the entity, but the under-18 FICA exemption does ' +
           'NOT apply inside a corporation — ' + TSIQ.fmt.usd(employerFICA + employeeFICA) +
-          ' of payroll tax (15.3%) is included in the math. Compare against the ' +
-          'Sole prop / FMC option, which avoids it entirely.');
+          ' of payroll tax (15.3%) is included in the math. A sole ' +
+          'proprietorship owned by the parent avoids it for a child under 18; the family-management-' +
+          'company workaround for an S corporation has no IRS or court approval.');
       }
     } else {
       // ---- Sole prop / FMC: FICA-exempt under §3121(b)(3)(A) ----
@@ -218,6 +224,10 @@ TSIQ.strategyModules.push({
             'the S corp to the kids with no payroll tax — savings run at the parents\' ' +
             'marginal rate. The fee must be arm\'s-length for real family-payroll ' +
             'services, with an FMC management agreement in the file.');
+          notes.push('CAUTION — family management company: no IRS ruling or court decision approves ' +
+            'this structure, and commentators treat it as an economic-substance risk when the company ' +
+            'exists only to avoid payroll tax. The conservative figure is "S-corp direct payroll", which ' +
+            'includes the 15.3% payroll tax. Do not present this option as settled law.');
         }
       } else {
         if (yearIndex === 0) {
@@ -233,6 +243,15 @@ TSIQ.strategyModules.push({
         TSIQ.fmt.usd(tb.standardDeduction.single) + ' standard deduction are income-tax-free ' +
         'to the child. Work must be real, age-appropriate, documented (timesheets), and ' +
         'paid at market rate.');
+      notes.push('Modeled for ' + runYears + ' year(s). The no-FICA rule for a parent\'s sole proprietorship ' +
+        'ends when the child turns 18; set the years to match the children\'s ages.');
+      if (p.caRules) {
+        notes.push('California: a minor generally needs a work permit (and the business a permit to employ), ' +
+          'hours are limited on school days, and children under 12 cannot be employed in most businesses. ' +
+          'The parent exemption covers only agricultural, horticultural and domestic work on the ' +
+          'parent\'s own premises (Labor Code §1394). California\'s standard deduction is about $5,700, ' +
+          'so a child paid more than that files a state return.');
+      }
       if (perChild > tb.standardDeduction.single) {
         notes.push('Wages per child exceed the standard deduction — the excess is taxable ' +
           'on the child\'s return (not modeled here).');

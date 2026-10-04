@@ -9,7 +9,7 @@ TSIQ.strategyModules.push({
   id: 'ptet',
   name: 'Pass-Through Entity Tax (PTET) Election',
   category: 'Entity Structure',
-  applyOrder: 20, // runs after S-corp election so it sees entity income
+  applyOrder: 92, // runs last: the tax is figured on entity income after every other entity-level deduction
 
   advisor: {
     summary:

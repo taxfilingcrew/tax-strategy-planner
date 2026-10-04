@@ -112,7 +112,8 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'abandonedBasis', label: 'Remaining basis of retired component', type: 'currency', default: 25000 }
+    { key: 'abandonedBasis', label: 'Remaining basis of retired component', type: 'currency', default: 25000 },
+    { key: 'remainingYears', label: 'Years of depreciation left on that component', type: 'number', default: 20 }
   ],
 
   appliesTo: function (profile) {
@@ -120,28 +121,40 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Year 1 only: the retired component's remaining basis is deducted as a
-   * disposition loss against rentalNet. Simplification (commented, immaterial):
-   * the baseline would have kept straight-line depreciating that basis
-   * (~basis/27.5 per year) — that small later-year delta is ignored; the
-   * election's other benefit (removing the component from future §1250
-   * recapture) is outside the engine (sale-year recapture not modeled in v1).
+   * Year 1: the retired component's remaining basis is deducted as a
+   * disposition loss. Without the election that basis would have kept
+   * depreciating, so the model nets out the straight-line slice the baseline
+   * takes: year 1 = basis − basis/years; each later year gives back
+   * basis/years until the component would have been fully depreciated.
+   * Routed to the rental when the profile has one, otherwise to the business
+   * that owns the building.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    if (yearIndex !== 0) {
-      return { profile: p, notes: notes };
-    }
-    var loss = params.abandonedBasis || 0;
-    p.rentalNet = (p.rentalNet || 0) - loss;
-    notes.push(TSIQ.fmt.usd(loss) + ' partial disposition loss on the retired component ' +
-      '(Reg. §1.168(i)-8(d)(2)) — elected by claiming it on the TIMELY return for the ' +
-      'renovation year. Related removal costs are also deductible (not included here — ' +
-      'add them to this input if known).');
-    if (!p.rentalLossesUsable && (p.rentalNet || 0) < 0) {
-      notes.push('Rental losses flagged NOT currently usable (§469) — the excess is ' +
-        'suspended and carried forward in the projection.');
+    state = state || {};
+    var loss = Math.max(0, params.abandonedBasis || 0);
+    var years = Math.max(1, params.remainingYears || 20);
+    var slice = loss / years;
+
+    if (yearIndex === 0) {
+      var route = (p.rentalNet || 0) !== 0 ? 'rentalNet'
+        : (p.scheduleCNet > 0 ? 'scheduleCNet' : (p.passthroughK1 > 0 ? 'passthroughK1' : 'rentalNet'));
+      state.padRoute = route;
+      p[route] = (p[route] || 0) - (loss - slice);
+      notes.push(TSIQ.fmt.usd(loss) + ' partial disposition loss on the retired component ' +
+        '(Reg. §1.168(i)-8(d)(2)) — elected by claiming it on the TIMELY return for the ' +
+        'renovation year. Related removal costs are also deductible (not included here — ' +
+        'add them to this input if known).');
+      notes.push('Modeled net of the depreciation the component would have produced anyway: ' +
+        TSIQ.fmt.usd(slice) + ' a year over its remaining ' + years + ' years is given back, so the ' +
+        'projection shows the value of taking the deduction now instead of over time.');
+      if (route === 'rentalNet' && !p.rentalLossesUsable && (p.rentalNet || 0) < 0) {
+        notes.push('Rental losses flagged NOT currently usable (§469) — the excess is ' +
+          'suspended and carried forward in the projection.');
+      }
+    } else if (state.padRoute && yearIndex < years) {
+      p[state.padRoute] = (p[state.padRoute] || 0) + slice;
     }
     return { profile: p, notes: notes };
   }

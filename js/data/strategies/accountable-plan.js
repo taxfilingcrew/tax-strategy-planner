@@ -97,12 +97,18 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'annualAmount', label: 'Annual reimbursable expenses (home office, mileage, etc.)', type: 'currency', default: 12000 }
+    { key: 'annualAmount', label: 'Reimbursable expenses per year (home office, mileage, phone)', type: 'currency', default: 6000 },
+    // defaultFrom: a sole proprietor converting to an S corp already deducts
+    // these on Schedule C; an existing entity owner usually does not.
+    { key: 'status', label: 'These expenses today are', type: 'select', default: 'new',
+      options: [{ value: 'new', label: 'Not deducted anywhere' },
+        { value: 'already', label: 'Already deducted (on Schedule C or by the entity)' }],
+      defaultFrom: function (profile) { return (profile.scheduleCNet || 0) > 0 ? 'already' : 'new'; } }
   ],
 
   suggest: function (p) {
     if (!(p.passthroughK1 > 0)) return null;
-    return { reason: 'Entity owners almost always have home-office/vehicle/phone costs worth reimbursing tax-free — near-universal once an entity exists.' };
+    return { reason: 'Entity owner — check whether home-office, vehicle and phone costs are being reimbursed. Count only what is not deducted today.' };
   },
 
   appliesTo: function (profile) {
@@ -111,24 +117,39 @@ TSIQ.strategyModules.push({
 
   /**
    * Deducts reimbursements from entity income; tax-free to the owner, so
-   * nothing is added to personal income. Sole proprietors already deduct
-   * these costs directly on Schedule C, so no incremental benefit is modeled
-   * without an entity.
+   * nothing is added to personal income. Only expenses NOT deducted today
+   * are a new saving. Expenses a sole proprietor already takes on Schedule C
+   * are inside the profit entered in Section 1 — after an S-corp election the
+   * plan is how the corporation keeps deducting them, not a second deduction.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var amt = params.annualAmount || 0;
-    if (p.passthroughK1 > 0) {
-      p.passthroughK1 = p.passthroughK1 - amt;
-      if (yearIndex === 0) {
-        notes.push(TSIQ.fmt.usd(amt) + ' of substantiated expenses reimbursed — ' +
-          'deductible to the entity, tax-free to the owner (Reg. §1.62-2).');
+    var first = yearIndex === 0;
+    var amt = Math.max(0, params.annualAmount || 0);
+    if (!(p.passthroughK1 > 0)) {
+      if (first) {
+        notes.push('Requires an entity with an owner-employee (typically an S corp). ' +
+          'Sole proprietors already deduct these costs on Schedule C, so no incremental ' +
+          'benefit is modeled. Pair with the S-Corp Election strategy.');
       }
-    } else {
-      notes.push('Requires an entity with an owner-employee (typically an S corp). ' +
-        'Sole proprietors already deduct these costs on Schedule C, so no incremental ' +
-        'benefit is modeled. Pair with the S-Corp Election strategy.');
+      return { profile: p, notes: notes };
+    }
+    if (params.status === 'already') {
+      if (first) {
+        notes.push('No new saving modeled: the ' + TSIQ.fmt.usd(amt) + ' of expenses is marked as already ' +
+          'deducted (the Schedule C profit or K-1 income in Section 1 is already net of it). The ' +
+          'accountable plan keeps that deduction alive inside the corporation — set it up, but do ' +
+          'not count it twice. Change the setting only for expenses nobody deducts today.');
+      }
+      return { profile: p, notes: notes };
+    }
+    p.passthroughK1 = p.passthroughK1 - amt;
+    if (state) state.accountablePlanAmount = amt;
+    if (first) {
+      notes.push(TSIQ.fmt.usd(amt) + ' of substantiated expenses reimbursed — ' +
+        'deductible to the entity, tax-free to the owner (Reg. §1.62-2). Counted as new: ' +
+        'confirm none of it is deducted today.');
     }
     return { profile: p, notes: notes };
   }
