@@ -75,7 +75,8 @@ TSIQ.strategyModules.push({
       'Loss of §199A: the 21% rate must be compared against the owner\'s effective passthrough rate AFTER the QBI deduction, not the headline bracket.',
       'Locked-in structure: getting appreciated assets back out of a C corporation is itself a taxable event; converting back to passthrough status has its own toll charges (e.g., BIG tax if re-electing S).',
       '§1202 is a facts-heavy exclusion — qualified business, original issuance, gross-asset test, and holding period must all be documented from day one; a later exam reconstructs all of it.',
-      'State treatment varies — some states do not conform to §1202.'
+      'California taxes C-corporation income at 8.84% ($800 minimum) and does not conform to §1202 — a QSBS exit is fully taxable for California.',
+      'Accumulated earnings tax (§531): 20% on earnings retained beyond the reasonable needs of the business, above a $250,000 credit ($150,000 for service corporations).'
     ],
     bestFit: [
       'Profitable businesses that genuinely reinvest most earnings (equipment, inventory, hiring) rather than distributing them.',
@@ -97,15 +98,15 @@ TSIQ.strategyModules.push({
     teaser: 'A flat, lower tax rate on profits you keep in the business — and a path to a tax-free sale someday',
     headline: 'Keep profits in the business at a 21% rate — and set up a tax-free exit',
     plainEnglish: [
-      'Right now, every dollar your business earns lands on your personal tax return, where rates can run well over 30% — even for profit you never take out of the company. Restructuring as a regular corporation changes that: profit the business keeps is taxed at a flat 21%, period.',
+      'Right now, every dollar your business earns lands on your personal tax return, where rates can run well over 30% — even for profit you never take out of the company. Restructuring as a regular corporation changes that: profit the business keeps is taxed at a flat 21% federal rate, plus your state\'s corporate tax (8.84% in California, about 28% combined).',
       'That gap matters when you are reinvesting. Money kept in the company to buy equipment, hire, or build inventory grows from a bigger after-tax base every year. The catch is that money you pull out for yourself beyond your salary gets taxed a second time, so this works best when the business — not your household — needs the cash.',
-      'There is also a powerful long-term prize: if you hold the company\'s stock long enough and later sell the business, current law can make millions of dollars of that sale completely tax-free. The clock starts when we set the structure up, which is a reason to plan early rather than later.'
+      'There is also a powerful long-term prize: if you hold the company\'s stock long enough and later sell the business, current federal law can make millions of dollars of that sale free of federal tax (California still taxes it). The clock starts when we set the structure up, which is a reason to plan early rather than later.'
     ],
     analogy: 'Think of it as a greenhouse for your profits: money that stays inside grows in a better climate, but every trip outside the greenhouse costs a toll — so we design it for profits you truly intend to keep planted.',
     benefits: [
-      'A flat 21% rate on profits kept in the business, instead of your higher personal rate',
+      'A flat 21% federal rate on profits kept in the business, instead of your higher personal rate',
       'More after-tax money compounding inside the company each year',
-      'A potential exit where a large part of the sale price is tax-free after a 5-year hold',
+      'A potential exit where a large part of the sale price is free of federal tax after a 5-year hold',
       'A salary and structure that look and feel like any established company'
     ],
     steps: [
@@ -124,7 +125,16 @@ TSIQ.strategyModules.push({
   inputs: [
     { key: 'ownerSalary', label: 'Owner W-2 salary (reasonable comp)', type: 'currency', default: 120000 },
     { key: 'dividendsPaid', label: 'Annual dividends paid to owner', type: 'currency', default: 0 },
-    { key: 'adminCost', label: 'Annual payroll + 1120 compliance cost', type: 'currency', default: 3000 }
+    { key: 'adminCost', label: 'Annual payroll + 1120 compliance cost', type: 'currency', default: 3000 },
+    // defaultFrom: California's 8.84% when California rules are on; otherwise
+    // the client's own state rate as a rough stand-in for the corporate rate.
+    { key: 'corpStateRatePct', label: 'State corporate tax rate (%) — California is 8.84', type: 'percent', default: 8.84,
+      defaultFrom: function (profile) {
+        return profile.caRules ? 8.84 : Math.round((profile.stateRate || 0) * 10000) / 100;
+      } },
+    { key: 'exitTax', label: 'Tax on retained earnings when they come out', type: 'select', default: 'yes',
+      options: [{ value: 'yes', label: 'Tax them at the end of the projection' },
+        { value: 'no', label: 'Leave untaxed (QSBS exit or indefinite retention)' }] }
   ],
 
   appliesTo: function (profile) {
@@ -133,53 +143,103 @@ TSIQ.strategyModules.push({
 
   /**
    * Converts Schedule C income into: owner W-2 wages + corporate profit taxed
-   * at the flat 21% rate (§11) + an optional qualified-dividend layer.
-   * Employer FICA and admin cost reduce corporate profit. Retained (undistributed)
-   * profit bears only the 21% tax in this model; dividends actually paid are
-   * added to qualDiv, creating the double-tax layer on the personal return.
-   * Simplification: dividends are assumed paid from current/accumulated E&P
-   * (fully qualified); corporate-level state tax is not modeled.
+   * at the flat 21% rate (§11) after state corporate tax + an optional
+   * dividend layer.
+   * - Salary and dividends grow with the client's income growth rate (a
+   *   salary frozen for ten years while profit rises is not reasonable comp).
+   * - State corporate tax (California: 8.84%, $800 minimum) is deducted before
+   *   the 21% and carried as entityStateTax.
+   * - Admin cost is deducted by the corporation AND counted as a plan cost.
+   * - Retained earnings are tracked. By default they are taxed as a
+   *   distribution in the final projection year, so the projection total shows
+   *   the full two-layer cost instead of presenting deferral as savings. Turn
+   *   that off only for a planned §1202 exit or genuine indefinite retention.
+   * - Dividends are limited to accumulated after-tax earnings.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
     if (p.scheduleCNet <= 0) {
-      notes.push('No Schedule C (sole proprietorship) profit found — nothing to convert. ' +
-        'This strategy models incorporating a sole proprietorship as a C corporation.');
+      if (yearIndex === 0) {
+        notes.push('No Schedule C (sole proprietorship) profit found — nothing to convert. ' +
+          'This strategy models incorporating a sole proprietorship as a C corporation.');
+      }
       return { profile: p, notes: notes };
     }
     var tb = TSIQ.TABLES_2026;
     var f = ((state && state.tables) || tb).fica; // indexed in later years
-    var salary = Math.min(params.ownerSalary, p.scheduleCNet); // can't pay more than profit
-    if (salary < params.ownerSalary) {
+    var g = (state && state.growthFactor) || 1;
+    var wantedSalary = (params.ownerSalary || 0) * g;
+    var salary = Math.min(wantedSalary, p.scheduleCNet); // can't pay more than profit
+    if (salary < wantedSalary && yearIndex === 0) {
       notes.push('Salary capped at business profit of ' + TSIQ.fmt.usd(p.scheduleCNet) + '.');
     }
     var employerFICA = Math.min(salary, f.ssWageBase) * (f.ssRate / 2) +
       salary * (f.medicareRate / 2);
-    var corpProfit = p.scheduleCNet - salary - employerFICA - (params.adminCost || 0);
-    var corpTax = Math.max(0, corpProfit) * tb.corporateRate;
+    var adminCost = Math.max(0, params.adminCost || 0);
+    var corpProfit = p.scheduleCNet - salary - employerFICA - adminCost;
+
+    // State corporate tax, deductible against the federal 21%.
+    var stateRate = Math.max(0, params.corpStateRatePct === undefined ? 0 : params.corpStateRatePct) / 100;
+    var stateMin = p.caRules ? tb.california.minimumFranchiseTax : 0;
+    var stateCorpTax = (stateRate > 0 || stateMin > 0)
+      ? Math.max(stateMin, stateRate * Math.max(0, corpProfit)) : 0;
+    var corpTax = Math.max(0, corpProfit - stateCorpTax) * tb.corporateRate;
+    var afterTax = Math.max(0, corpProfit) - stateCorpTax - corpTax;
+
+    // Dividends come out of accumulated after-tax earnings.
+    var retainedBefore = state.ccorpRetained || 0;
+    var wantedDividends = Math.max(0, params.dividendsPaid || 0) * g;
+    var dividends = Math.min(wantedDividends, Math.max(0, retainedBefore + afterTax));
+    state.ccorpRetained = retainedBefore + afterTax - dividends;
 
     p.corpTaxPaid = (p.corpTaxPaid || 0) + corpTax;
+    p.entityStateTax = (p.entityStateTax || 0) + stateCorpTax;
+    p.planCosts = (p.planCosts || 0) + adminCost;
     p.ownerWages = (p.ownerWages || 0) + salary;
-    p.qualDiv = (p.qualDiv || 0) + (params.dividendsPaid || 0);
+    p.qualDiv = (p.qualDiv || 0) + dividends;
     p.scheduleCNet = 0;
 
+    // Second layer on what was kept inside: taxed when it comes out.
+    var lastYear = (state.projectionYears || 1) - 1;
+    var taxExit = params.exitTax !== 'no';
+    if (taxExit && yearIndex === lastYear && state.ccorpRetained > 0) {
+      p.qualDiv = p.qualDiv + state.ccorpRetained;
+      notes.push('Final projection year: ' + TSIQ.fmt.usd(state.ccorpRetained) + ' of retained ' +
+        'earnings taxed as a distribution to the owner (the second layer of tax). Without ' +
+        'this the projection would show deferral as savings.');
+      state.ccorpRetained = 0;
+    }
+
     if (yearIndex === 0) {
-      notes.push('C-corp profit of ' + TSIQ.fmt.usd(Math.max(0, corpProfit)) +
-        ' taxed at the flat 21% rate (§11): ' + TSIQ.fmt.usd(corpTax) +
-        ' corporate tax. Retained earnings compound at 21% instead of your personal rate.');
-      if ((params.dividendsPaid || 0) > 0) {
-        notes.push(TSIQ.fmt.usd(params.dividendsPaid) + ' of dividends modeled as ' +
-          'qualified dividends on the personal return — the double-tax layer (§301/§316).');
-        var afterTaxProfit = Math.max(0, corpProfit) - corpTax;
-        if ((params.dividendsPaid || 0) > afterTaxProfit) {
-          notes.push('Warning: dividends exceed current-year after-tax corporate profit of ' +
-            TSIQ.fmt.usd(afterTaxProfit) + ' — sustainable only from prior accumulated E&P.');
-        }
+      notes.push('C-corp profit of ' + TSIQ.fmt.usd(Math.max(0, corpProfit)) + ' bears ' +
+        (stateCorpTax > 0 ? TSIQ.fmt.usd(stateCorpTax) + ' of state corporate tax and ' : '') +
+        TSIQ.fmt.usd(corpTax) + ' of federal tax at the flat 21% rate (§11). The owner takes ' +
+        TSIQ.fmt.usd(salary) + ' of salary' +
+        (dividends > 0 ? ' and ' + TSIQ.fmt.usd(dividends) + ' of dividends' : '') +
+        '; the rest stays in the corporation.');
+      if (wantedDividends > dividends) {
+        notes.push('Dividends limited to ' + TSIQ.fmt.usd(dividends) +
+          ' — the corporation cannot distribute more than its accumulated after-tax earnings.');
       }
-      notes.push('No §199A/QBI deduction applies to C-corp profit — the scenario math ' +
-        'reflects losing it. Watch §531 (accumulated earnings) and §541 (personal ' +
-        'holding company) exposure on retained/passive earnings.');
+      notes.push(taxExit
+        ? 'Retained earnings are taxed again when they come out. This projection taxes the ' +
+          'accumulated balance in its final year, so the total reflects both layers.'
+        : 'Retained earnings are NOT taxed in this projection (QSBS exit or indefinite ' +
+          'retention assumed). Any dividend, salary bonus or non-QSBS sale later adds a ' +
+          'second layer of tax that is not shown.');
+      notes.push('Compare the owner\'s cash, not just the tax: salary' +
+        (dividends > 0 ? ' plus dividends' : '') + ' of ' + TSIQ.fmt.usd(salary + dividends) +
+        ' replaces ' + TSIQ.fmt.usd(profile.scheduleCNet) + ' of business profit the owner ' +
+        'could spend today.');
+      var creditAmt = p.isSSTB ? 150000 : 250000;
+      notes.push('No §199A/QBI deduction applies to C-corp profit — the scenario math reflects ' +
+        'losing it. Accumulated earnings beyond the reasonable needs of the business are ' +
+        'exposed to the 20% accumulated earnings tax (§531) above a ' + TSIQ.fmt.usd(creditAmt) +
+        ' credit; at ' + TSIQ.fmt.usd(afterTax - dividends) + ' retained a year that is reached ' +
+        'in about ' + Math.max(1, Math.ceil(creditAmt / Math.max(1, afterTax - dividends))) +
+        ' year(s). Also watch §541 (personal holding company).' +
+        (p.isSSTB ? ' A service business in the §1202 excluded fields cannot use the QSBS exit.' : ''));
       if (corpProfit < 0) {
         notes.push('Warning: salary + payroll costs exceed profit — conversion is not beneficial at this income level.');
       }

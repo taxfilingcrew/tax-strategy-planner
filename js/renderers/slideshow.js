@@ -190,18 +190,23 @@ TSIQ.render = TSIQ.render || {};
     var n = uniqueStrategies.length;
     var movesWord = n + (n === 1 ? ' move' : ' moves');
 
-    // Incremental first-year savings per strategy (best scenario, in order)
+    // Short figure for overview/recap rows: first-year savings for a recurring
+    // strategy; net over the projection for a timing strategy.
+    function stepAmountLabel(sv, s) {
+      if (sv && sv.kind === 'savings') return usd(sv.firstYear);
+      if (sv && sv.kind === 'timing') {
+        return sv.cumulative >= 500 ? usd(sv.cumulative) + ' net' : 'Timing';
+      }
+      return s.modeled === false ? 'Foundation' : '&mdash;';
+    }
+
+    // What each strategy adds (best scenario, in order): first year and the
+    // whole projection, so a deferral is never shown as a permanent saving.
     var stepSavings = {};
     if (data.profile && best.selections) {
-      var ordered = best.selections.slice().sort(function (a, b) {
-        return a.strategy.applyOrder - b.strategy.applyOrder;
-      });
-      var running = [], prevBurden = b0;
-      ordered.forEach(function (sel) {
-        running.push(sel);
-        var r = TSIQ.computeScenario(data.profile, running, data.years, data.growthRate, data.inflationRate);
-        stepSavings[sel.strategy.id] = prevBurden - r.years[0].totalBurden;
-        prevBurden = r.years[0].totalBurden;
+      TSIQ.incrementalSavings(data.profile, best.selections, data.years,
+        data.growthRate, data.inflationRate).forEach(function (st) {
+        stepSavings[st.strategy.id] = st;
       });
     }
 
@@ -325,9 +330,7 @@ TSIQ.render = TSIQ.render || {};
     var cols = Math.min(n, 5);
     var overviewCards = uniqueStrategies.map(function (s, i) {
       var sv = stepSavings[s.id];
-      var amount = (sv !== undefined && sv >= 500)
-        ? usd(sv)
-        : (s.modeled === false ? 'Foundation' : '&mdash;');
+      var amount = stepAmountLabel(sv, s);
       return '<div class="card on-dark anim-' + Math.min(i + 2, 5) + '" style="padding:38px 28px;display:flex;flex-direction:column">' +
         '<div class="num-index" style="font-size:50px">' + (i + 1 < 10 ? '0' : '') + (i + 1) + '</div>' +
         '<h3 class="serif" style="font-size:26px;font-weight:700;margin:18px 0 12px">' + esc(s.name) + '</h3>' +
@@ -348,9 +351,18 @@ TSIQ.render = TSIQ.render || {};
       var c = s.client;
       var sv = stepSavings[s.id];
       var calloutLabel, calloutValue;
-      if (sv !== undefined && sv >= 500) {
+      if (sv !== undefined && sv.kind === 'savings') {
         calloutLabel = 'Estimated first-year savings';
-        calloutValue = '<div class="mono" style="font-size:64px;font-weight:700">' + usd(sv) + '</div>';
+        calloutValue = '<div class="mono" style="font-size:64px;font-weight:700">' + usd(sv.firstYear) + '</div>' +
+          '<div style="font-size:20px;margin-top:8px">' + usd(sv.cumulative) + ' over ' + data.years + ' years</div>';
+      } else if (sv !== undefined && sv.kind === 'timing') {
+        calloutLabel = sv.cumulative >= 500
+          ? 'Net savings over ' + data.years + ' years' : 'Timing move';
+        calloutValue = (sv.cumulative >= 500
+          ? '<div class="mono" style="font-size:64px;font-weight:700">' + usd(sv.cumulative) + '</div>'
+          : '<div class="serif" style="font-size:34px;font-weight:700;line-height:1.25">Improves cash flow</div>') +
+          '<div style="font-size:20px;margin-top:8px">Moves ' + usd(sv.firstYear) + ' of tax out of ' +
+          year + ' into later years</div>';
       } else {
         calloutLabel = 'Foundation move';
         calloutValue = '<div class="serif" style="font-size:34px;font-weight:700;line-height:1.25">Strengthens the whole plan</div>';
@@ -408,8 +420,7 @@ TSIQ.render = TSIQ.render || {};
     /* --------------------------- 8 · next steps --------------------------- */
     var recapRows = uniqueStrategies.map(function (s) {
       var sv = stepSavings[s.id];
-      var amount = (sv !== undefined && sv >= 500) ? usd(sv)
-        : (s.modeled === false ? 'Foundation' : '&mdash;');
+      var amount = stepAmountLabel(sv, s);
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:20px 40px;border-bottom:1px solid var(--line-soft)">' +
         '<span class="serif" style="font-size:24px;font-weight:600">' + esc(s.name) + '</span>' +
         '<span class="mono" style="font-size:26px;font-weight:700">' + amount + '</span></div>';

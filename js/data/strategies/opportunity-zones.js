@@ -66,7 +66,7 @@ TSIQ.strategyModules.push({
       'Investment risk dominates: a bad fund loses more principal than the tax benefits save.',
       'Phantom income at the inclusion date — tax due with no distribution in many funds.',
       'Fund-level compliance failures (90% test) can trigger penalties and jeopardize benefits.',
-      'State conformity varies; several states do not follow the deferral or exclusion.'
+      'California does not conform: it taxes the gain in the year of sale and taxes the appreciation at exit. For a California client the deferral and the 10-year exclusion are federal only.'
     ],
     bestFit: [
       'Clients realizing large capital gains (business sale, concentrated stock, real estate) with a 10+ year horizon.',
@@ -93,7 +93,7 @@ TSIQ.strategyModules.push({
     analogy: 'It\'s like replanting the profit from one harvest into new ground where everything that grows from it is yours to keep, tax-free — as long as you let it grow for ten years.',
     benefits: [
       'Postpone the tax on a large gain instead of paying it now',
-      'After a 10-year hold, growth on the reinvested money is 100% tax-free',
+      'After a 10-year hold, growth on the reinvested money is free of federal tax',
       'Only the profit needs to be reinvested — the rest of your sale proceeds stay free',
       'The new permanent rules add extra benefits, especially for rural-area funds'
     ],
@@ -106,53 +106,76 @@ TSIQ.strategyModules.push({
     considerations: [
       'The postponed tax does come due — under the new rules, five years after you invest — and usually without cash coming out of the fund, so we plan for that bill.',
       'This is a real investment with real risk; the tax benefits never rescue a bad fund.',
-      'The ten-year tax-free growth only materializes if you can genuinely leave the money invested that long.'
+      'The ten-year tax-free growth only materializes if you can genuinely leave the money invested that long.',
+      'California does not follow this program. You still owe California tax on the original gain this year, and California will tax the growth when you sell.'
     ]
   },
 
   inputs: [
-    { key: 'gainDeferred', label: 'Capital gain deferred into QOF', type: 'currency', default: 200000 }
+    { key: 'gainDeferred', label: 'Capital gain deferred into QOF', type: 'currency', default: 200000 },
+    { key: 'fundType', label: 'Fund type', type: 'select', default: 'standard',
+      options: [{ value: 'standard', label: 'Standard fund (10% basis step-up)' },
+        { value: 'rural', label: 'Qualified rural fund (30% basis step-up)' }] }
   ],
 
   appliesTo: function (profile) {
-    return true; // validated in apply(): needs LTCG in the profile
+    return true; // validated in apply(): needs the gain in "One-time gain"
   },
 
   /**
-   * Models the OZ 2.0 pattern (the operative regime for planning at the
-   * 2026/2027 boundary): year 1 removes the deferred gain from ltcg; the gain
-   * comes BACK into ltcg at yearIndex 5 (the 5-year rolling deferral endpoint)
-   * — deferral shown honestly, not as free money. Simplifications, commented:
-   * the OZ 2.0 5-year basis step-up (10%, 30% rural) and the 10-year
-   * appreciation exclusion are NOT modeled (the former is regime-dependent,
-   * the latter depends on unknowable growth). A gain left under the ORIGINAL
-   * regime would be recognized 12/31/2026 (year 1) with no deferral at all —
-   * flagged in notes.
+   * Models the post-2026 regime (the operative one for planning at the
+   * 2026/2027 boundary): a 2026 gain invested in a QOF on or after 1/1/2027.
+   * Year 1 removes the deferred gain from oneTimeGain. The gain comes back in
+   * the tax year containing the date five years after the investment — 2032,
+   * year index 6 — reduced by the 5-year basis step-up (10%; 30% for a
+   * qualified rural fund), so 90% (70%) is recognized. Deferral is shown
+   * honestly, not as free money.
+   * California does not conform: with California rules on, the state taxes
+   * the gain in year 1 and not again at the federal inclusion date.
+   * Not modeled: the 10-year exclusion of post-investment appreciation
+   * (depends on unknowable growth). A gain invested under the ORIGINAL regime
+   * (before 2027) is recognized 12/31/2026 with no deferral — flagged in notes.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var INCLUSION_YEAR_INDEX = 6;
+    var stepUp = params.fundType === 'rural' ? 0.30 : 0.10;
     if (yearIndex === 0) {
-      var deferred = Math.min(params.gainDeferred || 0, Math.max(p.ltcg || 0, 0));
+      var requested = Math.max(0, params.gainDeferred || 0);
+      var deferred = Math.min(requested, Math.max(p.oneTimeGain || 0, 0));
       state.ozDeferred = deferred;
       if (deferred <= 0) {
-        notes.push('No long-term capital gain in the profile — enter the realized gain ' +
-          'as LTCG in the year it occurs for the QOF deferral to apply. No benefit modeled.');
+        notes.push('No one-time gain found. Enter the realized gain in "One-time gain this year" ' +
+          'in Section 1 for the QOF deferral to apply. No benefit modeled.');
         return { profile: p, notes: notes };
       }
-      p.ltcg = p.ltcg - deferred;
+      p.oneTimeGain = p.oneTimeGain - deferred;
+      TSIQ.stateAddBack(p, deferred); // California taxes the gain now
       notes.push(TSIQ.fmt.usd(deferred) + ' of gain deferred into a Qualified Opportunity ' +
-        'Fund (180-day window). TIMING IS CRITICAL: original-regime deferrals END ' +
-        '12/31/2026; modeled here under OBBBA\'s OZ 2.0 (investments from 1/1/2027) with ' +
-        'its 5-year rolling deferral — the gain is modeled as recognized in year 6.');
-      notes.push('Not modeled: the OZ 2.0 5-year basis step-up (10%; 30% rural) and the ' +
-        '10-year FMV step-up that makes post-investment appreciation tax-free — the ' +
-        'largest benefit, deliberately unquantified.');
-    } else if (yearIndex === 5 && state.ozDeferred > 0) {
-      // 5-year rolling deferral ends: the deferred gain is recognized.
-      p.ltcg = (p.ltcg || 0) + state.ozDeferred;
-      notes.push('Year 6: ' + TSIQ.fmt.usd(state.ozDeferred) + ' OZ-deferred gain ' +
-        'recognized (OZ 2.0 five-year deferral endpoint) — plan liquidity for this bill.');
+        'Fund. TIMING IS CRITICAL: this models an investment made on or after 1/1/2027, which ' +
+        'works only if the 180-day window reaches into 2027 (a sale after about July 5, 2026, ' +
+        'or a K-1 gain using the entity year-end start). A 2026 investment is taxed 12/31/2026 ' +
+        'with no deferral.');
+      notes.push('The gain is modeled as recognized in ' + (TSIQ.TABLES_2026.taxYear + INCLUSION_YEAR_INDEX) +
+        ', less the ' + Math.round(stepUp * 100) + '% basis step-up: ' +
+        TSIQ.fmt.usd(deferred * (1 - stepUp)) + ' taxable then.' +
+        ((state.projectionYears || 99) <= INCLUSION_YEAR_INDEX
+          ? ' That falls outside this projection, so the total shown is deferral only — lengthen the projection to at least ' +
+            (INCLUSION_YEAR_INDEX + 1) + ' years.' : ''));
+      if (p.caRules) {
+        notes.push('California does not follow the opportunity zone rules: the state taxes the ' +
+          'full gain in ' + TSIQ.TABLES_2026.taxYear + ' and will tax the fund\'s growth at exit. ' +
+          'Only the federal deferral is shown.');
+      }
+      notes.push('Not modeled: the 10-year step-up that makes post-investment appreciation ' +
+        'free of federal tax — the largest benefit, deliberately unquantified.');
+    } else if (yearIndex === INCLUSION_YEAR_INDEX && state.ozDeferred > 0) {
+      var recognized = state.ozDeferred * (1 - stepUp);
+      p.oneTimeGain = (p.oneTimeGain || 0) + recognized;
+      TSIQ.stateAddBack(p, -recognized); // already taxed by California in year 1
+      notes.push((TSIQ.TABLES_2026.taxYear + INCLUSION_YEAR_INDEX) + ': ' + TSIQ.fmt.usd(recognized) +
+        ' of OZ-deferred gain recognized — plan liquidity for this bill.');
     }
     return { profile: p, notes: notes };
   }

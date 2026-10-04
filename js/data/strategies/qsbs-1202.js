@@ -23,8 +23,9 @@ TSIQ.strategyModules.push({
       'BEFORE 7/5/2025 keeps the old rules — a 5-year cliff (no partial tiers), ' +
       '$10M/10× cap, $50M asset ceiling, with 100% exclusion for post-9/27/2010 ' +
       'acquisitions (earlier vintages: 50–75% with the §57(a)(7) AMT preference). ' +
-      'For partial-exclusion tiers, 7% of the excluded gain is an AMT preference ' +
-      'and the taxable portion is §1202(b) 28%-rate gain. The exclusion is per ' +
+      'For partial-exclusion tiers the taxable portion is 28%-rate gain ' +
+      '(§1(h)(4)); the 7% AMT preference applies only to stock acquired before ' +
+      '9/28/2010, not to the new OBBBA tiers. The exclusion is per ' +
       'issuer and per taxpayer — gifting shares (§1202(h) tacks holding period ' +
       'and treats donees as original holders) can multiply caps across family ' +
       'members and non-grantor trusts, an aggressive but recognized play.',
@@ -45,9 +46,11 @@ TSIQ.strategyModules.push({
       '10× the aggregate adjusted basis of stock sold that year — the 10× arm ' +
       'rewards high-basis contributions (e.g., appreciated IP or asset ' +
       'contributions at incorporation).',
-      'Partial tiers (50%/75%): the excluded portion carries a 7% AMT ' +
-      'preference (§57(a)(7)); the included portion is taxed as 28%-rate gain ' +
-      '(§1(h)(4)) — the effective saving is smaller than the headline tier.',
+      'Partial tiers (50%/75%): the included portion is taxed as 28%-rate gain ' +
+      '(§1(h)(4)) — the effective saving is smaller than the headline tier. ' +
+      'The 7% AMT preference (§57(a)(7)) is limited to stock acquired on or ' +
+      'before 9/27/2010. Stock acquired after 7/4/2025 cannot reach its first ' +
+      'tier before July 2028.',
       'Cap multiplication: each taxpayer gets a separate per-issuer cap; ' +
       'completed gifts to children or non-grantor trusts before sale multiply ' +
       'the caps (§1202(h) preserves qualification and tacks the holding ' +
@@ -59,7 +62,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §1202(a)(4)', note: '100% exclusion for pre-OBBBA stock acquired after 9/27/2010 and held 5+ years (no AMT preference on the 100% tier).' },
       { type: 'IRC', cite: 'IRC §1202(b)', note: 'Per-issuer limitation — greater of the dollar cap or 10× aggregate adjusted basis of the stock disposed of during the year.' },
       { type: 'IRC', cite: 'IRC §1202(c), (d), (e)', note: 'Original-issuance requirement; aggregate gross asset ceiling at issuance; 80% active qualified business requirement and excluded service fields.' },
-      { type: 'IRC', cite: 'IRC §57(a)(7)', note: '7% of the excluded gain is an AMT preference for partial (50%/75%) exclusion tiers.' },
+      { type: 'IRC', cite: 'IRC §57(a)(7)', note: '7% of the excluded gain is an AMT preference only for stock acquired on or before 9/27/2010 (as amended by OBBBA) — it does not apply to the post-7/4/2025 50%/75% tiers.' },
       { type: 'IRC', cite: 'IRC §1202(h)', note: 'Transfers by gift or at death: transferee steps into the transferor\'s shoes — holding period tacks and QSBS status carries over (the basis of cap-multiplication planning).' },
       { type: 'IRC', cite: 'IRC §1045', note: 'Rollover of QSBS gain into replacement QSBS within 60 days when the holding period is short of the exclusion tier.' },
       { type: 'IRC', cite: 'IRC §1(h)(4)', note: 'The non-excluded portion of §1202 gain on partial tiers is 28%-rate gain, not regular LTCG.' }
@@ -74,7 +77,8 @@ TSIQ.strategyModules.push({
     risks: [
       'Qualification is fact-intensive and tested YEARS before the sale — missing issuance-date evidence of the asset test is the most common failure; build the file at issuance, not at exit.',
       'The excluded-field list (§1202(e)(3)) is broad and litigated at the margins — consulting-adjacent businesses need a hard look.',
-      'Partial tiers are not free: 7% AMT preference plus 28%-rate gain on the included portion.',
+      'Partial tiers are not free: the included portion is 28%-rate gain, not 15/20%.',
+      'California does not conform to §1202 — the gain is fully taxable for California at ordinary rates.',
       'Cap-stacking via gifts/trusts draws step-transaction and economic-substance scrutiny — complete gifts well before a sale is in sight, with real donative intent.',
       'State nonconformity: several states (notably CA) do not conform to §1202 — the state tax may be the whole bill.',
       'Two regimes now coexist: mixing up a client\'s pre- vs. post-7/5/2025 lots misstates both the tier and the cap.'
@@ -89,7 +93,7 @@ TSIQ.strategyModules.push({
       'Annually: monitor the 80% active-business test and any redemptions.',
       'Before a contemplated exit: verify each lot\'s era (acquired before vs. after 7/5/2025), tier, and per-issuer cap; consider §1045 rollover if the hold is short.',
       'For cap multiplication: complete gifts to family/non-grantor trusts well before any sale process starts; file gift tax returns.',
-      'At sale: report the exclusion on Form 8949/Schedule D with the §1202 adjustment code; compute the 7% AMT preference for partial tiers.'
+      'At sale: report the exclusion on Form 8949/Schedule D with the §1202 adjustment code; report the included portion of a partial tier as 28%-rate gain; add the gain back on the California return.'
     ]
   },
 
@@ -116,7 +120,7 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'The rules are strict about how and when you got the shares — shares bought from another investor never qualify, and the proof must reach back to the day the company issued them.',
-      'Some states don\'t honor this break, so state tax may still apply — we include that in the projection.',
+      'California does not honor this break, so California tax still applies to the full gain — the projection includes it.',
       'Selling before a milestone forfeits the better tier, so patience is a real part of the strategy.'
     ]
   },
@@ -125,69 +129,74 @@ TSIQ.strategyModules.push({
     { key: 'excludedGain', label: 'QSBS gain eligible for exclusion', type: 'currency', default: 2000000 },
     { key: 'acquisitionEra', label: 'Stock acquisition era', type: 'select', default: 'pre',
       options: [{ value: 'pre', label: 'Acquired before 7/5/2025 (old rules)' }, { value: 'post', label: 'Acquired after 7/4/2025 (OBBBA tiers)' }] },
-    { key: 'holdYears', label: 'Years held at sale', type: 'number', default: 5 }
+    { key: 'holdYears', label: 'Years held at sale', type: 'number', default: 5 },
+    { key: 'stockBasis', label: 'Basis in the stock (for the 10x-basis cap)', type: 'currency', default: 0 }
   ],
 
   appliesTo: function (profile) {
-    return true; // validated in apply(): baseline LTCG must include the sale gain
+    return true; // validated in apply(): needs the sale gain in "One-time gain"
   },
 
   /**
-   * Year-1 sale model. ADVISOR SETUP: include the full QSBS gain in the
-   * baseline's LTCG input; this strategy removes the excluded portion.
-   * Post-OBBBA tiers come from TSIQ.TABLES_2026.limits.qsbs.exclusionTiers
-   * (3yr→50%, 4yr→75%, 5+yr→100%). Pre-OBBBA: 100% only at 5+ years
-   * (assumes post-9/27/2010 acquisition — earlier vintages need manual
-   * modeling), 0% before 5 years.
-   * Not modeled: the 7% AMT preference on partial tiers (engine has no AMT),
-   * the 28%-rate character of the included portion, per-issuer caps, and
-   * state nonconformity — all flagged in notes where relevant.
+   * Year-1 (2026) sale model. The sale gain must be in the profile's
+   * oneTimeGain (Section 1, "One-time gain"); this strategy removes the
+   * excluded portion, capped at the gain entered and at the per-issuer cap.
+   * Stock acquired BEFORE 7/5/2025: 100% exclusion at a 5-year hold (assumes
+   * post-9/27/2010 acquisition), nothing before 5 years; cap is the greater
+   * of $10M or 10x basis.
+   * Stock acquired AFTER 7/4/2025: the 50/75/100% tiers need a 3/4/5-year
+   * hold, so the earliest any exclusion can apply is July 2028. A 2026 sale
+   * gets nothing — no exclusion is modeled.
+   * California does not conform to §1202: with California rules on, the
+   * excluded gain stays in the state tax base.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
     if (yearIndex !== 0) return { profile: p, notes: notes };
 
-    var tiers = TSIQ.TABLES_2026.limits.qsbs.exclusionTiers;
     var hold = params.holdYears || 0;
-    var pct = 0;
-
     if (params.acquisitionEra === 'post') {
-      if (hold >= 5) pct = tiers.yr5plus;
-      else if (hold >= 4) pct = tiers.yr4;
-      else if (hold >= 3) pct = tiers.yr3;
-      if (pct === 0) {
-        notes.push('Post-OBBBA stock held under 3 years — no §1202 exclusion yet. ' +
-          'First tier (50%) unlocks at 3 years; consider a §1045 rollover if selling now.');
-        return { profile: p, notes: notes };
-      }
-    } else {
-      if (hold >= 5) {
-        pct = 1.00;
-      } else {
-        notes.push('Pre-OBBBA stock held under 5 years — §1202 is a 5-year cliff for this era; ' +
-          'no partial tiers apply. No exclusion modeled.');
-        return { profile: p, notes: notes };
-      }
+      notes.push('Stock acquired after 7/4/2025 cannot reach its first exclusion tier (50% at a ' +
+        '3-year hold) before July 2028. A ' + TSIQ.TABLES_2026.taxYear + ' sale gets no §1202 ' +
+        'exclusion — consider a §1045 rollover, or holding to a tier date (3 years 50%, ' +
+        '4 years 75%, 5 years 100%; the taxable part of a partial tier is 28%-rate gain). ' +
+        'No benefit modeled.');
+      return { profile: p, notes: notes };
+    }
+    if (hold < 5) {
+      notes.push('Pre-OBBBA stock held under 5 years — §1202 is a 5-year cliff for this era; ' +
+        'no partial tiers apply. No exclusion modeled.');
+      return { profile: p, notes: notes };
     }
 
-    var eligible = (params.excludedGain || 0) * pct;
-    var reduction = Math.min(eligible, Math.max(p.ltcg || 0, 0));
-    if (reduction < eligible) {
-      notes.push('SETUP: baseline LTCG is less than the computed exclusion — include the full ' +
-        'QSBS sale gain in the baseline\'s LTCG input so this strategy can remove the excluded portion.');
+    var available = Math.max(p.oneTimeGain || 0, 0);
+    if (available <= 0) {
+      notes.push('No one-time gain found. Enter the stock sale gain in "One-time gain this year" ' +
+        'in Section 1 so this strategy can remove the excluded portion. No benefit modeled.');
+      return { profile: p, notes: notes };
     }
-    p.ltcg = (p.ltcg || 0) - reduction;
-    notes.push(TSIQ.fmt.usd(reduction) + ' of QSBS gain excluded (§1202, ' +
-      Math.round(pct * 100) + '% tier at a ' + hold + '-year hold). ' +
-      'Verify the per-issuer cap (' +
-      (params.acquisitionEra === 'post' ? '$15M indexed' : '$10M') + ' or 10x basis) is not exceeded.');
-    if (pct < 1) {
-      notes.push('Partial tier: 7% of the excluded gain is an AMT preference (§57(a)(7)) and the ' +
-        'included portion is 28%-rate gain — neither is modeled by the engine (no AMT); the shown benefit is slightly overstated.');
+    var cap = Math.max(10000000, 10 * Math.max(0, params.stockBasis || 0));
+    var requested = Math.max(0, params.excludedGain || 0);
+    var reduction = Math.min(requested, cap, available);
+    p.oneTimeGain = p.oneTimeGain - reduction;
+    TSIQ.stateAddBack(p, reduction); // California taxes the gain in full
+
+    notes.push(TSIQ.fmt.usd(reduction) + ' of QSBS gain excluded from federal tax (§1202, 100% at a ' +
+      hold + '-year hold).');
+    if (requested > cap) {
+      notes.push('Exclusion limited to the per-issuer cap of ' + TSIQ.fmt.usd(cap) +
+        ' (greater of $10M or 10x basis, §1202(b)); the rest of the gain is taxed normally.');
     }
-    notes.push('State nonconformity not modeled — the flat state rate here excludes the gain too, so in ' +
-      'nonconforming states (e.g., CA) the STATE savings shown are overstated; adjust manually.');
+    if (requested > available && available < Math.min(requested, cap)) {
+      notes.push('Exclusion capped at the ' + TSIQ.fmt.usd(available) + ' one-time gain entered in Section 1.');
+    }
+    notes.push(p.caRules
+      ? 'California does not conform to §1202: the full gain is taxed by California and is included in the state figure.'
+      : 'State conformity varies — several states (California among them) tax the gain in full. Turn on California rules in Section 1 if that applies.');
+    notes.push('Confirm the stock qualifies: original issuance from a domestic C corporation ' +
+      '(never an S corporation), gross assets under the cap at issuance, and a qualified ' +
+      'active business throughout the holding period.');
     return { profile: p, notes: notes };
   }
 });

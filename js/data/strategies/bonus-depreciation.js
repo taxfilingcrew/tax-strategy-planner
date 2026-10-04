@@ -155,7 +155,20 @@ TSIQ.strategyModules.push({
           'depreciation needs a business activity to deduct against. No benefit modeled.');
         return { profile: p, notes: notes };
       }
+      if (route === 'rentalNet' && !p.rentalNet) {
+        state.bonusDepRoute = 'none';
+        notes.push('No rental activity in this profile (rental net income is 0). Enter the ' +
+          'property\'s net rental income in Section 1 — even a small figure — for this ' +
+          'strategy to apply. No benefit modeled.');
+        return { profile: p, notes: notes };
+      }
       p[route] = p[route] - (basis - sl);
+      // California allows no bonus depreciation: the state keeps the baseline.
+      TSIQ.stateAdjust(p, route, basis - sl);
+      if (p.caRules) {
+        notes.push('California does not allow bonus depreciation — no state tax saving is ' +
+          'counted; the state depreciates the asset on its regular schedule.');
+      }
       notes.push('Year 1: ' + TSIQ.fmt.usd(basis) + ' deducted at 100% bonus (§168(k)); ' +
         'modeled net of the ' + TSIQ.fmt.usd(sl) + ' straight-line deduction the baseline ' +
         'would have taken. Simplified to a 7-year class life.');
@@ -167,6 +180,7 @@ TSIQ.strategyModules.push({
     } else if (yearIndex >= 1 && yearIndex <= recovery - 1 && state.bonusDepRoute && state.bonusDepRoute !== 'none') {
       // Baseline still deducts the straight-line slice; bonus used it up.
       p[state.bonusDepRoute] = p[state.bonusDepRoute] + sl;
+      TSIQ.stateAdjust(p, state.bonusDepRoute, -sl);
     }
     return { profile: p, notes: notes };
   }

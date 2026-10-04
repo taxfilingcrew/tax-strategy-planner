@@ -109,13 +109,53 @@ unless the note is year-specific.
 | `qbiReduction` | ADD amounts that also reduce §199A QBI (e.g., SE retirement contributions) |
 | `otherCredits` | ADD nonrefundable federal credits (R&D, WOTC, 45F, §44, 45S) |
 | `corpTaxPaid` | ADD entity-level federal tax (C-corp modeling, 21% via `TSIQ.TABLES_2026.corporateRate`) |
-| `ptetPaid` | entity-level STATE tax (PTET pattern) — credited against personal state tax |
+| `oneTimeGain` | gain from a one-off sale — present in year 1 only; sale strategies act on THIS, never on `ltcg`. Add later installments / inclusions to it in the year they are recognized |
+| `spouseWages` | ADD W-2 wages paid to the spouse by the client's business (income, but not counted against the owner's Social Security wage base) |
+| `otherTaxes` | ADD payroll or other federal taxes the strategy creates (e.g., both halves of FICA on a spouse's or child's wages) |
+| `planCosts` | ADD the non-tax cash cost of running the strategy (payroll service, compliance, study fees). Counted in total burden, so savings are net of it. A cost that is also deductible is deducted from income AND added here |
+| `ptetPaid` | entity-level STATE tax (PTET pattern) — credited against personal state tax; the engine adds it back to the state base, so state tax is unchanged |
 | `entityStateTax` | ADD non-creditable entity-level state tax (e.g., CA 1.5% S-corp franchise tax); also subtract it from `passthroughK1` |
 | `kidsCTC`, `otherDeps` | dependents |
 | `stateRate` | flat state rate (decimal) |
 
 Multi-year memory: use the shared `state` object (see cost-segregation.js's
 suspended-loss pattern) — namespace your keys (`state.myStrategyThing`).
+
+## State conformity (California)
+
+`profile.caRules` is true when the advisor has "Apply California rules" on.
+State tax is a flat rate on AGI, so a federal deduction the state does not
+allow must be taken back out for the state:
+
+- `TSIQ.stateAdjust(p, field, amount)` — the state's view of one profile
+  field. After lowering `rentalNet` (or `scheduleCNet`, `passthroughK1`) by a
+  deduction California does not allow (bonus depreciation, §179 above $25,000,
+  §179D), call it with the same amount to put the income back for the state,
+  and with the negative of each later give-back. The engine runs the adjusted
+  profile through the passive-loss rules again, so a loss suspended federally
+  is not double counted. `TSIQ.stateAdjust(p, 'rentalLossesUsable', false)`
+  keeps rentals passive for the state (no real estate professional exception).
+- `TSIQ.stateAddBack(p, amount)` — a flat add-back to the state base for items
+  outside those fields (HSA deduction, QSBS or opportunity-zone gain excluded
+  federally). Negative when the federal inclusion comes later.
+
+Both do nothing when `caRules` is off. State entity taxes (California 1.5%
+S-corp, 8.84% C-corp, $800 minimum) go in `entityStateTax`; rates are in
+`TSIQ.TABLES_2026.california`.
+
+## Projection context
+
+`state.yearIndex`, `state.projectionYears` and `state.growthFactor`
+(income growth to date) are set each year. `state.applied[id]` is true for
+strategies that already ran this year — use it so strategies sharing one legal
+limit, or the same dollars, do not stack. Grow advisor-entered salaries and
+similar amounts with `state.growthFactor` unless there is a reason not to.
+Unused nonrefundable credits carry forward automatically.
+
+Costs: an admin cost or study fee is a deduction AND an outlay — add it to
+`planCosts` or raising the cost will raise the "savings". A credit that
+cancels a deduction (§280C wage credits, §44, §45F) must add the credit back
+to business income.
 
 Projection years: `state.tables` holds the current year's tables (brackets,
 standard deduction, §199A threshold, SS wage base indexed by the advisor's

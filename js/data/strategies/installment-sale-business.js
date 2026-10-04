@@ -17,10 +17,11 @@ TSIQ.strategyModules.push({
       'When a business or other capital asset is sold with at least one payment ' +
       'received after the year of sale, §453 spreads gain recognition across the ' +
       'payment years in proportion to the gross profit ratio. Instead of stacking ' +
-      'the entire gain into one year — pushing it through the 20% bracket, NIIT, ' +
-      'and the OBBBA SALT phase-down all at once — the seller recognizes gain as ' +
-      'payments arrive, keeping each year in lower LTCG brackets and potentially ' +
-      'under the NIIT threshold. §1245/§1250 depreciation recapture is recognized ' +
+      'the entire gain into one year — pushing it through the 20% bracket and the ' +
+      'OBBBA SALT phase-down all at once — the seller recognizes gain as ' +
+      'payments arrive, keeping each year in lower LTCG brackets. NIIT is a ' +
+      'factor only for a passive owner: gain on a business the seller materially ' +
+      'participates in is not net investment income (§1411(c)(4)). §1245/§1250 depreciation recapture is recognized ' +
       'in full in the year of sale regardless of payments (§453(i)), and large ' +
       'obligations carry a §453A interest charge. Installment treatment is ' +
       'automatic; electing out (§453(d)) is the affirmative choice when a ' +
@@ -30,7 +31,7 @@ TSIQ.strategyModules.push({
       'taxable slice of each payment (§453(c)); the rest is basis recovery. ' +
       'Interest on the note is ordinary income, stated or imputed (§483/§1274).',
       'Bracket arbitrage: 2026 LTCG breakpoints put the 20% rate above roughly ' +
-      '$613,700 taxable (MFJ) — a $5M gain in one year is mostly 20% + 3.8% NIIT, ' +
+      '$613,700 taxable (MFJ) — a $5M gain in one year is mostly 20% (plus 3.8% NIIT for a passive owner), ' +
       'while $1M/year over five years keeps much of it at 15%.',
       '§453(i): all §1245 and §1250 recapture is recognized in the year of sale, ' +
       'even if no cash is received — model the year-1 cash need for asset sales ' +
@@ -70,7 +71,7 @@ TSIQ.strategyModules.push({
       'Death during the term: the note is income in respect of a decedent — no basis step-up on the deferred gain (§691; §1014(c)).'
     ],
     bestFit: [
-      'Business or real-estate sales of roughly $1M+ of gain where a lump sum would ride the 20% bracket and NIIT for most of the gain.',
+      'Business or real-estate sales of roughly $1M+ of gain where a lump sum would ride the 20% bracket (and NIIT, for a passive owner) for most of the gain.',
       'Sellers who do not need all cash at closing and can hold a secured note.',
       'Sellers whose other income will drop after the sale (retirement) — spreading lands gain in low-bracket years.'
     ],
@@ -118,44 +119,69 @@ TSIQ.strategyModules.push({
   ],
 
   appliesTo: function (profile) {
-    return true; // validated in apply(): baseline LTCG must include the lump-sum gain
+    return true; // validated in apply(): needs the sale gain in "One-time gain"
   },
 
   /**
-   * ADVISOR SETUP (critical): enter the FULL lump-sum gain in the baseline's
-   * LTCG input. This strategy replaces the year-1 lump with gain/N and adds
-   * gain/N in years 2..N — the honest cost-seg-style delta (deferral is never
-   * shown as free money).
-   * Known engine caveat: the projection repeats baseline income (with growth)
-   * every year, so baseline years 2+ also carry the one-time gain. It appears
-   * in BOTH columns (via the += slice on top of it here), so the
-   * scenario-minus-baseline delta remains the meaningful number; absolute
-   * projection-year figures overstate both scenarios equally.
-   * Not modeled: §453A interest charge, note interest income, recapture.
+   * The sale gain is a ONE-TIME item: it must be in the profile's oneTimeGain
+   * field (Section 1, "One-time gain this year"), which the projection taxes
+   * in year 1 only. The baseline therefore recognizes the whole gain in the
+   * sale year. This strategy replaces that lump with gain/N in year 1 and adds
+   * gain/N in each of years 2..N.
+   * The year-1 difference is DEFERRAL, not savings — the real benefit is the
+   * total over the projection (lower brackets, NIIT avoided), which is what
+   * the results and the pitch deck lead with.
+   * The gain modeled is capped at the one-time gain actually entered, so the
+   * strategy can never create a negative gain.
+   * Not modeled: §1245 recapture (all in year 1), unrecaptured §1250 gain at
+   * up to 25%, note interest income, and the §453A interest charge.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var gain = params.totalGain || 0;
-    var n = Math.max(1, Math.round(params.spreadYears || 1));
-    var slice = gain / n;
+    var key = 'instSaleBusiness';
 
     if (yearIndex === 0) {
-      if (p.ltcg < gain) {
-        notes.push('SETUP: the baseline LTCG input (' + TSIQ.fmt.usd(p.ltcg) +
-          ') is less than the modeled gain (' + TSIQ.fmt.usd(gain) +
-          '). Enter the FULL lump-sum gain in the baseline\'s LTCG field — this strategy ' +
-          'replaces the lump with the installment spread. Results are not meaningful until then.');
+      var n = Math.max(2, Math.round(params.spreadYears || 5));
+      var requested = Math.max(0, params.totalGain || 0);
+      var available = Math.max(0, p.oneTimeGain || 0);
+      var gain = Math.min(requested, available);
+      state[key] = { gain: gain, n: n };
+
+      if (gain <= 0) {
+        notes.push('No one-time gain found. Enter the sale gain in "One-time gain this year" ' +
+          'in Section 1 (not in recurring capital gains) so the baseline shows the lump-sum ' +
+          'sale and this strategy can spread it. No benefit modeled.');
+        return { profile: p, notes: notes };
       }
-      p.ltcg = p.ltcg - gain + slice;
-      notes.push('Year 1: lump-sum gain of ' + TSIQ.fmt.usd(gain) +
-        ' replaced with installment slice of ' + TSIQ.fmt.usd(slice) + ' (' + n +
-        '-year spread, §453). Years 2–' + n + ' each recognize another ' +
-        TSIQ.fmt.usd(slice) + ' — compare scenario vs. baseline year by year.');
-      notes.push('Not modeled: §1245/§1250 recapture (taxed in full in year 1 regardless of payments), ' +
-        'note interest income, and the §453A interest charge on obligations over $5M.');
-    } else if (yearIndex < n) {
-      p.ltcg = p.ltcg + slice;
+      if (gain < requested) {
+        notes.push('Gain to spread capped at the ' + TSIQ.fmt.usd(available) +
+          ' one-time gain entered in Section 1.');
+      }
+      p.oneTimeGain = p.oneTimeGain - gain + gain / n;
+      notes.push('Installment sale (§453): ' + TSIQ.fmt.usd(gain) + ' gain recognized over ' + n +
+        ' years, ' + TSIQ.fmt.usd(gain / n) + ' a year, instead of all in ' +
+        TSIQ.TABLES_2026.taxYear + '. The first-year difference is deferral — the tax saved is ' +
+        'the total over the projection.');
+      var horizon = state.projectionYears || n;
+      if (n > horizon) {
+        notes.push('The payment schedule runs past the ' + horizon + '-year projection: ' +
+          TSIQ.fmt.usd(gain * (n - horizon) / n) + ' of gain is recognized after the window, ' +
+          'so the total shown overstates the benefit. Lengthen the projection to see it all.');
+      }
+      if (!p.oneTimeGainActive) {
+        notes.push('The gain is being treated as net investment income (3.8% NIIT). If the seller ' +
+          'actively ran the business, check "One-time gain is from a business the client actively ' +
+          'runs" in Section 1 — the gain is then outside NIIT (§1411(c)(4)) and the benefit of ' +
+          'spreading it is smaller.');
+      }
+      notes.push('Not modeled: §1245 depreciation recapture is ordinary income in full in the ' +
+        'year of sale regardless of payments (§453(i)); unrecaptured §1250 gain is taxed at up ' +
+        'to 25%; note interest is ordinary income; the §453A interest charge applies to ' +
+        'balances over $5M.');
+    } else if (state[key] && state[key].gain > 0 && yearIndex < state[key].n) {
+      // Later installments: one more equal slice each year.
+      p.oneTimeGain = (p.oneTimeGain || 0) + state[key].gain / state[key].n;
     }
     return { profile: p, notes: notes };
   }

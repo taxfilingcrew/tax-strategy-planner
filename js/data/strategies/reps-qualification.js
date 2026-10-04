@@ -130,6 +130,9 @@ TSIQ.strategyModules.push({
     var notes = [];
     var alreadyUsable = !!p.rentalLossesUsable;
     p.rentalLossesUsable = true;
+    // California has no real estate professional exception (it does not
+    // conform to §469(c)(7)): rentals stay passive on the state return.
+    if (!alreadyUsable) TSIQ.stateAdjust(p, 'rentalLossesUsable', false);
     if (yearIndex === 0) {
       if (alreadyUsable) {
         notes.push('Rental losses were already flagged usable — REPS documented as the ' +
@@ -141,6 +144,15 @@ TSIQ.strategyModules.push({
           'scenario instead of being suspended. Requires >750 documented hours, >50% of ' +
           'personal-service time in real property trades, and material participation ' +
           '(consider the Reg. §1.469-9(g) aggregation election).');
+        notes.push('This is acceleration, not a new deduction: without REPS the same losses ' +
+          'are suspended and used against later rental income or on sale. Up to $25,000 of ' +
+          'loss is already allowed without REPS when income is under $150,000 — the figure ' +
+          'shown is the amount beyond that.');
+        if (p.caRules) {
+          notes.push('California does not recognize real estate professional status — for ' +
+            'California all rentals are passive, so no state saving is counted and the ' +
+            'losses carry forward separately on FTB 3801.');
+        }
       }
     }
     return { profile: p, notes: notes };

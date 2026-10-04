@@ -153,8 +153,20 @@ TSIQ.strategyModules.push({
           'select the rental stream or correct the profile. No benefit modeled.');
         return { profile: p, notes: notes };
       }
+      if (route === 'rentalNet' && !p.rentalNet) {
+        state.qipRoute = 'none';
+        notes.push('No rental activity in this profile (rental net income is 0). Enter the ' +
+          'property\'s net rental income in Section 1 — even a small figure — for this ' +
+          'strategy to apply. No benefit modeled.');
+        return { profile: p, notes: notes };
+      }
       var bonus = basis * tb.bonusDepreciationRate;
       p[route] = (p[route] || 0) - (bonus - sl);
+      // California allows no bonus depreciation: the state keeps the baseline.
+      TSIQ.stateAdjust(p, route, bonus - sl);
+      if (p.caRules) {
+        notes.push('California does not allow bonus depreciation — no state tax saving is counted.');
+      }
       notes.push('Year 1: ' + TSIQ.fmt.usd(bonus) + ' bonus depreciation on QIP ' +
         '(15-year property, §168(e)(6); 100% bonus, §168(k)) — modeled net of the ' +
         TSIQ.fmt.usd(sl) + ' straight-line slice a 39-year baseline would have taken. ' +
@@ -168,6 +180,7 @@ TSIQ.strategyModules.push({
     } else if (state.qipRoute && state.qipRoute !== 'none') {
       // Baseline still deducts its 39-yr straight-line slice; bonus used it up.
       p[state.qipRoute] = (p[state.qipRoute] || 0) + sl;
+      TSIQ.stateAdjust(p, state.qipRoute, -sl);
     }
     return { profile: p, notes: notes };
   }

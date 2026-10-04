@@ -94,7 +94,40 @@ TSIQ.TABLES_2026 = {
   // Charitable contributions (§170(b)(1)(I), OBBBA, tax years beginning after
   // 12/31/2025): itemized charitable deductions are allowed only to the extent
   // they exceed 0.5% of the contribution base (AGI).
-  charitable: { itemizedFloorRate: 0.005 },
+  // Non-itemizers (§170(p), OBBBA, 2026+): up to $1,000 ($2,000 joint) of cash
+  // gifts to public charities is deductible on top of the standard deduction.
+  // Gifts to donor-advised funds do not qualify.
+  charitable: {
+    itemizedFloorRate: 0.005,
+    nonItemizerLimit: { single: 1000, mfj: 2000, mfs: 1000, hoh: 1000 }
+  },
+
+  // §68 as rewritten by OBBBA (2026+): itemized deductions are reduced by 2/37
+  // of the lesser of (a) itemized deductions or (b) taxable income, before the
+  // reduction and increased by itemized deductions, above the 37% bracket
+  // threshold. Net effect: a 37%-bracket filer's deductions are worth 35%.
+  itemizedLimitRate: 2 / 37,
+
+  // §469(i): up to $25,000 of rental real estate loss is allowed against other
+  // income with active participation, phased out at 50% of modified AGI over
+  // $100,000 (gone at $150,000). Not available to most married-separate filers.
+  // Statutory amounts — not indexed.
+  passive: { rentalAllowance: 25000, phaseOutStart: 100000, phaseOutRate: 0.5 },
+
+  // California rules used when "Apply California rules" is on in Section 1.
+  // California does not follow federal bonus depreciation, caps §179 at
+  // $25,000, does not recognize HSAs, QSBS, opportunity zones or the real
+  // estate professional exception, and keeps the dependent-care exclusion at
+  // $5,000. Entity taxes: C corporation 8.84%; S corporation 1.5%; $800
+  // minimum franchise tax for either. Elective pass-through entity tax 9.3%.
+  california: {
+    sec179Limit: 25000,
+    corpRate: 0.0884,
+    sCorpRate: 0.015,
+    minimumFranchiseTax: 800,
+    ptetRate: 0.093,
+    dcfsaLimit: 5000
+  },
 
   // Bonus depreciation: OBBBA restored permanent 100% bonus for qualified
   // property acquired and placed in service after Jan 19, 2025 (§168(k)).
@@ -137,7 +170,7 @@ TSIQ.TABLES_2026 = {
     // Rev. Proc. 2025-32 / OBBBA §70301
     sec179: { max: 2560000, phaseOutStart: 4090000 },
     // 2026 standard business mileage rate — raised midyear. 72.5¢ for miles
-    // driven Jan 1–Jun 30 (IR-2025-128); 76¢ for Jul 1–Dec 31 (IR-2026-29).
+    // driven Jan 1–Jun 30 (Notice 2026-10); 76¢ for Jul 1–Dec 31 (Announcement 2026-11).
     // Projection years after 2026 use the latest (Jul–Dec) rate.
     mileageRateBusiness: { janJun: 0.725, julDec: 0.76 },
     kiddieTaxUnearnedThreshold: 2700,    // above this, taxed at parents' rate
@@ -183,6 +216,37 @@ TSIQ.indexTables = function (tables, factor) {
   t.qbi = Object.assign({}, tables.qbi, { threshold: mapObj(tables.qbi.threshold, r50) });
   t.fica = Object.assign({}, tables.fica, { ssWageBase: r50(tables.fica.ssWageBase) });
   return t;
+};
+
+/**
+ * State non-conformity hook for strategies. When California rules are on,
+ * `amount` of a federal deduction is added back to the state tax base (the
+ * state does not allow it). Pass a NEGATIVE amount in later years when the
+ * federal give-back should not raise state tax either. No effect when the
+ * California setting is off.
+ */
+TSIQ.stateAddBack = function (p, amount) {
+  if (p && p.caRules && amount) p.stateAddBack = (p.stateAddBack || 0) + amount;
+  return p;
+};
+
+/**
+ * State view of one profile field. When California rules are on, `amount` is
+ * added to `field` for the STATE computation only — e.g. after a strategy
+ * lowers rentalNet by a bonus-depreciation deduction California does not
+ * allow, TSIQ.stateAdjust(p, 'rentalNet', +thatAmount) puts it back for the
+ * state. The engine then runs the adjusted profile through the same passive
+ * loss rules, so a loss that is suspended federally is not double counted.
+ * Pass field 'rentalLossesUsable' with false to keep rental losses passive
+ * for the state (California has no real estate professional exception).
+ */
+TSIQ.stateAdjust = function (p, field, amount) {
+  if (!p || !p.caRules) return p;
+  var adj = Object.assign({}, p.stateAdj || {});
+  if (field === 'rentalLossesUsable') adj[field] = amount;
+  else if (amount) adj[field] = (adj[field] || 0) + amount;
+  p.stateAdj = adj;
+  return p;
 };
 
 // Shared formatting helpers — round only at display, never in the engine.

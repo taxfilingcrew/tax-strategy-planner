@@ -6,8 +6,10 @@
  * slideshow / PDF after the engagement is signed.
  *
  * Incremental attribution: strategies are added one at a time in applyOrder
- * and each slide shows the additional first-year savings that strategy
- * contributes on top of the ones before it.
+ * (TSIQ.incrementalSavings). A recurring saving shows its first-year figure
+ * with the projection total beneath it. A timing strategy (deferral,
+ * accelerated depreciation) shows its net over the projection, never the
+ * year-one deferral as if it were a permanent saving.
  * ==========================================================================*/
 window.TSIQ = window.TSIQ || {};
 TSIQ.render = TSIQ.render || {};
@@ -31,20 +33,9 @@ TSIQ.render = TSIQ.render || {};
     var firstYearSavings = baseYr1 - best.result.years[0].totalBurden;
     var cumSavings = data.baseline.totals.totalBurden - best.result.totals.totalBurden;
 
-    // Incremental first-year savings per strategy, added in applyOrder.
-    var ordered = best.selections.slice().sort(function (a, b) {
-      return a.strategy.applyOrder - b.strategy.applyOrder;
-    });
-    var steps = [], runningSel = [], prevBurden = baseYr1;
-    ordered.forEach(function (sel) {
-      runningSel.push(sel);
-      var r = TSIQ.computeScenario(data.profile, runningSel, data.years, data.growthRate, data.inflationRate);
-      steps.push({
-        strategy: sel.strategy,
-        incremental: prevBurden - r.years[0].totalBurden
-      });
-      prevBurden = r.years[0].totalBurden;
-    });
+    // What each strategy adds on top of the ones before it.
+    var steps = TSIQ.incrementalSavings(data.profile, best.selections,
+      data.years, data.growthRate, data.inflationRate);
 
     var fees = data.fees || { planning: 0, annual: 0 };
     var totalFees = fees.planning + fees.annual * data.years;
@@ -76,11 +67,25 @@ TSIQ.render = TSIQ.render || {};
     steps.forEach(function (step, i) {
       // Advisory/foundation strategies (no meaningful year-one math) get a
       // teaser slide without a dollar figure rather than an awkward "$0".
-      var numberBlock = step.incremental >= 500
-        ? '<div class="big">' + usd(step.incremental) + '</div>' +
-          '<div class="big-label">Additional first-year savings</div>'
-        : '<div class="big" style="font-size:6vh">Foundation</div>' +
+      var numberBlock;
+      if (step.kind === 'savings') {
+        numberBlock = '<div class="big">' + usd(step.firstYear) + '</div>' +
+          '<div class="big-label">Additional first-year savings</div>' +
+          '<p class="sub" style="margin-top:2vh">' + usd(step.cumulative) + ' over ' +
+          data.years + ' years</p>';
+      } else if (step.kind === 'timing') {
+        // Deferral: the year-one figure comes back later. Lead with the net.
+        numberBlock = (step.cumulative >= 500
+          ? '<div class="big">' + usd(step.cumulative) + '</div>' +
+            '<div class="big-label">Net savings over ' + data.years + ' years</div>'
+          : '<div class="big" style="font-size:6vh">Timing</div>' +
+            '<div class="big-label">Improves cash flow — not a permanent saving</div>') +
+          '<p class="sub" style="margin-top:2vh">Moves ' + usd(step.firstYear) +
+          ' of tax out of ' + TSIQ.TABLES_2026.taxYear + ' into later years</p>';
+      } else {
+        numberBlock = '<div class="big" style="font-size:6vh">Foundation</div>' +
           '<div class="big-label">Structural — powers the strategies that follow</div>';
+      }
       slides += '<div class="slide center">' +
         '<div class="eyebrow">Strategy #' + (i + 1) + '</div>' + numberBlock +
         (step.strategy.client.teaser

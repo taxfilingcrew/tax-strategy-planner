@@ -115,51 +115,63 @@ TSIQ.strategyModules.push({
   ],
 
   appliesTo: function (profile) {
-    return true; // validated in apply(): needs LTCG in the sale year
+    return true; // validated in apply(): needs the sale gain in "One-time gain"
   },
 
   /**
-   * Model vs. baseline: the baseline profile is assumed to include the FULL
-   * gain in ltcg in year 1 (the sale year). The installment sale recognizes
-   * totalGain / spreadYears each year, so:
-   *   Year 1: ltcg reduced by the deferred portion, totalGain × (1 − 1/n),
-   *           capped at the profile's LTCG (if less, the cap is noted).
-   *   Years 2..n: ltcg increased by an equal slice of the actually-deferred
-   *           amount (actualDeferred / (n − 1)) so the totals balance.
-   * Simplifications, commented: §1245 recapture (all-in-year-one) and note
-   * interest income are not modeled — enter interest as `interest` if
-   * material; §453A does not apply at modeled default sizes.
+   * The sale gain is a ONE-TIME item: it must be in the profile's oneTimeGain
+   * field (Section 1, "One-time gain this year"), which the projection taxes
+   * in year 1 only. The baseline therefore recognizes the whole gain in the
+   * sale year. This strategy replaces that lump with gain/N in year 1 and adds
+   * gain/N in each of years 2..N.
+   * The year-1 difference is DEFERRAL, not savings — the real benefit is the
+   * total over the projection (lower brackets, NIIT avoided), which is what
+   * the results and the pitch deck lead with.
+   * The gain modeled is capped at the one-time gain actually entered, so the
+   * strategy can never create a negative gain.
+   * Not modeled: §1245 recapture (all in year 1), unrecaptured §1250 gain at
+   * up to 25%, note interest income, and the §453A interest charge.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var n = Math.max(2, Math.round(params.spreadYears || 5));
+    var key = 'instSaleProperty';
 
     if (yearIndex === 0) {
-      var totalGain = params.totalGain || 0;
-      var deferredTarget = totalGain * (1 - 1 / n);
-      var actual = Math.min(deferredTarget, Math.max(p.ltcg || 0, 0));
-      state.instSaleDeferred = actual;
-      state.instSaleYears = n;
-      if (actual <= 0) {
-        notes.push('No long-term capital gain in the profile — enter the property gain ' +
-          'as LTCG in the year of sale for the installment spread to apply. No benefit modeled.');
+      var n = Math.max(2, Math.round(params.spreadYears || 5));
+      var requested = Math.max(0, params.totalGain || 0);
+      var available = Math.max(0, p.oneTimeGain || 0);
+      var gain = Math.min(requested, available);
+      state[key] = { gain: gain, n: n };
+
+      if (gain <= 0) {
+        notes.push('No one-time gain found. Enter the sale gain in "One-time gain this year" ' +
+          'in Section 1 (not in recurring capital gains) so the baseline shows the lump-sum ' +
+          'sale and this strategy can spread it. No benefit modeled.');
         return { profile: p, notes: notes };
       }
-      p.ltcg = p.ltcg - actual;
-      notes.push('Installment sale (§453): ' + TSIQ.fmt.usd(totalGain) + ' gain spread over ' +
-        n + ' years — ' + TSIQ.fmt.usd(totalGain / n) + ' recognized per year. Year 1 defers ' +
-        TSIQ.fmt.usd(actual) + ' to later years (shown in the projection).');
-      if (deferredTarget > actual) {
-        notes.push('Deferral capped at the profile\'s available LTCG of ' + TSIQ.fmt.usd(actual) +
-          ' — enter the full sale gain as LTCG for complete modeling.');
+      if (gain < requested) {
+        notes.push('Gain to spread capped at the ' + TSIQ.fmt.usd(available) +
+          ' one-time gain entered in Section 1.');
       }
-      notes.push('Not modeled: §1245 depreciation recapture is ordinary income IN FULL in ' +
-        'the year of sale regardless of payments (§453(i)); note interest is ordinary ' +
-        'income; §453A interest charge applies to balances over $5M.');
-    } else if (yearIndex >= 1 && yearIndex <= n - 1 && state.instSaleDeferred > 0) {
-      // Later installments: recognize an equal slice of the deferred gain.
-      p.ltcg = (p.ltcg || 0) + state.instSaleDeferred / (n - 1);
+      p.oneTimeGain = p.oneTimeGain - gain + gain / n;
+      notes.push('Installment sale (§453): ' + TSIQ.fmt.usd(gain) + ' gain recognized over ' + n +
+        ' years, ' + TSIQ.fmt.usd(gain / n) + ' a year, instead of all in ' +
+        TSIQ.TABLES_2026.taxYear + '. The first-year difference is deferral — the tax saved is ' +
+        'the total over the projection.');
+      var horizon = state.projectionYears || n;
+      if (n > horizon) {
+        notes.push('The payment schedule runs past the ' + horizon + '-year projection: ' +
+          TSIQ.fmt.usd(gain * (n - horizon) / n) + ' of gain is recognized after the window, ' +
+          'so the total shown overstates the benefit. Lengthen the projection to see it all.');
+      }
+      notes.push('Not modeled: §1245 depreciation recapture is ordinary income in full in the ' +
+        'year of sale regardless of payments (§453(i)); unrecaptured §1250 gain is taxed at up ' +
+        'to 25%; note interest is ordinary income; the §453A interest charge applies to ' +
+        'balances over $5M.');
+    } else if (state[key] && state[key].gain > 0 && yearIndex < state[key].n) {
+      // Later installments: one more equal slice each year.
+      p.oneTimeGain = (p.oneTimeGain || 0) + state[key].gain / state[key].n;
     }
     return { profile: p, notes: notes };
   }

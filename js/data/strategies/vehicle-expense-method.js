@@ -56,7 +56,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §274(d)', note: 'Strict substantiation for listed property including autos: contemporaneous records of amount, time, place, and business purpose; no deduction without them.' },
       { type: 'Reg', cite: 'Reg. §1.274-5T', note: 'Adequate-records standard — account book/log/app maintained at or near the time of use.' },
       { type: 'Admin', cite: 'Rev. Proc. 2019-46', note: 'Rules for the standard mileage rate: first-year election requirement, straight-line deemed depreciation, fleet (5+ vehicles) exclusion, switching rules.' },
-      { type: 'Admin', cite: 'IR-2025-128; IR-2026-29 (2026 rates)', note: '2026 business standard mileage rate: $0.725/mi for Jan 1–Jun 30, raised midyear to $0.76/mi for Jul 1–Dec 31; also sets the per-mile depreciation component used to reduce basis.' },
+      { type: 'Admin', cite: 'Notice 2026-10; Announcement 2026-11 (2026 rates)', note: '2026 business standard mileage rate: $0.725/mi for Jan 1–Jun 30, raised midyear to $0.76/mi for Jul 1–Dec 31; also sets the per-mile depreciation component used to reduce basis.' },
       { type: 'IRC', cite: 'IRC §280F', note: 'Luxury-auto depreciation caps for passenger automobiles and listed-property rules, including the >50% business-use requirement for accelerated methods.' }
     ],
     requirements: [
@@ -80,7 +80,7 @@ TSIQ.strategyModules.push({
     implementation: [
       'Start (or clean up) the mileage log NOW — an app with automatic trip detection is the practical fix for §274(d).',
       'In the vehicle\'s first business year, model both methods over the expected holding period before filing — the year-one choice controls future flexibility.',
-      'Standard: multiply logged business miles by the 2026 rate ($0.725); add parking and tolls.',
+      'Standard: multiply logged business miles by the 2026 rate — $0.725 for miles driven January–June, $0.76 for July–December; add parking and tolls.',
       'Actual: accumulate cost records, compute business-use %, apply §280F caps to depreciation.',
       'Track the cumulative depreciation component against basis each year in the permanent file.',
       'If the client forms an S corp later, move the vehicle deduction into an accountable-plan reimbursement at the standard rate.'
@@ -91,7 +91,7 @@ TSIQ.strategyModules.push({
     teaser: 'Two ways to claim the same costs — we pick the one that pays you more',
     headline: 'Make every business mile count on your tax return',
     plainEnglish: [
-      'When you use your own car for business — driving to clients, job sites, suppliers — the IRS lets you deduct it two different ways. The simple way pays you a flat 72.5 cents for every business mile in 2026. The detailed way deducts the business share of what the car actually costs you: gas, insurance, repairs, and wear-and-tear.',
+      'When you use your own car for business — driving to clients, job sites, suppliers — the IRS lets you deduct it two different ways. The simple way pays you a flat rate for every business mile (72.5 cents for January through June 2026, 76 cents from July) in 2026. The detailed way deducts the business share of what the car actually costs you: gas, insurance, repairs, and wear-and-tear.',
       'Which one wins depends on your car and your driving. Lots of miles in an economical car? The flat rate usually pays more. An expensive vehicle driven fewer miles? The actual-cost method often wins. The catch is that the choice you make in the first year can lock you in, so it pays to do the math up front rather than guess.',
       'One thing every option requires: a record of your business trips. A simple phone app does it automatically, and it is the difference between a deduction that survives IRS questions and one that disappears.'
     ],

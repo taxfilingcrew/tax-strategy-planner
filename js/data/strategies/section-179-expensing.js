@@ -14,7 +14,7 @@ TSIQ.strategyModules.push({
   advisor: {
     summary:
       '§179 permits an election to expense the cost of qualifying tangible ' +
-      'personal property (and, under §179(f), certain nonresidential real ' +
+      'personal property (and, under §179(e), certain nonresidential real ' +
       'property improvements — roofs, HVAC, fire protection/alarm, and ' +
       'security systems) in the placed-in-service year instead of ' +
       'depreciating it. For 2026 the maximum is $2,560,000, phasing out ' +
@@ -28,7 +28,7 @@ TSIQ.strategyModules.push({
       'amount — the taxpayer can expense one machine, half of another, and ' +
       'depreciate the rest. Bonus, by contrast, is all-or-nothing by class.',
       'Eligible property: §1245 tangible personal property used in an active ' +
-      'trade or business, off-the-shelf software, and §179(f) qualified real ' +
+      'trade or business, off-the-shelf software, and §179(e) qualified real ' +
       'property (roofs, HVAC, fire/alarm, security systems on NONresidential ' +
       'buildings) — items bonus depreciation generally cannot reach because ' +
       'they are 39-year property.',
@@ -47,7 +47,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §179(a), (b)(1)-(2)', note: 'The expensing election; 2026 dollar limit $2,560,000 with phase-out beginning at $4,090,000 of total §179 property placed in service (OBBBA, P.L. 119-21; indexed).' },
       { type: 'IRC', cite: 'IRC §179(b)(3)', note: 'Taxable-income limitation: deduction capped at aggregate active business income; excess carries forward indefinitely.' },
       { type: 'IRC', cite: 'IRC §179(d)(1)', note: 'Eligible property definition — §1245 property, off-the-shelf software; purchase requirement (used property OK if from an unrelated party).' },
-      { type: 'IRC', cite: 'IRC §179(f)', note: 'Qualified real property: roofs, HVAC, fire protection and alarm systems, and security systems for nonresidential real property — the reach bonus does not have.' },
+      { type: 'IRC', cite: 'IRC §179(e)', note: 'Qualified real property: qualified improvement property, plus roofs, HVAC, fire protection and alarm systems, and security systems for nonresidential real property — the reach bonus does not have.' },
       { type: 'IRC', cite: 'IRC §179(d)(10)', note: 'Recapture if business use falls to 50% or less before the end of the recovery period.' },
       { type: 'Admin', cite: 'Form 4562, Part I', note: 'Where the election and asset-by-asset amounts are reported; election made on a timely filed return (amendable under current rules).' }
     ],
@@ -68,10 +68,10 @@ TSIQ.strategyModules.push({
     bestFit: [
       'Profitable businesses buying equipment, vehicles (subject to luxury-auto/SUV limits), or nonresidential roofs/HVAC.',
       'Clients who want to fine-tune taxable income to a target (QBI thresholds, bracket edges) — §179\'s dollar-by-dollar control is the tool.',
-      'Buyers of used assets or §179(f) real property components that bonus cannot expense.'
+      'Buyers of §179(e) real property components (roofs, HVAC, fire and security systems) that bonus cannot expense.'
     ],
     implementation: [
-      'List the year\'s acquisitions; separate §179-eligible items (including §179(f) roofs/HVAC/fire/security on nonresidential buildings).',
+      'List the year\'s acquisitions; separate §179-eligible items (including §179(e) roofs/HVAC/fire/security on nonresidential buildings).',
       'Compute the §179(b)(3) aggregate business-income limit before choosing amounts — do not elect into a pointless carryforward.',
       'Choose the exact assets and dollar amounts to expense; coordinate with bonus depreciation on the remaining classes.',
       'Make the election on Form 4562, Part I, with the timely filed return.',
@@ -85,13 +85,13 @@ TSIQ.strategyModules.push({
     plainEnglish: [
       'When your business buys equipment, machinery, computers, or even a new roof or HVAC system for a commercial building, the normal rule is to deduct the cost slowly over many years. A special election lets you instead deduct the full cost right away — up to a very generous annual limit.',
       'What makes this election special is control. You pick exactly which purchases to write off immediately and which to spread out, dollar by dollar. That lets us aim your taxable income at precisely the level that saves you the most — not too high, not wastefully low.',
-      'It even covers things the other fast write-off rules miss, like used equipment and certain building components such as roofs and air-conditioning systems on commercial property.'
+      'It even covers things the other fast write-off rules miss — certain building components such as roofs and air-conditioning systems on commercial property.'
     ],
     analogy: 'Think of it as a dimmer switch for your deductions instead of an on/off switch — we can dial in exactly the amount that fits your year.',
     benefits: [
       'Deduct up to the full cost of qualifying purchases immediately',
       'You choose which assets and how much — total control over the timing',
-      'Covers used equipment and certain commercial building upgrades',
+      'Covers certain commercial building upgrades that other write-offs miss',
       'Pairs with other write-off rules for a tuned overall result'
     ],
     steps: [
@@ -134,17 +134,25 @@ TSIQ.strategyModules.push({
 
     if (yearIndex === 0) {
       var elected = params.amount || 0;
-      var allowed = Math.min(elected, tb.limits.sec179.max);
-      if (elected > tb.limits.sec179.max) {
-        notes.push('Election capped at the 2026 §179 limit of ' +
-          TSIQ.fmt.usd(tb.limits.sec179.max) + ' (phase-out begins at ' +
-          TSIQ.fmt.usd(tb.limits.sec179.phaseOutStart) + ' of total §179 property).');
+      // Dollar limit, reduced dollar-for-dollar once §179 property placed in
+      // service exceeds the phase-out threshold (§179(b)(2)).
+      var limit = Math.max(0, tb.limits.sec179.max -
+        Math.max(0, elected - tb.limits.sec179.phaseOutStart));
+      var allowed = Math.min(elected, limit);
+      if (elected > limit) {
+        notes.push('Election limited to ' + TSIQ.fmt.usd(limit) + ' — the 2026 §179 limit of ' +
+          TSIQ.fmt.usd(tb.limits.sec179.max) + ' falls dollar-for-dollar once §179 property exceeds ' +
+          TSIQ.fmt.usd(tb.limits.sec179.phaseOutStart) + '.');
       }
-      var route, incomeCap;
+      // §179(b)(3): limited to taxable income from ALL active trades or
+      // businesses — which includes the taxpayer's (and spouse's) W-2 wages.
+      var route;
+      var incomeCap = Math.max(0, p.scheduleCNet || 0) + Math.max(0, p.passthroughK1 || 0) +
+        Math.max(0, p.wages || 0) + Math.max(0, p.ownerWages || 0) + Math.max(0, p.spouseWages || 0);
       if (p.scheduleCNet > 0) {
-        route = 'scheduleCNet'; incomeCap = p.scheduleCNet;
+        route = 'scheduleCNet';
       } else if (p.passthroughK1 > 0) {
-        route = 'passthroughK1'; incomeCap = p.passthroughK1;
+        route = 'passthroughK1';
       } else {
         state.sec179Route = 'none';
         notes.push('No positive active business income (Schedule C or K-1) — the ' +
@@ -154,7 +162,7 @@ TSIQ.strategyModules.push({
       }
       if (allowed > incomeCap) {
         notes.push('§179(b)(3) taxable-income limitation: deduction limited to ' +
-          TSIQ.fmt.usd(incomeCap) + ' of business income; the remaining ' +
+          TSIQ.fmt.usd(incomeCap) + ' of active business income and wages; the remaining ' +
           TSIQ.fmt.usd(allowed - incomeCap) + ' carries forward (carryforward not modeled).');
         allowed = incomeCap;
       }
@@ -162,12 +170,22 @@ TSIQ.strategyModules.push({
       p[route] = p[route] - (allowed - sl);
       state.sec179Route = route;
       state.sec179Allowed = allowed;
+      // California: §179 capped at $25,000, reduced once property exceeds
+      // $200,000. The state gets the acceleration only on that slice.
+      var caAllowed = Math.min(allowed, Math.max(0, tb.california.sec179Limit - Math.max(0, elected - 200000)));
+      state.sec179NoState = allowed - caAllowed;
+      TSIQ.stateAdjust(p, route, state.sec179NoState * (1 - 1 / recovery));
+      if (p.caRules && state.sec179NoState > 0) {
+        notes.push('California limits §179 to ' + TSIQ.fmt.usd(tb.california.sec179Limit) +
+          ' — the state saving is counted on ' + TSIQ.fmt.usd(caAllowed) + ' only.');
+      }
       notes.push('Year 1: ' + TSIQ.fmt.usd(allowed) + ' expensed under §179, modeled ' +
         'net of the ' + TSIQ.fmt.usd(sl) + ' straight-line deduction the baseline would ' +
         'have taken (simplified 7-year class life).');
     } else if (yearIndex >= 1 && yearIndex <= recovery - 1 && state.sec179Route && state.sec179Route !== 'none') {
       // Baseline still deducts the straight-line slice; §179 used it up.
       p[state.sec179Route] = p[state.sec179Route] + (state.sec179Allowed / recovery);
+      TSIQ.stateAdjust(p, state.sec179Route, -(state.sec179NoState || 0) / recovery);
     }
     return { profile: p, notes: notes };
   }

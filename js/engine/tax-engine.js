@@ -14,11 +14,24 @@
  *   rentalNet,        // Schedule E rental net (after current depreciation)
  *   rentalLossesUsable, // true = RE pro / passive income available (§469)
  *   ltcg, qualDiv, interest, otherIncome,
+ *   oneTimeGain,      // capital gain from a one-off sale — year 1 only; the
+ *                     // scenario engine does not repeat or grow it
+ *   oneTimeGainActive,// true = gain from a business the client actively runs
+ *                     // (not net investment income, §1411(c)(4))
+ *   spouseWages,      // W-2 wages paid to the spouse by the client's business
+ *                     // (income, but not counted against the owner's own
+ *                     // Social Security wage base)
  *   propertyTax, mortgageInterest, charitable, otherItemized,
  *   stateRate,        // flat effective state rate, decimal (simplification)
  *   ptetPaid,         // entity-level state tax paid (PTET strategy) — creditable
- *   entityStateTax    // non-creditable entity-level state tax (e.g., CA 1.5%
+ *   entityStateTax,   // non-creditable entity-level state tax (e.g., CA 1.5%
  *                     // S-corp franchise tax) — added to the state burden
+ *   stateAddBack,     // federal deductions the state does not allow (added to
+ *                     // the state tax base; set via TSIQ.stateAddBack)
+ *   caRules,          // true = California non-conformity applies
+ *   planCosts         // non-tax cash cost of the plan (payroll service,
+ *                     // compliance, study fees) — counted in total burden so
+ *                     // savings are net of it
  * }
  * ==========================================================================*/
 window.TSIQ = window.TSIQ || {};
@@ -103,7 +116,7 @@ window.TSIQ = window.TSIQ || {};
         applicable = Math.max(0, applicable);
       }
     }
-    var netCapGain = Math.max(0, (p.ltcg || 0)) + Math.max(0, (p.qualDiv || 0));
+    var netCapGain = Math.max(0, (p.ltcg || 0) + (p.oneTimeGain || 0)) + Math.max(0, (p.qualDiv || 0));
     var overallCap = t.rate * Math.max(0, tiBeforeQBI - netCapGain);
     var allowed = Math.max(0, Math.min(applicable, overallCap));
     if (t.minimumDeduction && activeQbi >= t.minimumActiveQbi) {
@@ -111,6 +124,45 @@ window.TSIQ = window.TSIQ || {};
       allowed = Math.max(allowed, Math.min(t.minimumDeduction, tiBeforeQBI));
     }
     return allowed;
+  }
+
+  /**
+   * Passive rental loss rules (§469, simplified carryforward) and AGI for a
+   * profile `q`. Unless rental losses are flagged usable (real estate
+   * professional, short-term rental with material participation, or other
+   * passive income), a rental loss is limited to the §469(i) allowance —
+   * $25,000, phased out between $100,000 and $150,000 of modified AGI — and
+   * the rest is suspended and carried in st[carryKey] until rental income
+   * absorbs it. Used once for federal AGI and, with California rules on, once
+   * more for the state's view of the same year.
+   */
+  function incomeAndAgi(q, seDeduction, st, carryKey, fs, tb) {
+    var ltcgAll = q.ltcg + q.oneTimeGain;
+    var other = q.wages + q.ownerWages + q.spouseWages + q.scheduleCNet + q.passthroughK1 +
+      ltcgAll + q.qualDiv + q.interest + q.otherIncome;
+    var rentalAllowed = q.rentalNet;
+    var suspendedUsed = 0, suspendedAdded = 0, allowanceUsed = 0;
+    st[carryKey] = st[carryKey] || 0;
+    if (q.rentalNet < 0 && !q.rentalLossesUsable) {
+      var pv = tb.passive;
+      var magi = other - seDeduction - q.adjustments;
+      var allowance = (fs === 'mfs') ? 0
+        : Math.max(0, pv.rentalAllowance - pv.phaseOutRate * Math.max(0, magi - pv.phaseOutStart));
+      allowanceUsed = Math.min(-q.rentalNet, allowance);
+      suspendedAdded = -q.rentalNet - allowanceUsed;
+      st[carryKey] += suspendedAdded;
+      rentalAllowed = -allowanceUsed;
+    } else if (q.rentalNet > 0 && st[carryKey] > 0) {
+      suspendedUsed = Math.min(q.rentalNet, st[carryKey]);
+      st[carryKey] -= suspendedUsed;
+      rentalAllowed = q.rentalNet - suspendedUsed;
+    }
+    var totalIncome = other + rentalAllowed;
+    return {
+      rentalAllowed: rentalAllowed, suspendedUsed: suspendedUsed,
+      suspendedAdded: suspendedAdded, allowanceUsed: allowanceUsed,
+      totalIncome: totalIncome, agi: totalIncome - seDeduction - q.adjustments
+    };
   }
 
   /**
@@ -123,10 +175,13 @@ window.TSIQ = window.TSIQ || {};
   TSIQ.computeYear = function (profile, state, tables) {
     var p = Object.assign({
       wages: 0, ownerWages: 0, scheduleCNet: 0, passthroughK1: 0,
-      entityW2Wages: 0, isSSTB: false, rentalNet: 0, rentalLossesUsable: true,
+      entityW2Wages: 0, isSSTB: false, rentalNet: 0, rentalLossesUsable: false,
       ltcg: 0, qualDiv: 0, interest: 0, otherIncome: 0,
+      oneTimeGain: 0, oneTimeGainActive: false, spouseWages: 0,
       propertyTax: 0, mortgageInterest: 0, charitable: 0, otherItemized: 0,
-      stateRate: 0, ptetPaid: 0, entityStateTax: 0,
+      charitableToDAF: false,
+      stateRate: 0, ptetPaid: 0, entityStateTax: 0, stateAddBack: 0,
+      caRules: false, stateAdj: null, planCosts: 0,
       kidsCTC: 0, otherDeps: 0,
       fedWithholding: 0, fedEstimates: 0, stateWithholding: 0, stateEstimates: 0,
       // Generic hooks set by strategies:
@@ -157,33 +212,49 @@ window.TSIQ = window.TSIQ || {};
     var ownerPayrollTax = ownerSS + ownerMedicare;
 
     // ---- Additional Medicare (0.9% over threshold, wages + SE earnings) ----
-    var medicareBase = p.wages + p.ownerWages + seNetEarnings;
+    var medicareBase = p.wages + p.ownerWages + p.spouseWages + seNetEarnings;
     var addlMedicare = f.additionalMedicareRate *
       Math.max(0, medicareBase - f.additionalMedicareThreshold[fs]);
 
-    // ---- Passive rental loss suspension (§469, simplified carryforward) ----
-    var rentalAllowed = p.rentalNet;
-    var suspendedUsed = 0, suspendedAdded = 0;
-    state.suspendedRentalLoss = state.suspendedRentalLoss || 0;
-    if (p.rentalNet < 0 && !p.rentalLossesUsable) {
-      suspendedAdded = -p.rentalNet;
-      state.suspendedRentalLoss += suspendedAdded;
-      rentalAllowed = 0;
-    } else if (p.rentalNet > 0 && state.suspendedRentalLoss > 0) {
-      suspendedUsed = Math.min(p.rentalNet, state.suspendedRentalLoss);
-      state.suspendedRentalLoss -= suspendedUsed;
-      rentalAllowed = p.rentalNet - suspendedUsed;
-    }
+    // All long-term gain for the year: recurring gains plus any one-off sale.
+    var ltcgAll = p.ltcg + p.oneTimeGain;
 
-    // ---- AGI ----
-    var totalIncome = p.wages + p.ownerWages + p.scheduleCNet + p.passthroughK1 +
-      rentalAllowed + p.ltcg + p.qualDiv + p.interest + p.otherIncome;
-    var agi = totalIncome - seDeduction - p.adjustments;
+    // ---- Passive rental loss rules and AGI (see incomeAndAgi) ----
+    var fed = incomeAndAgi(p, seDeduction, state, 'suspendedRentalLoss', fs, tb);
+    var rentalAllowed = fed.rentalAllowed;
+    var suspendedUsed = fed.suspendedUsed, suspendedAdded = fed.suspendedAdded;
+    var rentalAllowanceUsed = fed.allowanceUsed;
+    var totalIncome = fed.totalIncome;
+    var agi = fed.agi;
 
     // ---- State tax (flat effective rate — documented simplification).
-    // PTET paid at the entity level credits against the personal liability. ----
-    var stateTaxGross = Math.max(0, agi) * p.stateRate;
-    var personalStateTax = Math.max(0, stateTaxGross - p.ptetPaid);
+    // The state base starts from AGI, plus (a) entity-level state tax deducted
+    // federally — a state does not allow a deduction for its own income tax,
+    // so a PTET election leaves state tax unchanged — and (b) federal
+    // deductions the state does not follow (stateAddBack).
+    // With California rules on, AGI is recomputed for the state from the
+    // profile as the state sees it (stateAdj: no bonus depreciation, no real
+    // estate professional exception, and so on), through the same passive-loss
+    // rules with its own carryforward. PTET paid at the entity level then
+    // credits against the personal liability. ----
+    var stateAgi = agi;
+    if (p.caRules) {
+      var q = Object.assign({}, p);
+      var adj = p.stateAdj || {};
+      Object.keys(adj).forEach(function (k) {
+        if (k === 'rentalLossesUsable') q[k] = adj[k];
+        else q[k] = (q[k] || 0) + adj[k];
+      });
+      stateAgi = incomeAndAgi(q, seDeduction, state, 'suspendedRentalLossState', fs, tb).agi;
+    }
+    var stateBase = Math.max(0, stateAgi + p.ptetPaid + p.stateAddBack);
+    var stateTaxGross = stateBase * p.stateRate;
+    // A PTET credit larger than the year's state tax is not lost — it carries
+    // forward (California: five years) and is used when liability allows.
+    var ptetAvailable = p.ptetPaid + (state.ptetCreditCarry || 0);
+    var ptetCreditUsed = Math.min(ptetAvailable, stateTaxGross);
+    state.ptetCreditCarry = ptetAvailable - ptetCreditUsed;
+    var personalStateTax = stateTaxGross - ptetCreditUsed;
 
     // ---- Itemized vs standard, with OBBBA SALT cap phase-down ----
     var saltPaid = personalStateTax + p.propertyTax;
@@ -197,15 +268,29 @@ window.TSIQ = window.TSIQ || {};
     var charitableFloor = Math.min(Math.max(0, p.charitable),
       tb.charitable.itemizedFloorRate * Math.max(0, agi));
     var charitableAllowed = Math.max(0, p.charitable) - charitableFloor;
-    var itemized = saltDeduction + p.mortgageInterest + charitableAllowed + p.otherItemized;
-    var standardDed = tb.standardDeduction[fs];
+    var itemizedGross = saltDeduction + p.mortgageInterest + charitableAllowed + p.otherItemized;
+    // Non-itemizers: standard deduction plus up to $1,000 / $2,000 of cash
+    // gifts (§170(p)); gifts to a donor-advised fund do not count.
+    var nonItemizerCharitable = p.charitableToDAF ? 0
+      : Math.min(Math.max(0, p.charitable), tb.charitable.nonItemizerLimit[fs]);
+    var standardDed = tb.standardDeduction[fs] + nonItemizerCharitable;
+    // §68 (2026+): 37%-bracket filers lose 2/37 of their itemized deductions.
+    var itemizedLimitReduction = 0;
+    if (itemizedGross > standardDed) {
+      var top = tb.brackets[fs][tb.brackets[fs].length - 1][0];
+      var qbiProvisional = qbiDeduction(p, agi, itemizedGross, seDeduction, tb);
+      itemizedLimitReduction = tb.itemizedLimitRate *
+        Math.min(itemizedGross, Math.max(0, agi - qbiProvisional - top));
+    }
+    var itemized = itemizedGross - itemizedLimitReduction;
     var deduction = Math.max(standardDed, itemized);
     var usedItemized = itemized > standardDed;
+    if (usedItemized) nonItemizerCharitable = 0;
 
     // ---- QBI, taxable income, income tax ----
     var qbi = qbiDeduction(p, agi, deduction, seDeduction, tb);
     var taxableIncome = Math.max(0, agi - deduction - qbi);
-    var prefIncome = Math.min(taxableIncome, Math.max(0, p.ltcg) + Math.max(0, p.qualDiv));
+    var prefIncome = Math.min(taxableIncome, Math.max(0, ltcgAll) + Math.max(0, p.qualDiv));
     var ordinaryTaxable = taxableIncome - prefIncome;
     var ordinaryTax = bracketTax(ordinaryTaxable, tb.brackets[fs]);
     var capGainsTax = prefRateTax(ordinaryTaxable, prefIncome, fs, tb);
@@ -219,13 +304,20 @@ window.TSIQ = window.TSIQ || {};
     var ctcExcess = Math.max(0, agi - c.phaseOutThreshold[fs]);
     var ctcReduction = Math.ceil(ctcExcess / 1000) * c.phaseOutPer1000;
     var ctcAllowed = Math.min(Math.max(0, grossCTC - ctcReduction), incomeTaxBeforeCredits);
-    // Other nonrefundable credits (strategy hook) — applied after CTC.
-    var otherCreditsAllowed = Math.min(p.otherCredits, incomeTaxBeforeCredits - ctcAllowed);
+    // Other nonrefundable credits (strategy hook) — applied after CTC. What
+    // the year's tax cannot absorb carries forward to later projection years
+    // (general business credits carry 20 years, §39).
+    var creditsAvailable = p.otherCredits + (state.creditCarryforward || 0);
+    var otherCreditsAllowed = Math.max(0,
+      Math.min(creditsAvailable, incomeTaxBeforeCredits - ctcAllowed));
+    state.creditCarryforward = creditsAvailable - otherCreditsAllowed;
     var incomeTax = incomeTaxBeforeCredits - ctcAllowed - otherCreditsAllowed;
 
     // ---- NIIT (§1411) — rental treated as passive NII unless losses-usable
     // toggle indicates real estate professional status ----
-    var nii = Math.max(0, p.ltcg) + Math.max(0, p.qualDiv) + Math.max(0, p.interest) +
+    // A one-off gain on a business the client actively runs is not NII.
+    var niiGains = Math.max(0, p.ltcg + (p.oneTimeGainActive ? 0 : p.oneTimeGain));
+    var nii = niiGains + Math.max(0, p.qualDiv) + Math.max(0, p.interest) +
       (p.rentalLossesUsable ? 0 : Math.max(0, rentalAllowed));
     var niit = tb.niit.rate * Math.max(0, Math.min(nii,
       Math.max(0, agi - tb.niit.magiThreshold[fs])));
@@ -233,7 +325,10 @@ window.TSIQ = window.TSIQ || {};
     var totalFederal = incomeTax + seTax + addlMedicare + niit + ownerPayrollTax +
       p.corpTaxPaid + p.otherTaxes;
     var totalState = personalStateTax + p.ptetPaid + p.entityStateTax;
-    var totalBurden = totalFederal + totalState;
+    // Total burden = tax plus the non-tax cash cost of running the plan, so
+    // every savings figure is net of what the plan costs to operate.
+    var totalTax = totalFederal + totalState;
+    var totalBurden = totalTax + p.planCosts;
 
     // ---- Payments to date → remaining balance due (current year only;
     // the scenario engine zeroes payments for projection years 2+). ----
@@ -248,6 +343,10 @@ window.TSIQ = window.TSIQ || {};
       deduction: deduction, usedItemized: usedItemized,
       saltDeduction: saltDeduction, saltEffectiveCap: effectiveCap,
       charitableAllowed: charitableAllowed, charitableFloor: charitableFloor,
+      nonItemizerCharitable: nonItemizerCharitable,
+      itemizedLimitReduction: itemizedLimitReduction,
+      rentalAllowanceUsed: rentalAllowanceUsed,
+      creditCarryforward: state.creditCarryforward,
       qbiDeduction: qbi, taxableIncome: taxableIncome,
       ordinaryTax: ordinaryTax, capGainsTax: capGainsTax,
       incomeTaxBeforeCredits: incomeTaxBeforeCredits,
@@ -262,7 +361,10 @@ window.TSIQ = window.TSIQ || {};
       totalFederal: totalFederal,
       personalStateTax: personalStateTax, ptetPaid: p.ptetPaid,
       entityStateTax: p.entityStateTax,
-      totalState: totalState, totalBurden: totalBurden,
+      ptetCreditCarry: state.ptetCreditCarry,
+      stateAgi: stateAgi, stateBase: stateBase, stateAddBack: p.stateAddBack,
+      totalState: totalState, totalTax: totalTax, planCosts: p.planCosts,
+      totalBurden: totalBurden,
       suspendedRentalLossAdded: suspendedAdded,
       suspendedRentalLossUsed: suspendedUsed,
       suspendedRentalLossBalance: state.suspendedRentalLoss

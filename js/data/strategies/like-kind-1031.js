@@ -110,40 +110,59 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'deferredGain', label: 'Gain deferred via exchange', type: 'currency', default: 200000 }
+    { key: 'deferredGain', label: 'Gain deferred via exchange', type: 'currency', default: 200000 },
+    { key: 'buildingPct', label: 'Share of the replacement property that is building (%)', type: 'percent', default: 80 },
+    { key: 'recoveryYears', label: 'Recovery period (27.5 residential, 39 commercial)', type: 'number', default: 27.5 }
   ],
 
   appliesTo: function (profile) {
-    return true; // validated in apply(): needs LTCG in the profile for the sale year
+    return true; // validated in apply(): needs the sale gain in "One-time gain"
   },
 
   /**
-   * Models the year-of-sale deferral only: reduces ltcg by the deferred gain,
-   * capped at the profile's LTCG. The eventual recognition on a later taxable
-   * sale of the replacement property is outside the projection (indefinite
-   * deferral / possible §1014 step-up) — noted, not modeled. NIIT savings
-   * flow automatically from the lower ltcg.
+   * Year of sale: removes the deferred gain from the profile's oneTimeGain
+   * (the sale is a one-off, entered in Section 1's "One-time gain"), capped at
+   * the gain entered.
+   * Later years: the replacement property takes a carryover basis, lower by
+   * the deferred gain (§1031(d)), so it throws off less depreciation than a
+   * property bought with fresh basis would. That lost deduction —
+   * deferred gain × building share ÷ recovery period — is added back to rental
+   * income every later year.
+   * The eventual tax on a later sale is outside the projection (indefinite
+   * deferral, or elimination at death under §1014) — noted, not modeled.
+   * California follows §1031 for real property.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    if (yearIndex !== 0) {
-      return { profile: p, notes: notes };
-    }
-    var deferred = Math.min(params.deferredGain || 0, Math.max(p.ltcg || 0, 0));
-    if (deferred <= 0) {
-      notes.push('No long-term capital gain in the profile — enter the property gain ' +
-        'as LTCG in the year of sale for this exchange to defer. No benefit modeled.');
-      return { profile: p, notes: notes };
-    }
-    p.ltcg = p.ltcg - deferred;
-    notes.push(TSIQ.fmt.usd(deferred) + ' of gain deferred via §1031 exchange (45/180-day ' +
-      'deadlines, qualified intermediary). Deferral, not elimination: the gain carries ' +
-      'over into the replacement property\'s basis and is recognized on a future taxable ' +
-      'sale — or eliminated at death via the §1014 step-up.');
-    if ((params.deferredGain || 0) > deferred) {
-      notes.push('Deferral capped at the profile\'s ' + TSIQ.fmt.usd(deferred) +
-        ' of LTCG — the exchange cannot defer more gain than the sale produces.');
+    if (yearIndex === 0) {
+      var requested = Math.max(0, params.deferredGain || 0);
+      var deferred = Math.min(requested, Math.max(p.oneTimeGain || 0, 0));
+      state.lke1031Deferred = deferred;
+      if (deferred <= 0) {
+        notes.push('No one-time gain found. Enter the property gain in "One-time gain this year" ' +
+          'in Section 1 for this exchange to defer. No benefit modeled.');
+        return { profile: p, notes: notes };
+      }
+      p.oneTimeGain = p.oneTimeGain - deferred;
+      notes.push(TSIQ.fmt.usd(deferred) + ' of gain deferred via §1031 exchange (45/180-day ' +
+        'deadlines, qualified intermediary). Deferral, not elimination: the gain carries ' +
+        'over into the replacement property\'s basis and is recognized on a future taxable ' +
+        'sale — or eliminated at death via the §1014 step-up.');
+      if (requested > deferred) {
+        notes.push('Deferral capped at the ' + TSIQ.fmt.usd(deferred) +
+          ' one-time gain entered — the exchange cannot defer more gain than the sale produces.');
+      }
+      var lost = deferred * Math.max(0, Math.min(100, params.buildingPct === undefined ? 80 : params.buildingPct)) / 100 /
+        Math.max(1, params.recoveryYears || 27.5);
+      notes.push('Later years include the cost of the lower carryover basis: about ' +
+        TSIQ.fmt.usd(lost) + ' a year less depreciation than a property bought with fresh basis.');
+      notes.push('Not modeled: the depreciation part of the gain would be taxed at up to 25% ' +
+        '(unrecaptured §1250), so the tax deferred is somewhat larger than shown. California ' +
+        'requires annual Form FTB 3840 when the replacement property is out of state.');
+    } else if (state.lke1031Deferred > 0) {
+      var share = Math.max(0, Math.min(100, params.buildingPct === undefined ? 80 : params.buildingPct)) / 100;
+      p.rentalNet = (p.rentalNet || 0) + state.lke1031Deferred * share / Math.max(1, params.recoveryYears || 27.5);
     }
     return { profile: p, notes: notes };
   }

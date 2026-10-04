@@ -43,6 +43,23 @@ in each scenario with their parameters, so importing the file later reopens the
 plan where you left it. Keep client files out of this repository — they belong
 in the client's folder.
 
+**One-off sales:** a gain from selling a business, a property or a block of
+stock goes in **One-time gain this year**, not in recurring capital gains —
+otherwise the projection repeats it every year. The installment-sale, §1031,
+opportunity-zone and QSBS strategies work only on the one-time gain.
+
+**Rental losses:** leave **Rental losses fully usable** unchecked unless the
+client is a real estate professional, materially participates in a short-term
+rental, or has other passive income. Unchecked, the tool allows the $25,000
+rental-loss allowance (phased out between $100,000 and $150,000 of income) and
+suspends the rest.
+
+**California:** **Apply California rules** (on by default) removes state
+savings California does not give — bonus depreciation, §179 above $25,000,
+§179D, HSAs, QSBS, opportunity zones, real estate professional losses — and
+applies California's S-corp (1.5%), C-corp (8.84%) and $800 minimum taxes where
+a strategy creates an entity. Turn it off for a client in a conforming state.
+
 **Existing S-corp owners:** enter the owner's own salary in **Owner W-2 wages
 from own S-corp**, not in outside W-2 wages. The tool charges payroll tax on it
 and uses it for retirement-plan and health-insurance limits.
@@ -105,10 +122,17 @@ Just open a session in this folder and ask for what you want, e.g.:
 ## Scope notes (v1)
 
 Federal 2026 law per Rev. Proc. 2025-32 / OBBBA, including the 0.5%-of-AGI
-charitable floor, the $400 minimum QBI deduction, and both 2026 business
-mileage rates (72.5¢ Jan–Jun, 76¢ Jul–Dec). State tax uses a flat effective
-rate; a state S-corp entity tax (e.g., California's 1.5% / $800 minimum) can be
-entered on the S-Corp Election strategy.
+charitable floor, the $1,000 / $2,000 charitable deduction for non-itemizers,
+the 35% cap on itemized deductions for 37%-bracket filers, the $400 minimum
+QBI deduction, the $25,000 rental-loss allowance, and both 2026 business
+mileage rates (72.5¢ Jan–Jun, 76¢ Jul–Dec). Unused business credits carry
+forward. State tax uses a flat effective rate, with California non-conformity
+applied where a strategy models it.
+
+Savings are net of the cash cost of running a strategy (payroll service,
+compliance, study fees) where the strategy records one. The pitch deck and
+slideshow show a timing strategy's net over the projection, not its
+first-year deferral.
 
 The multi-year projection applies 2026 law to every year. Brackets, the
 standard deduction, capital-gain breakpoints, the §199A threshold, and the
@@ -116,6 +140,14 @@ Social Security wage base are indexed at the **Bracket inflation indexing**
 rate in Section 1 (set it to 0 to hold 2026 amounts). The SALT cap is held at
 its 2026 amount in every year.
 
-Not yet modeled: AMT, depreciation recapture on sale, §461(l), the 2/37
-itemized-deduction limitation for 37%-bracket filers, AGI percentage limits on
-charitable gifts, and the scheduled SALT-cap changes after 2026.
+Not yet modeled: AMT, depreciation recapture on sale, §461(l), AGI percentage
+limits on charitable gifts, the 25% rate on unrecaptured §1250 gain, and the
+scheduled SALT-cap changes after 2026.
+
+**Library status:** an October 2026 review found problems in most strategies.
+The engine-level problems, the sale strategies, spouse payroll, C-corp
+conversion, WOTC and the California treatment of the depreciation, HSA, PTET
+and real-estate-professional strategies are fixed. The remaining findings
+(defaults that assume amounts the client may not have, strategies that share
+one legal limit, eligibility checks, and the advisory write-ups) are still
+open — check any other strategy's figure before a client sees it.

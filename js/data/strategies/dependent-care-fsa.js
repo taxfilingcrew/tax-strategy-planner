@@ -134,19 +134,46 @@ TSIQ.strategyModules.push({
     var p = Object.assign({}, profile);
     var notes = [];
     var fr = TSIQ.TABLES_2026.limits.fringe;
-    var wages = Math.max(0, p.wages || 0) + Math.max(0, p.ownerWages || 0);
+    // Only W-2 wages from an OUTSIDE employer count. An owner cannot use a
+    // cafeteria plan (sole proprietors, partners, more-than-2% S-corp
+    // shareholders), and an employer-paid plan fails when more than 25% of its
+    // benefits go to owners and their families (§129(d)(4)).
+    var wages = Math.max(0, p.wages || 0);
     if (wages <= 0) {
-      notes.push('Dependent Care FSA requires W-2 wages (outside employer or your own entity\'s payroll) — none found in this profile. No benefit modeled.');
+      if (yearIndex === 0) {
+        notes.push('A dependent care FSA needs W-2 wages from an outside employer that offers ' +
+          'one. Business owners cannot use a cafeteria plan for themselves, and a plan that ' +
+          'mainly benefits the owner\'s family fails §129(d)(4). No benefit modeled.');
+      }
       return { profile: p, notes: notes };
     }
-    var election = Math.min(params.annualElection || 0, fr.dcfsaLimit, wages);
-    if ((params.annualElection || 0) > fr.dcfsaLimit) {
-      notes.push('Election capped at the 2026 §129 limit of ' + TSIQ.fmt.usd(fr.dcfsaLimit) + '.');
+    if (!((p.kidsCTC || 0) + (p.otherDeps || 0) > 0)) {
+      if (yearIndex === 0) {
+        notes.push('No dependents in this profile — a dependent care FSA needs a child under 13 ' +
+          '(or a spouse or dependent unable to care for themselves). No benefit modeled.');
+      }
+      return { profile: p, notes: notes };
+    }
+    // §129(a)(2): $7,500, or $3,750 for a married person filing separately.
+    var limit = p.filingStatus === 'mfs' ? fr.dcfsaLimit / 2 : fr.dcfsaLimit;
+    var election = Math.min(params.annualElection || 0, limit, wages);
+    if ((params.annualElection || 0) > limit) {
+      notes.push('Election capped at the 2026 §129 limit of ' + TSIQ.fmt.usd(limit) + '.');
     }
     p.adjustments = (p.adjustments || 0) + election;
+    // California kept its exclusion at $5,000 ($2,500 separate).
+    var caLimit = TSIQ.TABLES_2026.california.dcfsaLimit / (p.filingStatus === 'mfs' ? 2 : 1);
+    TSIQ.stateAddBack(p, Math.max(0, election - caLimit));
     if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(election) + ' dependent care election modeled as a deduction (§129, $7,500 limit per OBBBA for 2026). Actual mechanism is a pre-tax wage exclusion that ALSO avoids FICA — model is conservative.');
-      notes.push('Excluded dollars reduce the §21 dependent care credit base — do not claim both on the same expenses.');
+      notes.push(TSIQ.fmt.usd(election) + ' dependent care election modeled as a deduction (§129; $7,500 for 2026, $3,750 married filing separately). The actual mechanism is a pre-tax wage exclusion that also avoids FICA, which is not modeled.');
+      notes.push('Not netted out: every excluded dollar reduces the expenses eligible for the ' +
+        'dependent care credit (§21), which for 2026 is 20% to 50% of up to $3,000 (one child) ' +
+        'or $6,000 (two or more). Subtract the credit given up before quoting this figure — ' +
+        'for many families under about $200,000 of income the credit is worth as much or more.');
+      notes.push('Applies only while a child is under 13 — the projection repeats it every year.');
+      if (p.caRules && election > caLimit) {
+        notes.push('California excludes only ' + TSIQ.fmt.usd(caLimit) + ' — the rest is taxed by the state.');
+      }
     }
     return { profile: p, notes: notes };
   }

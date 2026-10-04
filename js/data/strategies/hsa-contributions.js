@@ -141,11 +141,21 @@ TSIQ.strategyModules.push({
       limit = limit + fr.hsaCatchUp55;
     }
     p.adjustments = (p.adjustments || 0) + limit;
+    TSIQ.stateAddBack(p, limit); // California does not allow the HSA deduction
     if (yearIndex === 0) {
       notes.push('HSA contribution of ' + TSIQ.fmt.usd(limit) +
         ' deducted above the line (§223). Requires qualifying HDHP coverage; ' +
         'confirm no disqualifying coverage (general-purpose FSA, Medicare).');
-      notes.push('FICA savings from payroll (cafeteria-plan) funding are not modeled — actual benefit may be modestly higher.');
+      if (p.caRules) {
+        notes.push('California does not recognize HSAs: the contribution is added back on the ' +
+          'California return and the account\'s earnings are taxed by the state each year. ' +
+          'Only the federal saving is shown.');
+      }
+      if ((p.wages || 0) > 0) {
+        notes.push('If the contribution runs through an outside employer\'s cafeteria plan it ' +
+          'also avoids FICA — not modeled. Owners (sole proprietors, partners, more-than-2% ' +
+          'S-corp shareholders) cannot use a cafeteria plan and get no payroll-tax saving.');
+      }
     }
     return { profile: p, notes: notes };
   }

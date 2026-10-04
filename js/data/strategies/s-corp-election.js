@@ -105,8 +105,11 @@ TSIQ.strategyModules.push({
   inputs: [
     { key: 'salary', label: 'Reasonable compensation (W-2 salary)', type: 'currency', default: 80000 },
     { key: 'adminCost', label: 'Annual payroll + 1120-S compliance cost', type: 'currency', default: 2500 },
-    { key: 'entityTaxRatePct', label: 'State S-corp tax on net income (%) — CA is 1.5', type: 'percent', default: 0 },
-    { key: 'entityTaxMin', label: 'State minimum franchise tax — CA is $800', type: 'currency', default: 0 }
+    // defaultFrom: California's 1.5% / $800 when California rules are on.
+    { key: 'entityTaxRatePct', label: 'State S-corp tax on net income (%) — CA is 1.5', type: 'percent', default: 1.5,
+      defaultFrom: function (profile) { return profile.caRules ? 1.5 : 0; } },
+    { key: 'entityTaxMin', label: 'State minimum franchise tax — CA is $800', type: 'currency', default: 800,
+      defaultFrom: function (profile) { return profile.caRules ? 800 : 0; } }
   ],
 
   suggest: function (p) {
@@ -136,13 +139,20 @@ TSIQ.strategyModules.push({
       return { profile: p, notes: notes };
     }
     var f = ((state && state.tables) || TSIQ.TABLES_2026).fica; // indexed in later years
-    var salary = Math.min(params.salary, p.scheduleCNet); // can't pay more than profit
-    if (salary < params.salary) {
+    // Reasonable compensation rises with the business: the salary entered is
+    // the year-1 figure and grows with the client's income growth rate.
+    var wantedSalary = (params.salary || 0) * ((state && state.growthFactor) || 1);
+    var salary = Math.min(wantedSalary, p.scheduleCNet); // can't pay more than profit
+    if (salary < wantedSalary && yearIndex === 0) {
       notes.push('Salary capped at business profit of ' + TSIQ.fmt.usd(p.scheduleCNet) + '.');
     }
     var employerFICA = Math.min(salary, f.ssWageBase) * (f.ssRate / 2) +
       salary * (f.medicareRate / 2);
-    var entityProfit = p.scheduleCNet - salary - employerFICA - (params.adminCost || 0);
+    var adminCost = Math.max(0, params.adminCost || 0);
+    var entityProfit = p.scheduleCNet - salary - employerFICA - adminCost;
+    // Payroll service and the 1120-S are deductible AND a real cash cost of the
+    // election, so they count against the savings.
+    p.planCosts = (p.planCosts || 0) + adminCost;
 
     // State entity-level tax on S-corp net income (rate and minimum default to 0).
     var entityTaxRate = Math.max(0, params.entityTaxRatePct || 0) / 100;

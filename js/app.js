@@ -267,6 +267,9 @@
       rentalNet: num('rentalNet'),
       rentalLossesUsable: $('rentalLossesUsable').checked,
       ltcg: num('ltcg'), qualDiv: num('qualDiv'),
+      oneTimeGain: num('oneTimeGain'),
+      oneTimeGainActive: $('oneTimeGainActive').checked,
+      caRules: $('caRules').checked,
       interest: num('interest'), otherIncome: num('otherIncome'),
       propertyTax: num('propertyTax'), mortgageInterest: num('mortgageInterest'),
       charitable: num('charitable'), otherItemized: num('otherItemized'),
@@ -296,7 +299,8 @@
       ['Total federal', function (r) { return r.totalFederal; }],
       ['State tax (personal)', function (r) { return r.personalStateTax; }],
       ['PTET (entity-level state)', function (r) { return r.ptetPaid; }],
-      ['State S-corp entity tax (franchise)', function (r) { return r.entityStateTax; }]
+      ['State entity tax (S-corp / C-corp franchise)', function (r) { return r.entityStateTax; }],
+      ['Cost of running the plan (payroll, filings, fees)', function (r) { return r.planCosts; }]
     ];
     var html = '';
     lines.forEach(function (line) {
@@ -368,7 +372,7 @@
       '<table class="results-table"><thead><tr><th></th>' +
       cols.map(function (c) { return '<th>' + esc(c.label) + '</th>'; }).join('') +
       '</tr></thead><tbody>' + detailRows(cols) +
-      '<tr class="total-row"><td>Total tax burden</td>' + cols.map(function (c) {
+      '<tr class="total-row"><td>Total tax and plan costs</td>' + cols.map(function (c) {
         return '<td>' + usd(c.r.totalBurden) + '</td>';
       }).join('') + '</tr>' +
       '<tr class="savings-row"><td>Savings vs. baseline</td>' + cols.map(function (c, i) {
@@ -423,9 +427,11 @@
       'Projection applies 2026 law to all years; brackets, standard deduction, capital-gain ' +
       'breakpoints, the §199A threshold, and the Social Security wage base are indexed at the ' +
       'inflation rate entered in Section 1 (SALT cap held at its 2026 amount). ' +
-      'State tax modeled at a flat effective rate. ' +
-      'AMT, recapture on sale, §461(l), and the 2/37 itemized-deduction limit for 37% filers ' +
-      'are not modeled — see the README scope notes.</p>';
+      'State tax modeled at a flat effective rate' +
+      (run.profile.caRules ? ', with California non-conformity applied where a strategy models it' : '') +
+      '. Savings are net of plan costs shown above. A one-time gain is taxed in ' +
+      TSIQ.TABLES_2026.taxYear + ' only. ' +
+      'AMT, recapture on sale, and §461(l) are not modeled — see the README scope notes.</p>';
 
     $('results').innerHTML = html;
     $('output-actions').style.display = 'flex';
@@ -505,12 +511,12 @@
   /* --------------------- client file import / export --------------------- */
   // Format documented in docs/client-file-format.md (tsiq-client-v1).
   var PROFILE_FIELD_IDS = ['filingStatus', 'wages', 'scheduleCNet', 'passthroughK1',
-    'ownerWages', 'entityW2Wages', 'rentalNet', 'ltcg', 'qualDiv', 'interest', 'otherIncome',
+    'ownerWages', 'entityW2Wages', 'rentalNet', 'ltcg', 'oneTimeGain', 'qualDiv', 'interest', 'otherIncome',
     'propertyTax', 'mortgageInterest', 'charitable', 'otherItemized',
     'kidsCTC', 'otherDeps', 'fedWithholding', 'fedEstimates',
     'stateWithholding', 'stateEstimates', 'stateRatePct', 'years', 'growthPct',
     'inflationPct'];
-  var PROFILE_CHECKBOX_IDS = ['isSSTB', 'rentalLossesUsable'];
+  var PROFILE_CHECKBOX_IDS = ['isSSTB', 'rentalLossesUsable', 'oneTimeGainActive', 'caRules'];
   var SCENARIO_KEYS = ['sc2', 'sc3'];
 
   // Scenario picks as plain data: { label, strategies: [{ id, params }] }.
@@ -720,6 +726,11 @@
         pdfNotes.push('K-1 income and W-2 wages are both present. If any of those wages are the ' +
           'client\'s own salary from their S-corp, move that amount from "W-2 wages (outside jobs)" ' +
           'to "Owner W-2 wages from own S-corp" so payroll tax, QBI, and retirement limits compute correctly.');
+      }
+      if (num('ltcg') >= 50000) {
+        pdfNotes.push('Long-term gains of ' + usd(num('ltcg')) + ' were imported as recurring. If they ' +
+          'came from a one-off sale (a business, a property), move the amount to "One-time gain" ' +
+          'so the projection does not repeat it every year.');
       }
       runSuggestions(pdfNotes);
       window.scrollTo(0, 0);

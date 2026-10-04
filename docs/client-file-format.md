@@ -40,8 +40,12 @@ their parameters, so a plan can be reopened exactly as it was left.
                                      //   including the owner's (§199A)
     "isSSTB": false,
     "rentalNet": 0,                  // Schedule E net rental
-    "rentalLossesUsable": true,
-    "ltcg": 0, "qualDiv": 0, "interest": 0, "otherIncome": 0,
+    "rentalLossesUsable": false,     // true only for a real estate professional, an STR
+                                     //   with material participation, or other passive income
+    "ltcg": 0,                       // RECURRING long-term gains (repeat every year)
+    "oneTimeGain": 0,                // gain from a one-off sale — taxed in year 1 only
+    "oneTimeGainActive": false,      // true = business the client actively runs (no NIIT)
+    "qualDiv": 0, "interest": 0, "otherIncome": 0,
     "propertyTax": 0, "mortgageInterest": 0, "charitable": 0, "otherItemized": 0,
     "kidsCTC": 0,                    // qualifying children under 17
     "otherDeps": 0,
@@ -49,7 +53,8 @@ their parameters, so a plan can be reopened exactly as it was left.
     "stateWithholding": 0, "stateEstimates": 0,
     "stateRatePct": 5,               // percent, not decimal
     "years": 10, "growthPct": 3,
-    "inflationPct": 2.5              // bracket indexing for projection years
+    "inflationPct": 2.5,             // bracket indexing for projection years
+    "caRules": true                  // apply California non-conformity and entity taxes
   },
   "scenarios": {                     // optional — written by Export
     "sc2": {
@@ -83,6 +88,15 @@ their parameters, so a plan can be reopened exactly as it was left.
   charges both halves of FICA on it, and it drives retirement and
   self-employed-health-insurance limits). If the split is not determinable from
   the return, leave it all in `wages` and add a question to `notes`.
+- **`ltcg` vs. `oneTimeGain`** — Form 1040 line 7 does not distinguish them.
+  A gain from selling a business, a building or a block of stock goes in
+  `oneTimeGain`; the projection taxes it in year 1 only. Everything in `ltcg`
+  is repeated (and grown) every projection year. The sale strategies
+  (installment sale, §1031, opportunity zone, QSBS) act on `oneTimeGain` only.
+- **`rentalLossesUsable`** — leave `false` unless the return shows the client
+  is a real estate professional or has passive income absorbing the losses.
+  When false, the engine allows the $25,000 rental loss allowance (phased out
+  between $100,000 and $150,000 of income) and suspends the rest.
 - **`scenarios`** — optional. When present, importing clears both scenario
   pickers and restores the saved strategies and parameters; strategy ids no
   longer in the library are skipped and reported. Files without it (older

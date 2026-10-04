@@ -72,7 +72,14 @@ TSIQ.render = TSIQ.render || {};
         return '<td>' + usd(v) + '</td>';
       }).join('') + '</tr>';
     });
-    html += '<tr class="total-row"><td>Total tax</td>' + cols.map(function (c) {
+    var anyPlanCosts = cols.some(function (c) { return c.r.planCosts > 0; });
+    if (anyPlanCosts) {
+      html += '<tr><td>Cost of running the plan (payroll, filings, fees)</td>' + cols.map(function (c) {
+        return '<td>' + usd(c.r.planCosts) + '</td>';
+      }).join('') + '</tr>';
+    }
+    html += '<tr class="total-row"><td>' + (anyPlanCosts ? 'Total tax and plan costs' : 'Total tax') +
+      '</td>' + cols.map(function (c) {
       return '<td>' + usd(c.r.totalBurden) + '</td>';
     }).join('') + '</tr>';
     html += '<tr><td class="savings">Your savings vs. baseline</td>' + cols.map(function (c, i) {

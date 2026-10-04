@@ -89,7 +89,7 @@ TSIQ.strategyModules.push({
     benefits: [
       'A large first-year tax deduction, often 20–35% of the building\'s cost',
       'More cash in your pocket now, when it can be reinvested',
-      'Works on buildings you already own — no amended returns needed',
+      'Works on buildings you already own — no amended returns needed (older purchases get a smaller first-year share)',
       'The study itself is tax-deductible'
     ],
     steps: [
@@ -109,7 +109,13 @@ TSIQ.strategyModules.push({
     { key: 'reclassPct', label: '% reclassified to 5/7/15-yr property', type: 'percent', default: 25 },
     { key: 'propertyType', label: 'Property type', type: 'select', default: 'residential',
       options: [{ value: 'residential', label: 'Residential (27.5-yr)' }, { value: 'commercial', label: 'Commercial (39-yr)' }] },
-    { key: 'studyCost', label: 'Cost of study (deductible)', type: 'currency', default: 6000 }
+    { key: 'studyCost', label: 'Cost of study (deductible)', type: 'currency', default: 6000 },
+    { key: 'acquired', label: 'When the building was acquired (sets the bonus rate)', type: 'select', default: 'post',
+      options: [{ value: 'post', label: 'After Jan 19, 2025 (100% bonus)' },
+        { value: 'y2025', label: 'Jan 1–19, 2025 (40%)' },
+        { value: 'y2024', label: '2024 (60%)' },
+        { value: 'y2023', label: '2023 (80%)' },
+        { value: 'pre', label: 'Sept 28, 2017 – 2022 (100%)' }] }
   ],
 
   suggest: function (p) {
@@ -139,17 +145,50 @@ TSIQ.strategyModules.push({
     var reclassAmt = params.buildingBasis * (params.reclassPct / 100);
     var slPerYear = reclassAmt / recovery;
 
+    // Bonus rate follows the building's acquisition / placed-in-service date.
+    // What bonus does not cover is recovered on the short-life schedules —
+    // modeled here as an even five-year write-off of the remainder.
+    var BONUS_BY_ERA = { post: 1.00, y2025: 0.40, y2024: 0.60, y2023: 0.80, pre: 1.00 };
+    var rate = BONUS_BY_ERA[params.acquired] === undefined ? 1.00 : BONUS_BY_ERA[params.acquired];
+    var bonus = reclassAmt * rate;
+    var restPerYear = (reclassAmt - bonus) / 5;
+
     if (yearIndex === 0) {
-      var bonus = reclassAmt * tb.bonusDepreciationRate;
-      p.rentalNet = p.rentalNet - (bonus - slPerYear) - (params.studyCost || 0);
-      notes.push('Year 1: ' + TSIQ.fmt.usd(bonus) + ' bonus depreciation on ' +
-        TSIQ.fmt.usd(reclassAmt) + ' of reclassified property (100% bonus, §168(k)).');
-      if (!p.rentalLossesUsable) {
-        notes.push('Rental losses flagged NOT currently usable (§469) — excess loss is suspended and carried forward in the projection.');
+      if (!p.rentalNet) {
+        state.costSegOff = true;
+        notes.push('No rental activity in this profile (rental net income is 0). Enter the ' +
+          'property\'s net rental income in Section 1 — even a small figure — for this ' +
+          'strategy to apply. No benefit modeled.');
+        return { profile: p, notes: notes };
       }
-    } else {
+      var studyCost = Math.max(0, params.studyCost || 0);
+      var extra = bonus + restPerYear - slPerYear;
+      p.rentalNet = p.rentalNet - extra - studyCost;
+      p.planCosts = (p.planCosts || 0) + studyCost; // the study is a real cash cost
+      // California allows no bonus depreciation: the state keeps the baseline.
+      TSIQ.stateAdjust(p, 'rentalNet', extra);
+      notes.push('Year 1: ' + TSIQ.fmt.usd(bonus) + ' bonus depreciation on ' +
+        TSIQ.fmt.usd(reclassAmt) + ' of reclassified property (' + Math.round(rate * 100) +
+        '% bonus for this acquisition date, §168(k))' +
+        (rate < 1 ? '; the other ' + TSIQ.fmt.usd(reclassAmt - bonus) + ' is written off over five years.' : '.') +
+        ' The ' + TSIQ.fmt.usd(studyCost) + ' study fee is counted as a cost.');
+      notes.push('This is acceleration: every later year gives back ' + TSIQ.fmt.usd(slPerYear) +
+        ' of depreciation, and most of that give-back falls after a 10-year projection. ' +
+        'For a building already owned, depreciation already claimed on these components ' +
+        'reduces the catch-up — not modeled.');
+      if (p.caRules) {
+        notes.push('California does not allow bonus depreciation — no state tax saving is counted.');
+      }
+      if (!p.rentalLossesUsable) {
+        notes.push('Rental losses are not flagged usable (§469) — the loss beyond the $25,000 ' +
+          'allowance is suspended and carried forward in the projection. Pair with real estate ' +
+          'professional status or the short-term rental strategy if the client qualifies.');
+      }
+    } else if (!state.costSegOff) {
       // Baseline still assumes SL on the reclassified slice; cost seg used it up.
-      p.rentalNet = p.rentalNet + slPerYear;
+      var back = slPerYear - (yearIndex <= 4 ? restPerYear : 0);
+      p.rentalNet = p.rentalNet + back;
+      TSIQ.stateAdjust(p, 'rentalNet', -back);
     }
     return { profile: p, notes: notes };
   }

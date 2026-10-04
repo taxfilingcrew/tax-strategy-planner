@@ -21,10 +21,10 @@ TSIQ.strategyModules.push({
       'envelope) placed in service in a commercial building or a ' +
       'residential building 4+ stories. The deduction is a sliding scale ' +
       'per square foot keyed to modeled energy savings vs. an ASHRAE 90.1 ' +
-      'baseline — for 2026 roughly $0.58–$1.16/sqft at the base rate, ' +
-      'multiplied 5x to roughly $2.90–$5.81/sqft when prevailing wage and ' +
-      'apprenticeship (PW&A) requirements are met (indexed figures — ' +
-      'approximate). Because government and tax-exempt building owners ' +
+      'baseline — for 2026, $0.59–$1.19/sqft at the base rate, ' +
+      'multiplied 5x to $2.97–$5.94/sqft when prevailing wage and ' +
+      'apprenticeship (PW&A) requirements are met (Rev. Proc. 2025-32). ' +
+      'Because government and tax-exempt building owners ' +
       'cannot use it, they may ALLOCATE the deduction to the designer ' +
       '(architect/engineer/design-build contractor) — a major benefit for ' +
       'design firms. The deduction reduces the building property\'s basis, ' +
@@ -36,9 +36,8 @@ TSIQ.strategyModules.push({
       '90.1 reference standard.',
       'Sliding scale: the per-sqft rate starts at 25% modeled energy-cost ' +
       'savings and climbs with each additional percentage point of savings ' +
-      'to a cap at 50% savings. Meeting PW&A quintuples the rate. 2026 ' +
-      'amounts are inflation-indexed (~$0.58 base floor to ~$5.81 PW&A cap ' +
-      'per sqft — verify against the current-year revenue procedure).',
+      'to the maximum. Meeting PW&A quintuples the rate. 2026 amounts: $0.59 ' +
+      'base floor to $5.94 PW&A cap per sqft (Rev. Proc. 2025-32).',
       'OBBBA termination: no §179D deduction for property the construction ' +
       'of which begins after 6/30/2026. Projects already under construction ' +
       'by that date remain eligible when placed in service.',
@@ -55,9 +54,9 @@ TSIQ.strategyModules.push({
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §179D', note: 'The deduction: energy-efficient commercial building property, sliding per-sqft scale, PW&A multiplier (post-IRA structure).' },
-      { type: 'IRC', cite: 'P.L. 119-21 (OBBBA) — §179D termination', note: 'No deduction for property whose construction begins after June 30, 2026 — the planning deadline that leads this strategy.' },
+      { type: 'IRC', cite: 'P.L. 119-21 (OBBBA) — §179D termination', note: 'No deduction for property whose construction begins after June 30, 2026. That date has passed: only projects already under construction by then still qualify.' },
       { type: 'IRC', cite: 'IRC §179D(d)', note: 'Allocation of the deduction to the designer for buildings owned by governmental and tax-exempt entities.' },
-      { type: 'Admin', cite: 'Rev. Proc. 2025-32 (2026 inflation adjustments)', note: 'Source of the indexed 2026 per-square-foot amounts (approximate ~$0.58–$5.81 range stated; verify exact figures here).' },
+      { type: 'Admin', cite: 'Rev. Proc. 2025-32 (2026 inflation adjustments)', note: 'Source of the indexed 2026 per-square-foot amounts: $0.59–$1.19 base, $2.97–$5.94 with prevailing wage and apprenticeship.' },
       { type: 'Admin', cite: 'Form 7205', note: 'Required form for claiming §179D, identifying the building, savings percentage, PW&A status, and any designer allocation.' },
       { type: 'Admin', cite: 'ASHRAE Standard 90.1 (applicable edition)', note: 'The reference baseline the modeled energy-cost savings are measured against.' }
     ],
@@ -75,12 +74,12 @@ TSIQ.strategyModules.push({
       'The 2026 per-sqft figures are indexed and stated here approximately — pull the exact amounts from the current revenue procedure before quantifying for a client.'
     ],
     bestFit: [
-      'Owners with commercial construction or major lighting/HVAC/envelope retrofits already underway or startable before 7/1/2026.',
+      'Owners with commercial construction or major lighting/HVAC/envelope work that began construction on or before 6/30/2026.',
       'Architecture, engineering, and design-build firms with government or tax-exempt projects (schools, municipal buildings) in open years.',
       'PW&A-compliant projects (union or prevailing-wage contractors) where the 5x multiplier is realistic.'
     ],
     implementation: [
-      'Triage the pipeline NOW against the 6/30/2026 construction-start deadline; document start dates.',
+      'Confirm and document that construction began on or before 6/30/2026 (physical work of a significant nature) — later starts get nothing.',
       'Engage a §179D certification firm for energy modeling before design is locked — savings percentages are won in design.',
       'If pursuing the 5x rate, put PW&A compliance tracking in the construction contracts from day one.',
       'Designers: request allocation letters from public-sector clients for eligible placed-in-service years.',
@@ -89,11 +88,11 @@ TSIQ.strategyModules.push({
   },
 
   client: {
-    teaser: 'A building-upgrade write-off with a hard deadline months away',
+    teaser: 'A building-upgrade write-off for projects already under way',
     headline: 'Energy-efficient building work: a big deduction — if construction starts in time',
     plainEnglish: [
       'When you build or upgrade a commercial building with efficient lighting, heating and cooling, or insulation and windows, the tax law rewards you with an immediate deduction based on the building\'s square footage — instead of waiting 39 years to deduct those costs the normal way. On a decent-sized building, that can be hundreds of thousands of dollars moved from "someday" to "this year."',
-      'Here is the urgent part: Congress ended this deduction for projects that start construction after June 30, 2026. Projects that break ground before then keep their eligibility. If you have been considering a building project or a major systems upgrade, the calendar — not the tax code — is now the main constraint.',
+      'One limit matters most: Congress ended this deduction for projects that start construction after June 30, 2026. A project that broke ground on or before that date keeps its eligibility; a project starting now does not qualify. California does not allow this deduction on the state return.',
       'The deduction size depends on how efficient the building is and on how construction workers are paid — meeting certain wage standards multiplies the deduction five times. An independent engineer certifies the energy savings, and that certificate is your proof.'
     ],
     analogy: 'It\'s like a store closing sale on a deduction — the discount is real, but the doors close for new projects on June 30, 2026.',
@@ -104,7 +103,7 @@ TSIQ.strategyModules.push({
       'Design firms can receive the deduction for government building projects'
     ],
     steps: [
-      'We check your project timeline against the June 30, 2026 construction-start deadline — first and fast',
+      'We confirm your project began construction on or before June 30, 2026, and document it',
       'An independent engineer models and certifies the energy savings',
       'We coordinate the wage documentation if the 5x version is in reach',
       'We claim the deduction with the proper IRS form and adjust your building records'
@@ -156,14 +155,28 @@ TSIQ.strategyModules.push({
           'select the rental stream or correct the profile. No benefit modeled.');
         return { profile: p, notes: notes };
       }
+      if (route === 'rentalNet' && !p.rentalNet) {
+        state.d179dRoute = 'none';
+        notes.push('No rental activity in this profile (rental net income is 0). Enter the ' +
+          'property\'s net rental income in Section 1 — even a small figure — for this ' +
+          'strategy to apply. No benefit modeled.');
+        return { profile: p, notes: notes };
+      }
       p[route] = (p[route] || 0) - (amt - sl);
+      // California does not allow §179D (R&TC §17257.2): the state keeps the baseline.
+      TSIQ.stateAdjust(p, route, amt - sl);
       notes.push(TSIQ.fmt.usd(amt) + ' §179D deduction (certified energy savings; ' +
         'modeled net of the ' + TSIQ.fmt.usd(sl) + ' straight-line slice the baseline ' +
-        'would have taken over 39 years). DEADLINE: §179D is TERMINATED for property ' +
-        'beginning construction after 6/30/2026 (OBBBA).');
-      notes.push('2026 per-sqft rates are indexed (~$0.58–$5.81 depending on savings % ' +
-        'and prevailing wage/apprenticeship) — approximate; verify exact figures in the ' +
-        'current revenue procedure.');
+        'would have taken over 39 years). AVAILABLE ONLY for property whose construction ' +
+        'began on or before 6/30/2026 — §179D is terminated for later starts (OBBBA).');
+      notes.push('2026 rates: $0.59–$1.19 per square foot at the base rate, $2.97–$5.94 with ' +
+        'prevailing wage and apprenticeship (Rev. Proc. 2025-32). For a retrofit, interior ' +
+        'lighting and HVAC are usually qualified improvement property already eligible for ' +
+        '100% bonus — §179D then adds little; the 39-year baseline here fits new construction ' +
+        'and building-envelope work.');
+      if (p.caRules) {
+        notes.push('California does not allow the §179D deduction — no state tax saving is counted.');
+      }
       if (route === 'rentalNet' && !p.rentalLossesUsable && (p.rentalNet || 0) < 0) {
         notes.push('Rental losses flagged NOT currently usable (§469) — the excess is ' +
           'suspended and carried forward in the projection.');
@@ -171,6 +184,7 @@ TSIQ.strategyModules.push({
     } else if (state.d179dRoute && state.d179dRoute !== 'none') {
       // Baseline still deducts the 39-yr straight-line slice; §179D used it up.
       p[state.d179dRoute] = (p[state.d179dRoute] || 0) + sl;
+      TSIQ.stateAdjust(p, state.d179dRoute, -sl);
     }
     return { profile: p, notes: notes };
   }

@@ -71,7 +71,7 @@ TSIQ.strategyModules.push({
     teaser: 'Restores a deduction Congress capped — through a door most filers never use',
     headline: 'Restore the state-tax deduction Congress capped',
     plainEnglish: [
-      'Since 2018, there has been a cap on how much state income tax you can deduct on your federal return. For successful business owners, that cap wipes out a deduction that used to be worth tens of thousands of dollars.',
+      'Since 2018, there has been a cap on how much state income tax you can deduct on your federal return ($40,400 for 2026, shrinking for incomes over $505,000). For business owners whose state and property taxes exceed the cap — or who take the standard deduction — part of that deduction is simply lost.',
       'Here is the good news: the cap applies to people, not to businesses. If your business elects to pay your state income tax at the company level, the business deducts every dollar of it — no cap — and the state gives you credit so you are not taxed twice.',
       'The IRS has formally approved this approach. It is not a loophole; most states created these programs specifically so their business owners could keep the full deduction.'
     ],
@@ -97,14 +97,27 @@ TSIQ.strategyModules.push({
   inputs: [
     // defaultFrom: the app pre-fills this from the client's state rate in
     // Section 1 when the strategy is checked (until the advisor edits it).
-    { key: 'ptetRatePct', label: 'State PTET rate (%) — starts at the client\'s state rate; CA elective tax is 9.3', type: 'percent', default: 5,
-      defaultFrom: function (profile) { return Math.round((profile.stateRate || 0) * 10000) / 100; } }
+    { key: 'ptetRatePct', label: 'State PTET rate (%) — California elective tax is 9.3; otherwise starts at the client\'s state rate', type: 'percent', default: 9.3,
+      defaultFrom: function (profile) {
+        return profile.caRules ? 9.3 : Math.round((profile.stateRate || 0) * 10000) / 100;
+      } }
   ],
 
   suggest: function (p) {
     if (!(p.passthroughK1 > 0 && p.stateRate > 0)) return null;
-    return { reason: TSIQ.fmt.usd(p.passthroughK1) + ' of pass-through income in a state with an income tax — the entity-level deduction is usually free money.',
-      params: { ptetRatePct: Math.round(p.stateRate * 10000) / 100 } };
+    // PTET helps only where the owner's own state-tax deduction is capped or
+    // unused: a non-itemizer, or state + property tax above the SALT cap.
+    // An itemizer under the cap just swaps one deduction for another and
+    // loses part of it through the QBI haircut.
+    var salt = TSIQ.TABLES_2026.salt;
+    var fs = p.filingStatus || 'mfj';
+    var statePaid = (p.stateRate || 0) * ((p.wages || 0) + (p.ownerWages || 0) + (p.passthroughK1 || 0) + (p.scheduleCNet || 0)) + (p.propertyTax || 0);
+    var itemizes = statePaid + (p.mortgageInterest || 0) + (p.charitable || 0) + (p.otherItemized || 0) >
+      TSIQ.TABLES_2026.standardDeduction[fs];
+    if (itemizes && statePaid <= salt.cap[fs]) return null;
+    return { reason: TSIQ.fmt.usd(p.passthroughK1) + ' of pass-through income, and the owner\'s own state-tax deduction is ' +
+        (itemizes ? 'over the SALT cap' : 'unused (standard deduction)') + ' — the entity-level deduction recovers it.',
+      params: { ptetRatePct: p.caRules ? 9.3 : Math.round(p.stateRate * 10000) / 100 } };
   },
 
   appliesTo: function (profile) {
@@ -125,9 +138,10 @@ TSIQ.strategyModules.push({
         'or S corporation. Pair with the S-Corp Election strategy, or enter K-1 income.');
       return { profile: p, notes: notes };
     }
-    // No rate supplied → fall back to the client's own state rate.
+    // No rate supplied → California's 9.3% under California rules, otherwise
+    // the client's own state rate.
     var rate = (params.ptetRatePct !== undefined
-      ? params.ptetRatePct : (p.stateRate || 0) * 100) / 100;
+      ? params.ptetRatePct : (p.caRules ? 9.3 : (p.stateRate || 0) * 100)) / 100;
     var ptet = p.passthroughK1 * rate;
     p.passthroughK1 = p.passthroughK1 - ptet;
     p.ptetPaid = (p.ptetPaid || 0) + ptet;
@@ -135,6 +149,17 @@ TSIQ.strategyModules.push({
       notes.push('Entity pays ' + TSIQ.fmt.usd(ptet) + ' of state tax, fully deductible ' +
         'federally (Notice 2020-75); owner receives an equal state credit.');
       notes.push('Federal benefit shown is net of the §199A interaction (PTET also reduces QBI).');
+      notes.push('State tax is unchanged: the state does not allow a deduction for its own tax, ' +
+        'so the benefit is federal only. The election pays off when the owner\'s own state-tax ' +
+        'deduction is capped or unused; an owner who itemizes under the $40,400 SALT cap can ' +
+        'come out slightly behind.');
+      if (p.caRules) {
+        notes.push('California: 9.3% of qualified net income; each owner consents separately; ' +
+          'elected on a timely original return. Prepay by June 15 the greater of $1,000 or 50% ' +
+          'of the prior-year tax — for 2026–2030 a short or missed prepayment no longer voids ' +
+          'the election but trims the credit by 12.5% of the shortfall. The credit is ' +
+          'nonrefundable with a 5-year carryover.');
+      }
     }
     return { profile: p, notes: notes };
   }

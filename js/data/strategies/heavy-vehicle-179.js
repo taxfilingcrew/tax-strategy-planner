@@ -151,17 +151,22 @@ TSIQ.strategyModules.push({
       notes.push(TSIQ.fmt.usd(businessShare) + ' first-year write-off (§179 up to the ' +
         'indexed SUV cap, 100% bonus under §168(k) on the balance) on ' +
         TSIQ.fmt.usd(params.vehicleCost || 0) + ' × ' + Math.round(usePct * 100) + '% business use.');
-      notes.push('Timing benefit: years 2–6 show the give-back vs. straight-line. ' +
+      notes.push('Timing benefit: years 2–5 show the give-back vs. straight-line. ' +
         '§1245/§280F recapture on sale or if business use drops ≤50% is not modeled.');
     } else if (yearIndex <= 4) {
       delta = slPerYear; // baseline still deducting SL; this scenario used it up
     }
 
     if (delta !== 0) {
-      if (p.scheduleCNet > 0) {
-        p.scheduleCNet = p.scheduleCNet + delta;
-      } else {
-        p.passthroughK1 = p.passthroughK1 + delta;
+      var route = p.scheduleCNet > 0 ? 'scheduleCNet' : 'passthroughK1';
+      p[route] = p[route] + delta;
+      // California: no bonus depreciation and §179 capped at $25,000, so the
+      // state accelerates only the first $25,000 of the business share.
+      var noState = Math.max(0, businessShare - TSIQ.TABLES_2026.california.sec179Limit);
+      TSIQ.stateAdjust(p, route, yearIndex === 0 ? noState * (1 - 1 / 5) : -noState / 5);
+      if (yearIndex === 0 && p.caRules && noState > 0) {
+        notes.push('California allows no bonus depreciation and caps §179 at $25,000 — the ' +
+          'state saving is counted on the first $25,000 only.');
       }
     }
     return { profile: p, notes: notes };
