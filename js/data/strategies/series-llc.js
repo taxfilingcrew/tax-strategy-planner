@@ -24,7 +24,13 @@ TSIQ.strategyModules.push({
       'liability segregation and administrative economy, not a federal tax ' +
       'rate play. State recognition of the internal shields varies, and ' +
       'title, insurance, and lender practice lag the statutes — the caveats ' +
-      'are the substance of this advisory.',
+      'are the substance of this advisory. CALIFORNIA REMOVES THE COST ' +
+      'ADVANTAGE: a series LLC cannot be formed in California; one formed ' +
+      'elsewhere must register here, and the FTB treats EACH series doing ' +
+      'business in California as a separate LLC that owes its own $800 ' +
+      'annual tax and gross-receipts LLC fee and files its own Form 568. For ' +
+      'a California owner or California property the structure costs the ' +
+      'same as separate LLCs and adds legal uncertainty.',
     mechanics: [
       'One master LLC is formed under a series-enabling statute (Delaware ' +
       'pioneered the form; Texas, Illinois, Nevada, and a number of other ' +
@@ -34,7 +40,15 @@ TSIQ.strategyModules.push({
       'assets, notice in the certificate of formation — the debts of one ' +
       'series are enforceable only against that series\'s assets, replicating ' +
       'a per-property LLC stack with one formation and (in many states) one ' +
-      'franchise/annual fee.',
+      'franchise/annual fee. Not in California — see the next point.',
+      'California (FTB): a series LLC cannot be formed under California law. ' +
+      'A series LLC formed in another state must register with the Secretary ' +
+      'of State, and each series that is registered or doing business in ' +
+      'California — which includes a series whose manager or owner runs it ' +
+      'from California, wherever the property is — pays the $800 annual tax ' +
+      '(FTB 3522), the LLC fee on gross receipts (FTB 3536), and files a ' +
+      'separate Form 568. Five properties in five series is 5 × $800 and five ' +
+      'returns, exactly like five LLCs.',
       'Federal classification: Prop. Reg. §301.7701-1(a)(5) treats each ' +
       'series as a separate local-law entity, then applies §7701 ' +
       'check-the-box. A series wholly owned by one person is disregarded; a ' +
@@ -57,7 +71,8 @@ TSIQ.strategyModules.push({
       { type: 'Reg', cite: 'Reg. §§301.7701-1 through -3', note: 'Entity classification (check-the-box): single-owner series are disregarded; multi-owner series default to partnership status.' },
       { type: 'Admin', cite: 'Form 8832', note: 'Entity classification election, available series by series if a non-default classification is wanted.' },
       { type: 'IRC', cite: 'IRC §7701(a)(2)–(3)', note: 'Definitions of partnership and corporation that the classification analysis feeds into.' },
-      { type: 'IRC', cite: 'IRC §469', note: 'Passive activity rules apply per activity regardless of the series wrapper — the wrapper neither helps nor hurts loss usability.' }
+      { type: 'IRC', cite: 'IRC §469', note: 'Passive activity rules apply per activity regardless of the series wrapper — the wrapper neither helps nor hurts loss usability.' },
+      { type: 'Admin', cite: 'FTB guidance: Series limited liability company; Form 568 instructions', note: 'A series LLC cannot be formed in California. Each series of a foreign series LLC registered or doing business in California is treated as a separate LLC: $800 annual tax, LLC fee, and its own Form 568.' }
     ],
     requirements: [
       'Formation in (or qualification analysis for) a state with a series-enabling statute; properties in non-series states need local-counsel review before relying on the internal shields.',
@@ -71,16 +86,18 @@ TSIQ.strategyModules.push({
       'Federal guidance is a PROPOSED regulation — longstanding and widely followed, but not final.',
       'Operational fragility: sloppy records, shared bank accounts, or deeds left in the master LLC\'s name collapse the segregation.',
       'Title companies and lenders are inconsistent about series — expect friction (or refusal) on financing and closings in some markets.',
-      'Some states charge per-series fees or registration (e.g., registered series regimes), eroding the cost advantage.'
+      'Some states charge per-series fees or registration (e.g., registered series regimes), eroding the cost advantage.',
+      'California: $800 plus the LLC fee and a Form 568 for EVERY series doing business in the state, and California has no series statute, so whether a California court would honor the internal walls for California property or a California injury is untested. Unregistered series are exposed to back tax, penalties and loss of the right to sue in California courts.'
     ],
     bestFit: [
-      'Clients holding (or accumulating) several rental properties in a state with a robust series statute.',
+      'Clients who live outside California and hold (or are accumulating) several rental properties in a state with a robust series statute.',
+      'NOT California residents or California property: there is no fee saving and the shield is untested — use separate LLCs, or one LLC with strong umbrella insurance, instead.',
       'Owners currently holding multiple properties in ONE ordinary LLC — a series structure is a large risk upgrade from that baseline.',
       'Cost-sensitive investors for whom a full per-property LLC stack (formation + annual fees + registered agents) is prohibitive.',
       'Disciplined record-keepers — this structure punishes commingling.'
     ],
     implementation: [
-      'Confirm the property states: series-enabling statute or a local-counsel opinion on shield recognition before committing.',
+      'Confirm the property states AND the owner\'s state: series-enabling statute or a local-counsel opinion on shield recognition before committing. If the owner manages from California or any property is here, price it as one $800-plus-fee LLC per series and compare with ordinary LLCs first.',
       'Form the master LLC with series-enabling language in the certificate and a series-aware operating agreement; establish each series in writing.',
       'Deed each property into its specific series; open a bank account per series; set up per-series books.',
       'Confirm federal classification series by series (disregarded vs. partnership) and calendar the resulting return obligations.',
@@ -94,13 +111,13 @@ TSIQ.strategyModules.push({
     headline: 'Protect each property from the others — without a stack of LLCs',
     plainEnglish: [
       'If you own several rental properties, a lawsuit involving one of them — say, an injury at Property A — can put every property you own on the table. The standard fix is a separate LLC for each property, but that means paying formation costs and annual fees several times over, every year.',
-      'A series LLC does the same job with one company. Inside it, each property lives in its own protected compartment with its own records and bank account. If something goes wrong at one property, the claim is walled off from the others.',
-      'For most single owners, this does not add federal tax paperwork — your rentals are reported much like they are today. The win is protection and lower ongoing cost, with the flexibility to add a new compartment each time you buy another property.'
+      'A series LLC does the same job with one company. Inside it, each property lives in its own protected compartment with its own records and bank account. If something goes wrong at one property, the claim is walled off from the others. In the states that allow it, that means one company to form and one annual fee.',
+      'California is not one of those states. You cannot form one here, and if you live in California or the property is here, the state treats every compartment as its own company: $800 a year or more for each, and a separate state return for each. So for California owners and California property there is no cost saving, and the protection has not been tested in California courts. In that case we usually recommend ordinary separate LLCs or a strong umbrella insurance policy instead.'
     ],
     analogy: 'It\'s like a ship built with watertight compartments: one flooded compartment doesn\'t sink the whole vessel.',
     benefits: [
       'Each property is shielded from problems at the others',
-      'One company to form and maintain instead of many',
+      'Outside California: one company to form and maintain instead of many',
       'Usually no extra federal tax filings for a single owner',
       'Easy to add a new compartment for each new purchase'
     ],
@@ -111,6 +128,7 @@ TSIQ.strategyModules.push({
       'Each year we check that the walls between compartments stay intact'
     ],
     considerations: [
+      'California charges each compartment its own $800 yearly tax and requires a return for each, so this rarely makes sense for a California owner or California property.',
       'Not every state recognizes the internal walls — if you own property in a state that doesn\'t, we may recommend a different structure there.',
       'The protection only holds if each compartment keeps its own money and records — mixing funds between properties can undo it.',
       'Some banks, lenders, and title companies are less familiar with this structure, which can add friction when financing or selling.'

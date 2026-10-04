@@ -23,8 +23,9 @@ TSIQ.strategyModules.push({
       'fringe CLEANUP item, not a headline strategy — the dollars are small ' +
       '(a few hundred dollars of premium excluded per employee) — but it is ' +
       'cheap, clean, and commonly done wrong: >2% S-corp shareholders do not ' +
-      'qualify for the exclusion (§1372 partner treatment — their premiums ' +
-      'belong on the W-2), and discriminatory plans strip key employees of ' +
+      'qualify for the exclusion (§1372 partner treatment — the full cost of ' +
+      'their coverage belongs on the W-2 in Boxes 1, 3 AND 5, so it bears ' +
+      'Social Security and Medicare tax as well as income tax), and discriminatory plans strip key employees of ' +
       'the $50k exclusion entirely under §79(d). Advisory-only: the per-owner ' +
       'benefit is too small and too structure-dependent to model honestly ' +
       'from return inputs.',
@@ -43,9 +44,14 @@ TSIQ.strategyModules.push({
       'eligibility or benefit amounts, key employees lose the $50k exclusion ' +
       'and impute income at the GREATER of Table I or actual cost.',
       'Entity mapping: C-corp owner-employees qualify like any employee; ' +
-      '>2% S-corp shareholders do not (premiums are W-2 wages, though not ' +
-      'FICA wages, and are not eligible for §162(l) since life insurance is ' +
-      'not health insurance); partners/sole proprietors are not employees.',
+      '>2% S-corp shareholders do not: the whole cost of their coverage is ' +
+      'W-2 wages AND FICA wages (Boxes 1, 3 and 5). §3121(a)(2)(C) removes ' +
+      'group-term life from the FICA exclusion to the extent it is includible ' +
+      'in income, and for a 2% shareholder all of it is. It is not FUTA ' +
+      'wages, income tax withholding is not required, and it is not eligible ' +
+      'for §162(l) (life insurance is not health insurance). Do not confuse ' +
+      'this with a 2% shareholder\'s HEALTH premiums, which are Box 1 only. ' +
+      'Partners/sole proprietors are not employees.',
       'Employer premiums are deductible under §162; §264(a) denies the ' +
       'deduction if the employer is directly or indirectly a beneficiary.'
     ],
@@ -54,7 +60,8 @@ TSIQ.strategyModules.push({
       { type: 'Reg', cite: 'Reg. §1.79-3(d)(2)', note: 'Table I uniform premiums — the age-banded rates used to impute income on coverage over $50,000.' },
       { type: 'Reg', cite: 'Reg. §1.79-1', note: 'What qualifies as group term life, including the under-10-employee alternative rules.' },
       { type: 'IRC', cite: 'IRC §79(d)', note: 'Nondiscrimination: discriminatory plans cost key employees the exclusion; imputation at greater of Table I or actual cost.' },
-      { type: 'IRC', cite: 'IRC §1372', note: '>2% S-corp shareholders treated as partners — no §79 exclusion; premiums are W-2 wages.' },
+      { type: 'IRC', cite: 'IRC §1372', note: '>2% S-corp shareholders treated as partners — no §79 exclusion; the cost of their coverage is W-2 wages in Boxes 1, 3 and 5.' },
+      { type: 'IRC', cite: 'IRC §3121(a)(2)(C)', note: 'Group-term life is FICA wages to the extent includible in gross income — the amount over $50,000 for an ordinary employee, the entire cost for a >2% S-corp shareholder.' },
       { type: 'IRC', cite: 'IRC §264(a)(1)', note: 'No employer deduction where the employer is a beneficiary of the policy.' }
     ],
     requirements: [
@@ -64,7 +71,7 @@ TSIQ.strategyModules.push({
       '§79(d) nondiscrimination compliance if key employees participate.'
     ],
     risks: [
-      'S-corp misclassification is the most common error: >2% shareholders given the exclusion that §1372 denies — a payroll correction, not a planning idea.',
+      'S-corp misclassification is the most common error: >2% shareholders given the exclusion that §1372 denies, or their coverage put in Box 1 only with no Social Security and Medicare tax (the health-insurance treatment applied to life insurance by mistake) — a payroll correction, not a planning idea.',
       'Discriminatory small-group designs (owner-only or owner-tilted coverage) forfeit the key-employee exclusion under §79(d).',
       'Missed imputation on coverage above $50k accrues quiet W-2/FICA errors for years.',
       'The dollars are small — presenting this as a marquee strategy erodes credibility. It is a hygiene item bundled with a broader fringe redesign.'
@@ -77,7 +84,7 @@ TSIQ.strategyModules.push({
     implementation: [
       'Inventory existing life coverage and how premiums are being run through payroll today.',
       'Verify group status under Reg. §1.79-1 (or design to the small-group alternative) and check §79(d) discrimination.',
-      'Correct entity mapping: exclude only where §79 actually applies; put >2% S-corp shareholder premiums on the W-2.',
+      'Correct entity mapping: exclude only where §79 actually applies; put >2% S-corp shareholder premiums on the W-2 in Boxes 1, 3 and 5 and withhold FICA on them.',
       'Set up Table I imputation for coverage over $50,000 (payroll systems automate this — confirm the age bands).',
       'Deduct premiums at the entity; confirm the employer is not a beneficiary.'
     ]
@@ -106,7 +113,7 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'This is a small, tidy benefit — we position it as part of an overall benefits cleanup, not a headline saving.',
-      'Owners of S-corporations do not get the tax-free treatment on their own coverage — we will show you exactly how yours must be reported.',
+      'Owners of S-corporations do not get the tax-free treatment on their own coverage — for you it is taxed like extra pay, including Social Security and Medicare. We will show you exactly how yours must be reported.',
       'The plan has to cover employees fairly; a plan designed only for the owner loses the tax break.'
     ]
   },

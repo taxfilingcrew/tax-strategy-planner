@@ -22,8 +22,13 @@ TSIQ.strategyModules.push({
       'deferred gain permanently. Separately, an S-corporation ESOP is a powerful ' +
       'operating structure: the ESOP\'s share of S-corp income is exempt from UBIT ' +
       'under §512(e)(3), so a 100% ESOP-owned S corp pays no federal income tax at ' +
-      'the entity or shareholder level — but §1042 is available only for C-corp ' +
-      'stock, so sellers must choose between the two benefits (or sequence them).',
+      'the entity or shareholder level. The two benefits do NOT come together: ' +
+      'the full §1042 deferral requires C-corp stock, the income-tax-free ' +
+      'operating structure requires S status, and a seller must choose one ' +
+      'or sequence them. For sales after December 31, 2027, SECURE 2.0 opens ' +
+      'a narrow door for S-corp sellers: §1042(h) allows the election on up ' +
+      'to 10% of the amount realized. California still charges its 1.5% ' +
+      'S-corporation tax on an ESOP-owned S corp.',
     mechanics: [
       '§1042 election: the seller of qualified employer securities (domestic ' +
       'C-corp stock, no public market, held 3+ years) elects nonrecognition to ' +
@@ -36,7 +41,10 @@ TSIQ.strategyModules.push({
       'keeping the deferral intact while accessing liquidity.',
       'Basis mechanics: the deferred gain reduces basis in the QRP (§1042(d)), ' +
       'so selling QRP triggers the gain. Holding QRP until death converts the ' +
-      'deferral into permanent exclusion via the §1014 basis step-up.',
+      'deferral into permanent exclusion via the §1014 basis step-up. A GIFT ' +
+      'of QRP does not trigger the gain either (§1042(e)(3)): the low basis ' +
+      'carries to the donee, and a gift to charity ends the deferred gain ' +
+      'with a fair-market-value deduction — a second permanent-exclusion route.',
       'Anti-double-dip rules: under §409(n), §1042 sellers, 25%+ shareholders, ' +
       'and certain family members are barred from receiving allocations of the ' +
       '§1042 shares inside the ESOP; violations trigger the §4979A 50% excise tax.',
@@ -53,6 +61,8 @@ TSIQ.strategyModules.push({
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §1042', note: 'Gain deferral on sale of C-corp qualified securities to an ESOP owning 30%+ after the sale, with reinvestment in qualified replacement property within the 3-month-before/12-month-after window; §1042(d) carries the deferred gain into QRP basis.' },
+      { type: 'IRC', cite: 'IRC §1042(e)(3)', note: 'Recapture on disposition of QRP does not apply to a transfer at death, by gift, in a §368 reorganization (unless the electing seller controls the corporation), or in a later §1042 sale.' },
+      { type: 'IRC', cite: 'IRC §1042(h) (SECURE 2.0 Act §114)', note: 'S-corporation stock: for sales after December 31, 2027, the §1042 election may be made on not more than 10% of the amount realized. The full deferral remains a C-corporation benefit.' },
       { type: 'IRC', cite: 'IRC §512(e)', note: 'S-corp interests held by exempt organizations generally generate UBIT — but §512(e)(3) exempts ESOP-held S-corp stock, the provision that makes the 100% ESOP-owned S corp federally income-tax-free.' },
       { type: 'IRC', cite: 'IRC §409(p)', note: 'S-corp ESOP anti-abuse: prohibited allocations to disqualified persons in a nonallocation year (50%+ concentration counting synthetic equity) trigger deemed distributions and the §4979A excise tax.' },
       { type: 'IRC', cite: 'IRC §409(n)', note: 'No allocation of §1042 shares to the seller, 25%+ shareholders, or their family — the price of the seller\'s deferral.' },
@@ -91,9 +101,19 @@ TSIQ.strategyModules.push({
       '§409(p) failure in an S-corp ESOP is catastrophic (deemed distributions, ' +
       '50% excise on prohibited allocations and synthetic equity) — annual ' +
       'testing is mandatory, especially with management incentive equity.',
-      'Selling or disposing of QRP recognizes the deferred gain (limited ' +
-      'exceptions: death, gift does NOT qualify — gifts of QRP trigger ' +
-      'recognition); portfolio management inside QRP is constrained.',
+      'Selling QRP recognizes the deferred gain. The exceptions are death, ' +
+      'GIFT, certain reorganizations and a later §1042 sale (§1042(e)(3)) — ' +
+      'so QRP can be given to family (carryover basis) or to charity without ' +
+      'triggering it, but ordinary rebalancing cannot; portfolio management ' +
+      'inside QRP is constrained.',
+      'C and S benefits are alternatives, not a package: a client who hears ' +
+      '"no capital gains tax AND a tax-free company" has been sold both at ' +
+      'once. Until 2028 an S-corp seller gets no §1042 deferral at all; from ' +
+      '2028, 10% of the amount realized.',
+      'California: the 1.5% S-corporation tax ($800 minimum) applies to an ' +
+      'ESOP-owned S corp, so "income-tax-free" is federal only. Confirm ' +
+      'California\'s treatment of the §1042 election for the sale year ' +
+      'before quoting a state deferral.',
       'Transaction cost: feasibility study, trustee, appraiser, plan counsel, and ' +
       'lender fees commonly run well into six figures — this is a $2M+ ' +
       'enterprise-value tool.'
@@ -111,7 +131,8 @@ TSIQ.strategyModules.push({
     implementation: [
       'Commission a feasibility study: valuation range, debt capacity, ' +
       'contribution limits (§404), repurchase-obligation forecast, and whether ' +
-      '§1042 (C corp) or the S-corp exemption is the priority.',
+      '§1042 (C corp) or the S-corp exemption is the priority — they cannot ' +
+      'both apply to the same sale (S-corp sellers: 10% from 2028).',
       'Assemble the team: independent trustee, independent appraiser, ERISA ' +
       'counsel, and lender; design the plan document and the transaction ' +
       '(leveraged vs installment).',
@@ -134,13 +155,13 @@ TSIQ.strategyModules.push({
     plainEnglish: [
       'When you sell your company, capital gains tax usually takes a large bite the moment the deal closes. There is a different kind of buyer that changes that: an employee ownership trust set up for your own team. You sell at a price set by an independent appraiser, and a special tax rule lets you roll the sale money into a portfolio of stocks and bonds without paying capital gains tax on the sale.',
       'That tax bill is not just delayed — with the right planning, it can disappear. If you hold the replacement investments for the rest of your life, current law wipes out the deferred gain when your estate passes to your heirs. You got full price for the business, and the capital gains tax on the sale was never paid.',
-      'There is a second prize, too. Once the company is fully owned by the employee trust and set up the right way, it generally stops paying federal income tax on its profits. That extra cash flow helps the company pay off the buyout and grow — and your employees end up owning the place where they work.'
+      'There is a different prize available instead of that one. A company set up as an S corporation and fully owned by the employee trust generally stops paying federal income tax on its profits, which helps it pay off the buyout and grow. You do not get both at once: the full capital-gains deferral is for a regular (C) corporation, and the tax-free operating structure is for an S corporation. Some owners take the deferral first and convert the company later. Which path is worth more depends on your numbers, and we run both.'
     ],
     analogy: 'It is like trading your company for a diversified portfolio in a way the tax system treats as "you never really sold" — and if you hold that portfolio for life, the tax meter never comes back on.',
     benefits: [
       'Full appraised value for your company, paid to you',
       'Capital gains tax deferred — and eliminated entirely if you hold the replacement investments for life',
-      'The company can become largely federal-income-tax-free going forward, powering the buyout',
+      'Or, as an alternative path, a company that pays little or no federal income tax going forward — not both on the same sale',
       'Your employees become owners; the business and jobs stay put'
     ],
     steps: [
@@ -152,7 +173,8 @@ TSIQ.strategyModules.push({
     considerations: [
       'This is a serious transaction with real setup and ongoing costs — it fits established, profitable companies, usually with 20 or more employees.',
       'The company takes on a lasting obligation to buy back shares from employees who leave or retire; we plan and fund for that from day one.',
-      'The tax deferral has strict rules — the reinvestment window, what you can buy, and what you and your family can receive from the plan — so the paperwork and timing must be exact.'
+      'The tax deferral has strict rules — the reinvestment window, what you can buy, and what you and your family can receive from the plan — so the paperwork and timing must be exact.',
+      'The full deferral applies only if your company is a C corporation when you sell. If it is an S corporation, the deferral is not available before 2028 and is limited to 10% after that. California also keeps taxing the company at 1.5% either way.'
     ]
   },
 

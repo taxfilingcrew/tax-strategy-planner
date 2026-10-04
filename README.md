@@ -148,6 +148,8 @@ scheduled SALT-cap changes after 2026.
 Every finding on the 56 modeled strategies has now been fixed (engine-level
 problems, California treatment, shared limits, eligibility checks, defaults
 that assumed amounts the client may not have, costs shown as costs, and timing
-strategies shown as timing). Still open: 40 of the 44 advisory write-ups have
-text errors, 12 of them serious (wrong law or written for another state) —
-they do not change any numbers, but read them before handing one to a client.
+strategies shown as timing). The 12 advisory write-ups that stated wrong law
+or were written for another state have been corrected and rewritten for
+California. Still open: 28 advisory write-ups with smaller text errors
+(missing California points, a few wrong cites) — they do not change any
+numbers, but read them before handing one to a client.

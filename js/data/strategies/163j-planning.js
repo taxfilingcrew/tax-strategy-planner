@@ -20,8 +20,9 @@ TSIQ.strategyModules.push({
       'amortization, and depletion are added back — which materially raises ' +
       'the cap for capital-intensive borrowers versus the 2022–2024 EBIT ' +
       'regime. Two structural exits exist: the small-business exemption for ' +
-      'taxpayers meeting the §448(c) gross-receipts test ($32 million for 2026 ' +
-      'average over three years for 2026, indexed — verify), and the ' +
+      'taxpayers meeting the §448(c) gross-receipts test (average annual gross ' +
+      'receipts of $32 million or less over the prior three years for 2026, ' +
+      'indexed), and the ' +
       'irrevocable electing-real-property-trade-or-business election, which ' +
       'removes the limit at the price of ADS depreciation (and loss of bonus) ' +
       'on the trade\'s real property. Advisory: whether the limit binds — and ' +
@@ -41,7 +42,7 @@ TSIQ.strategyModules.push({
       'Small-business exemption (§163(j)(3)): taxpayers (other than tax ' +
       'shelters) meeting the §448(c) test — average annual gross receipts for ' +
       'the prior 3 years at or below the inflation-adjusted ceiling ($32M for ' +
-      '2026 — verify against the annual revenue procedure) — are simply outside ' +
+      '2026, Rev. Proc. 2025-32) — are simply outside ' +
       '§163(j). Aggregation rules (§448(c)(2)) combine commonly controlled ' +
       'entities, so receipts cannot be split away.',
       'Tax-shelter trap: a "syndicate" (>35% of losses allocated to limited ' +
@@ -55,15 +56,27 @@ TSIQ.strategyModules.push({
       'property). For stabilized, heavily leveraged rentals the trade is often ' +
       'worth it; for assets with big cost-seg/bonus potential it is expensive.',
       'Compliance runs through Form 8990 at the entity level; planning levers ' +
-      'include capitalizing interest where permitted (§266 elections for ' +
-      'unproductive real property), debt placement among aggregated entities, ' +
-      'and timing income to generate excess taxable income that releases ' +
-      'partner-level carryforwards.'
+      'are debt placement among aggregated entities and timing income to ' +
+      'generate excess taxable income that releases partner-level ' +
+      'carryforwards.',
+      'Capitalizing interest is NO LONGER a way around the cap. For tax years ' +
+      'beginning after 2025, OBBBA applies §163(j) BEFORE the interest ' +
+      'capitalization rules: interest a taxpayer elects to capitalize (for ' +
+      'example a §266 election on unproductive land) is still business ' +
+      'interest tested under the 30% limit, and allowed interest is applied ' +
+      'to capitalized amounts first. Only interest that MUST be capitalized ' +
+      'under §263A(f) or §263(g) stays outside. Do not recommend a §266 ' +
+      'election as §163(j) planning for 2026 or later.',
+      'California does not conform to the post-2017 §163(j) limit (SB 711 ' +
+      'kept that nonconformity): interest disallowed federally is deductible ' +
+      'on the California return in the year it is paid. Track the federal ' +
+      'carryforward and the state difference separately.'
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §163(j)(1), (2)', note: 'The 30%-of-ATI limitation and the indefinite carryforward of disallowed business interest.' },
       { type: 'IRC', cite: 'IRC §163(j)(8)', note: 'ATI definition — OBBBA permanently restored the depreciation/amortization/depletion add-back (EBITDA base) beginning with 2025 tax years.' },
-      { type: 'IRC', cite: 'IRC §163(j)(3); §448(c)', note: 'Small-business exemption via the gross-receipts test ($32M for 2026, indexed — verify annually); §448(c)(2) aggregation of commonly controlled groups.' },
+      { type: 'IRC', cite: 'IRC §163(j)(3); §448(c)', note: 'Small-business exemption via the gross-receipts test ($32M for 2026, indexed each year); §448(c)(2) aggregation of commonly controlled groups.' },
+      { type: 'IRC', cite: 'IRC §163(j), as amended by OBBBA §70341 (P.L. 119-21)', note: 'Coordination with interest capitalization, tax years beginning after 12/31/2025: the limit is applied before capitalization provisions other than §263(g) and §263A(f), so an elective §266 capitalization no longer takes interest outside §163(j).' },
       { type: 'IRC', cite: 'IRC §163(j)(7)(B); §168(g)(1)(F)', note: 'Electing real property trade or business: irrevocable election out of §163(j); ADS required on nonresidential real, residential rental, and QIP — which also forfeits bonus on that property.' },
       { type: 'IRC', cite: 'IRC §448(d)(3); §461(i)(3)', note: 'Tax-shelter/syndicate definition — entities allocating >35% of losses to limited owners lose the small-business exemption regardless of receipts.' },
       { type: 'Reg', cite: 'Reg. §1.163(j)-1 through -11', note: 'Definitional and computational framework, including the partnership §163(j)(4) mechanics and trading-through rules.' },
@@ -92,7 +105,8 @@ TSIQ.strategyModules.push({
       'If exempt: screen for syndicate status each loss year before relying on the exemption.',
       'If limited: prepare Form 8990; quantify the carryforward and its release path.',
       'For real property trades: model RPTOB (interest freed, ADS + no bonus forever) against staying in (30% EBITDA cap) over the hold period — the answer differs per asset plan.',
-      'Consider §266 capitalization elections for interest on unproductive land carried for development.',
+      'Do NOT use a §266 capitalization election to get around the cap — from 2026 electively capitalized interest is tested under §163(j) first. Review any standing §266 elections made for that purpose.',
+      'California return: add back nothing for §163(j) — deduct the full interest for state purposes and keep a state-only schedule of the difference.',
       'Coordinate debt placement across aggregated entities so interest sits where ATI capacity exists.'
     ]
   },

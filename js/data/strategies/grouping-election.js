@@ -25,6 +25,10 @@ TSIQ.strategyModules.push({
       'binding once made — regrouping is allowed only for material changes or ' +
       'if the original grouping was clearly inappropriate — and Rev. Proc. ' +
       '2010-13 requires disclosure statements for new groupings and changes. ' +
+      'CALIFORNIA: the ordinary §1.469-4 grouping carries over to the state ' +
+      'return, but the real estate professional rules do not — California ' +
+      'does not conform to §469(c)(7), so for California every rental is ' +
+      'passive and the §1.469-9(g) aggregation election has no state effect. ' +
       'This is structural: it changes which losses are usable, not the ' +
       'amounts, so it is advisory in this tool.',
     mechanics: [
@@ -41,6 +45,12 @@ TSIQ.strategyModules.push({
       'REPS aggregation (Reg. §1.469-9(g)) is a DIFFERENT election: it treats ' +
       'all rental real estate interests as one activity so a real estate ' +
       'professional tests material participation once across the portfolio.',
+      'California: R&TC §17561 does not adopt §469(c)(7). A federal real ' +
+      'estate professional\'s rental losses remain passive on the California ' +
+      'return (limited to passive income plus the $25,000 allowance, which ' +
+      'phases out between $100,000 and $150,000 of income), computed on FTB ' +
+      '3801 with separate California carryforwards. The federal aggregation ' +
+      'election changes nothing for the state.',
       'Groupings bind future years (Reg. §1.469-4(e)); the IRS can regroup to ' +
       'prevent tax avoidance if the grouping lacks an economic unit (Reg. ' +
       '§1.469-4(f)).',
@@ -53,6 +63,7 @@ TSIQ.strategyModules.push({
       { type: 'Reg', cite: 'Reg. §1.469-4(e), (f)', note: 'Consistency requirement — groupings bind future years; Commissioner may regroup to prevent avoidance.' },
       { type: 'Reg', cite: 'Reg. §1.469-9(g)', note: 'Real estate professional election to treat all rental real estate as a single activity for material participation.' },
       { type: 'Admin', cite: 'Rev. Proc. 2010-13', note: 'Written disclosure statements required for new groupings, additions, and regroupings; undisclosed groupings risk being treated as separate activities.' },
+      { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §17561; FTB 3801 instructions', note: 'California conforms to §469 except the real estate professional exception of §469(c)(7): rental real estate is passive for California regardless of hours.' },
       { type: 'IRC', cite: 'IRC §469(g)', note: 'Suspended losses release on disposition of the ENTIRE interest — grouping enlarges what "entire" means.' },
       { type: 'IRC', cite: 'IRC §469(c), (h)', note: 'Passive activity definitions and the material participation standard the grouping determines the testing unit for.' }
     ],
@@ -67,11 +78,12 @@ TSIQ.strategyModules.push({
       'Grouping rentals with businesses outside the insubstantiality/proportionate-ownership exceptions invites IRS regrouping.',
       'Failure to file the Rev. Proc. 2010-13 disclosure can forfeit the intended treatment at exam.',
       'The §1.469-9(g) aggregation can complicate per-property loss planning and future disposition timing.',
+      'Quoting combined federal-and-state savings from real estate professional status to a California client overstates it: the state loss stays suspended. Keep two sets of passive-loss carryforwards (federal Form 8582, California FTB 3801).',
       'Groupings interact with the self-rental recharacterization rule — grouping the rental with the operating business is often the cleaner fix; analyze together.'
     ],
     bestFit: [
       'Owners of several related entities or locations whose combined hours pass material participation but whose per-activity hours fail.',
-      'Real estate professionals with multiple rentals who cannot materially participate in each property separately.',
+      'Real estate professionals with multiple rentals who cannot materially participate in each property separately (federal benefit only for California residents).',
       'Clients holding an operating business plus its real estate (pairs with self-rental planning).'
     ],
     implementation: [
@@ -79,6 +91,7 @@ TSIQ.strategyModules.push({
       'Test material participation under the current structure vs. candidate groupings; model disposition consequences before electing.',
       'Draft the grouping under the five-factor test; document the economic-unit rationale in the file.',
       'File the Rev. Proc. 2010-13 disclosure statement (or the §1.469-9(g) election for REPS aggregation) with the timely return.',
+      'For California residents, prepare FTB 3801 treating all rentals as passive and track the state carryforward separately.',
       'Revisit only on material changes in facts — and document any regrouping\'s justification.'
     ]
   },
@@ -106,7 +119,8 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'The choice is binding in future years, and it can delay when losses from a sale are recognized — so we model the exit before we commit.',
-      'The activities must genuinely fit together as one economic operation; combinations built purely for tax reasons can be undone by the IRS.'
+      'The activities must genuinely fit together as one economic operation; combinations built purely for tax reasons can be undone by the IRS.',
+      'For rental properties, the special rule for full-time real estate professionals works on the federal return only. California treats rental losses as passive no matter how many hours you work, so the state part of the saving does not apply.'
     ]
   },
 

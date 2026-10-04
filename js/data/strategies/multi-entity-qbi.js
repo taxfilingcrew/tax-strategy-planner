@@ -15,30 +15,33 @@ TSIQ.strategyModules.push({
   advisor: {
     summary:
       'An SSTB owner above the §199A threshold gets no QBI deduction on the ' +
-      'SSTB — but activities inside the practice that are NOT specified ' +
-      'services (owned real estate, product sales, non-professional admin/ ' +
-      'billing operations at genuine arm\'s length) can be separated into ' +
+      'SSTB — but activities that are NOT specified services (real estate ' +
+      'rented to outsiders, product sales, admin/billing operations serving ' +
+      'outside customers at genuine arm\'s length) can be separated into ' +
       'distinct entities whose income keeps the deduction. The final ' +
       'regulations closed the aggressive "crack and pack" version: under Reg. ' +
-      '§1.199A-5(c)(2), an entity with 50%+ common ownership that provides ' +
-      '80% or more of its property or services to a commonly owned SSTB is ' +
-      'treated as part of the SSTB (and below 80%, the portion provided to the ' +
-      'SSTB is tainted pro rata). What survives is structuring with real ' +
-      'third-party revenue and real substance — an entity serving genuine ' +
-      'outside customers, or a rental with market-rate terms and outside ' +
-      'tenants. Value depends on facts that cannot be honestly computed from ' +
+      '§1.199A-5(c)(2), when an entity with 50%+ common ownership provides ' +
+      'property or services to a commonly owned SSTB, the PORTION provided to ' +
+      'the SSTB is treated as a separate SSTB — a straight pro rata rule. ' +
+      '(The 80% all-or-nothing test appeared only in the proposed ' +
+      'regulations and was dropped from the final rule.) So income earned ' +
+      'from the client\'s own practice never qualifies — including rent the ' +
+      'practice pays on a building the owner holds — and only revenue from ' +
+      'genuine outside customers or outside tenants keeps the deduction. Value depends on facts that cannot be honestly computed from ' +
       'return inputs, so this strategy is advisory-only.',
     mechanics: [
       'SSTB status is determined activity by activity: a medical practice is an ' +
       'SSTB, but the building it operates from, a medical-products line, an ' +
       'imaging center, or a billing company serving many practices need not be ' +
       '(Reg. §1.199A-5(b) defines the tainted fields).',
-      'Anti-abuse rule (Reg. §1.199A-5(c)(2)): with 50%+ common ownership, a ' +
-      'separated entity providing ≥80% of its property or services to the SSTB ' +
-      'is treated ENTIRELY as part of the SSTB; below 80%, the SSTB-serving ' +
-      'portion is treated as SSTB income pro rata. The spun-off entity only ' +
-      'fully escapes with meaningful outside revenue or ownership below 50% ' +
-      'common (attribution applies).',
+      'Anti-abuse rule (Reg. §1.199A-5(c)(2), final): with 50%+ common ' +
+      'ownership (direct or indirect, §§267(b)/707(b) attribution), the ' +
+      'portion of a separated entity\'s business that provides property or ' +
+      'services to the SSTB is treated as a separate SSTB; the rest is not. ' +
+      'There is no 80% cliff. An entity doing 90% of its business with the ' +
+      'practice keeps the deduction on the other 10%; one doing 30% loses it ' +
+      'on that 30%. The benefit is therefore exactly as large as the outside ' +
+      'revenue (or the share owned by non-common owners).',
       'De minimis trap in the other direction (Reg. §1.199A-5(c)(1)): a ' +
       'non-SSTB entity with gross receipts ≤ $25M is wholly tainted as an SSTB ' +
       'if more than 10% of receipts come from specified services (5% above ' +
@@ -59,7 +62,7 @@ TSIQ.strategyModules.push({
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §199A(d)(2)', note: 'SSTB definition — the fence this structuring works around; non-SSTB activities are outside it even when owned by the same taxpayer.' },
-      { type: 'Reg', cite: 'Reg. §1.199A-5(c)(2)', note: 'The anti-"crack and pack" rule: 50%+ commonly owned entity providing ≥80% of property/services to the SSTB is treated as part of the SSTB; below 80%, tainted pro rata.' },
+      { type: 'Reg', cite: 'Reg. §1.199A-5(c)(2)', note: 'The anti-"crack and pack" rule in the final regulations: where a 50%+ commonly owned business provides property or services to an SSTB, that portion is treated as a separate SSTB (pro rata). The proposed regulations\' 80% test was not adopted.' },
       { type: 'Reg', cite: 'Reg. §1.199A-5(c)(1)', note: 'De minimis rule: >10% of gross receipts from specified services (5% if receipts >$25M) taints the entire business as an SSTB.' },
       { type: 'Reg', cite: 'Reg. §1.199A-5(b)', note: 'Field-by-field definitions of specified services — the map of what can and cannot be separated cleanly.' },
       { type: 'Reg', cite: 'Reg. §1.199A-1(b)(14)', note: 'Self-rental to a commonly controlled passthrough is a §199A trade or business — the hook that gives separated real estate QBI status (subject to the SSTB-tenant taint).' },
@@ -68,16 +71,16 @@ TSIQ.strategyModules.push({
     ],
     requirements: [
       'A genuinely separable non-SSTB activity: owned real estate, a products line, equipment, or a service operation with real or realistically obtainable third-party customers.',
-      'Either meaningful outside revenue in the separated entity (to stay under the 80% test) or an ownership structure below 50% common ownership after attribution.',
+      'Meaningful OUTSIDE revenue in the separated entity (only that share keeps the deduction), or an ownership structure below 50% common ownership after attribution.',
       'Full operational substance: employees, contracts, market pricing, separate books, licenses, and insurance in the separated entity.',
       'Professional-service receipts kept below the 10%/5% de minimis line in the clean entity.'
     ],
     risks: [
-      'Reg. §1.199A-5(c)(2) recharacterization is the headline risk: a captive entity serving mostly the SSTB is simply treated as the SSTB — the structure accomplishes nothing but cost.',
+      'Reg. §1.199A-5(c)(2) recharacterization is the headline risk: whatever the separated entity earns from the commonly owned SSTB is SSTB income. A captive entity serving only the practice accomplishes nothing but cost — and that includes a building whose only tenant is the practice.',
       '§482 reallocation where intercompany pricing is off-market (management fees, rent, or service charges set to shift income rather than reflect value).',
       'Sham-entity/substance-over-form attack where the spun-off entity has no employees or independent activity (Moline Properties baseline).',
       'Ongoing cost and friction: separate returns, payroll, insurance, licenses, and intercompany accounting — the deduction recovered must clear this hurdle annually.',
-      'State-level consequences (franchise taxes, nexus, PTET eligibility) multiply with each new entity.'
+      'State-level consequences multiply with each new entity. California: $800 a year per LLC plus the gross-receipts fee (or 1.5% for an S corp), a separate return for each, and no state benefit at all — California has no QBI deduction.'
     ],
     bestFit: [
       'SSTB owners well above the threshold (where threshold management alone cannot reach) with a substantial non-service component: practice-owned real estate, product/device sales, imaging or lab operations, or admin services marketable to outsiders.',
@@ -86,10 +89,10 @@ TSIQ.strategyModules.push({
     ],
     implementation: [
       'Inventory the practice\'s activities and revenue streams; identify components that are non-SSTB under Reg. §1.199A-5(b) and could serve outside customers.',
-      'Test the structure against the 80%/50% rule and the 10%/5% de minimis rule using realistic revenue projections — if the separated entity cannot get real outside revenue, stop here.',
+      'Test the structure against the 50% common-ownership rule and the 10%/5% de minimis rule using realistic revenue projections. Size the benefit on OUTSIDE revenue only — if the separated entity cannot get real outside revenue, stop here.',
       'Form the entity; move (or hire) the employees, assets, and licenses it needs to operate; open separate books and accounts.',
       'Paper the intercompany relationships: leases, service agreements, and pricing studies supporting arm\'s-length rates.',
-      'Coordinate with the wage-optimization and aggregation strategies for the clean entities; revisit the 80% and de minimis tests annually as revenue mix shifts.'
+      'Coordinate with the wage-optimization and aggregation strategies for the clean entities; revisit the outside-revenue share and the de minimis test annually as revenue mix shifts.'
     ]
   },
 
@@ -97,7 +100,7 @@ TSIQ.strategyModules.push({
     teaser: 'Parts of your business may qualify for a deduction the rest of it lost — if they stand on their own',
     headline: 'Separate what qualifies, so part of your income wins back the 20% deduction',
     plainEnglish: [
-      'For certain professions, the 20% business-income deduction disappears at higher income levels. But the rule targets the professional services themselves — not everything a practice does. The building you own, products you sell, equipment services, or an administrative operation that serves other businesses can all still qualify.',
+      'For certain professions, the 20% business-income deduction disappears at higher income levels. But the rule targets the professional services themselves — not everything you do. A building you rent to outside tenants, products you sell, or an administrative operation that serves other businesses can still qualify. Money your own practice pays to another company you own — including rent on your own building — does not.',
       'The problem is that when everything sits inside one company, the tax law paints it all with the same brush. By moving the qualifying activities into their own properly run companies — with their own staff, contracts, and customers — the income they earn can qualify for the deduction again.',
       'This only works when the separation is real. The IRS has specific rules against paper-only spin-offs, so we design structures with genuine substance: real operations, market pricing, and ideally real outside customers.'
     ],
@@ -115,8 +118,8 @@ TSIQ.strategyModules.push({
       'We coordinate the new entities\' returns and revisit the numbers each year'
     ],
     considerations: [
-      'The IRS has strong rules against separations that only exist on paper — a new entity mostly serving your own practice usually will not work. We only recommend this when real substance and outside revenue are achievable.',
-      'More entities mean more ongoing cost — extra returns, payroll, and bookkeeping — so the recovered deduction has to clearly outweigh them, every year.',
+      'The IRS rules count only what a separate company earns from OUTSIDE customers. Whatever it earns from your own practice is treated the same as the practice. We only recommend this when real outside revenue is achievable.',
+      'More entities mean more ongoing cost — extra returns, payroll, bookkeeping, and in California at least $800 a year for each — so the recovered deduction has to clearly outweigh them, every year. The deduction is federal only; California does not have it.',
       'Because the benefit depends on facts we design together (customers, pricing, staffing), this plan shows it as a structural recommendation rather than a computed dollar amount.'
     ]
   },
