@@ -43,6 +43,11 @@
       </div>
     </div>
 
+    <p class="src-legend" id="src-legend" style="display:none">
+      <span id="src-legend-text"></span>
+      <label class="src-toggle"><input type="checkbox" id="src-toggle" checked> Show source notes</label>
+    </p>
+
     <div id="suggestions" style="display:none"></div>
 
     <div class="form-group">
@@ -221,6 +226,7 @@
 
 <!-- Load order matters: tables → strategies → registry → engine → renderers → app -->
 <script src="js/data/tax-tables-2026.js"></script>
+<script src="js/data/source-notes.js"></script>
 <!-- STRATEGIES:BEGIN — auto-generated; run `node scripts/build-index.js` after adding a strategy file -->
 <script src="js/data/strategies/163j-planning.js"></script>
 <script src="js/data/strategies/accident-health-c-corp.js"></script>

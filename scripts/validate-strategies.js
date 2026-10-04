@@ -73,6 +73,22 @@ TSIQ.STRATEGIES.forEach(function (s) {
   if (errs.length) failures.push(s.id + ': ' + errs.join('; '));
 });
 
+// Source notes: every note must point at a field on the page, and every
+// return-data field must have one.
+require(path.join(root, 'js/data/source-notes.js'));
+var html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+var noteIds = Object.keys(TSIQ.SOURCE_NOTES.fields);
+noteIds.forEach(function (id) {
+  if (html.indexOf('id="' + id + '"') < 0) failures.push('source-notes: no field with id "' + id + '" in index.html');
+  if (!TSIQ.SOURCE_NOTES.fields[id].from) failures.push('source-notes: "' + id + '" has no "from" line');
+});
+var NO_NOTE = ['clientName', 'firmName', 'years', 'growthPct', 'inflationPct', 'caRules'];
+var formPart = html.slice(html.indexOf('Client Tax Return Data'), html.indexOf('Build Scenarios'));
+(formPart.match(/class="field[^"]*"><(?:label for|input id)="([A-Za-z0-9]+)"/g) || []).forEach(function (m) {
+  var id = m.match(/="([A-Za-z0-9]+)"$/)[1];
+  if (noteIds.indexOf(id) < 0 && NO_NOTE.indexOf(id) < 0) failures.push('source-notes: field "' + id + '" has no note');
+});
+
 console.log('Strategies loaded: ' + TSIQ.STRATEGIES.length);
 console.log('Modeled: ' + TSIQ.STRATEGIES.filter(function (s) { return s.modeled !== false; }).length +
   '  Advisory: ' + TSIQ.STRATEGIES.filter(function (s) { return s.modeled === false; }).length);

@@ -158,6 +158,13 @@ so a fee can be compared with a number that holds up:
 - Assumptions slides list the client data and the inputs behind each strategy
   and state that the figures are estimates until the return is prepared.
 
+**Source notes on the entry page:** under each field on the opening page is the
+form and line to read the figure from on the client's prior-year return, and
+where to check if that line is blank or combined. The notes live in
+`js/data/source-notes.js` and are tied to one form year (2025 now) — re-check
+every line number against the new forms when the tables move to the next year.
+"Show source notes" on the page turns them off.
+
 **Library status:** an October 2026 review found problems in most strategies.
 Every finding on the 56 modeled strategies has now been fixed (engine-level
 problems, California treatment, shared limits, eligibility checks, defaults

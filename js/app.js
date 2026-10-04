@@ -772,8 +772,45 @@
     $('lib-count').textContent = '(' + TSIQ.STRATEGIES.length + ')';
   }
 
+  /* ------------- source notes: prior-year return line for each field ------ */
+  function initSourceNotes() {
+    var sn = TSIQ.SOURCE_NOTES;
+    if (!sn || !sn.fields) return;
+    Object.keys(sn.fields).forEach(function (id) {
+      var el = $(id), n = sn.fields[id];
+      if (!el || !n) return;
+      var field = el.closest('.field');
+      if (!field || field.querySelector('.src-note')) return;
+      var note = document.createElement('p');
+      note.className = 'src-note';
+      var from = document.createElement('b');
+      from.textContent = n.from;
+      note.appendChild(from);
+      if (n.check) {
+        var chk = document.createElement('span');
+        chk.textContent = n.check;
+        note.appendChild(chk);
+      }
+      field.appendChild(note);
+      if (field.classList.contains('check')) field.classList.add('has-src');
+      else if (field.parentNode.classList.contains('grid')) field.parentNode.classList.add('has-src');
+    });
+    $('src-legend-text').textContent = 'Under each field: where to find the figure on the client\'s ' +
+      sn.returnYear + ' return (federal Form 1040 package unless marked CA). The first line is where to read it; the second is where to check.';
+    $('src-legend').style.display = '';
+    var off = false;
+    try { off = localStorage.getItem('tsiq-src-notes') === 'off'; } catch (e) {}
+    $('src-toggle').checked = !off;
+    document.body.classList.toggle('src-off', off);
+    $('src-toggle').addEventListener('change', function () {
+      document.body.classList.toggle('src-off', !this.checked);
+      try { localStorage.setItem('tsiq-src-notes', this.checked ? 'on' : 'off'); } catch (e) {}
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     initBrand();
+    initSourceNotes();
     initTabs();
     buildLibrary();
     buildScenarioPicker('sc2', 'sc2-strategies');
