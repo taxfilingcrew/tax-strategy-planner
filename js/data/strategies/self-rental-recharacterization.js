@@ -44,6 +44,14 @@ TSIQ.strategyModules.push({
       'grouped as one activity under Reg. §1.469-4(d)(1) (allowed where the ' +
       'ownership of the rental and the business is proportionate, or one is ' +
       'insubstantial).',
+      'The grouping fix does NOT work when the tenant is a C corporation: an ' +
+      'activity conducted through a C corporation can be grouped with the ' +
+      'owner\'s other activity only to test material participation in that ' +
+      'other activity, not to merge the rental into the business (Reg. ' +
+      '§1.469-4(d)(5)(ii)). The owner\'s rental loss stays passive (Williams ' +
+      'v. Commissioner, T.C. Memo. 2015-76, affirmed by the Fifth Circuit). ' +
+      'With a C-corp tenant the only levers are the rent level and timing of ' +
+      'depreciation.',
       'Rent-setting levers (within arm\'s-length bounds, supported by ' +
       'comparables): lower rent shifts income into the operating business ' +
       '(QBI-eligible, but SE/payroll-relevant); higher rent shifts income to ' +
@@ -52,7 +60,13 @@ TSIQ.strategyModules.push({
       'A self-rental with net income generally still qualifies for §199A QBI ' +
       'via the common-ownership aggregation/trade-or-business analysis (Reg. ' +
       '§1.199A-1(b)(14) treats rentals to a 50%-commonly-controlled business ' +
-      'as a trade or business).',
+      'as a trade or business). Three limits: the rule applies only when the ' +
+      'tenant is an individual or a pass-through entity — rent from the ' +
+      'owner\'s C corporation does not qualify under it; rent from a commonly ' +
+      'owned specified service business is itself SSTB income and gets no ' +
+      'deduction above the threshold (Reg. §1.199A-5(c)(2)); and a building ' +
+      'entity with no payroll is limited above the threshold to 2.5% of the ' +
+      'property\'s unadjusted basis unless aggregated with the tenant.',
       'Written leases, market-rate documentation, and consistent treatment ' +
       'year to year are the exam defense.'
     ],
@@ -61,13 +75,15 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §469(l)', note: 'Grant of regulatory authority under which the recharacterization rules were issued.' },
       { type: 'Case', cite: 'Krukowski v. Comm\'r, 279 F.3d 547 (7th Cir. 2002)', note: 'Upheld the self-rental recharacterization regulation against a validity challenge — attorney renting an office building to his own firm.' },
       { type: 'Reg', cite: 'Reg. §1.469-4(d)(1)', note: 'When a rental may be grouped with a trade-or-business activity (insubstantiality or proportionate ownership) — the main structural fix.' },
+      { type: 'Reg', cite: 'Reg. §1.469-4(d)(5)(ii)', note: 'An activity conducted through a C corporation may be grouped with another activity of the taxpayer only for determining material or significant participation in that other activity.' },
+      { type: 'Case', cite: 'Williams v. Comm\'r, T.C. Memo. 2015-76, aff\'d (5th Cir. 2016)', note: 'Owners could not group their rental of a building with the C-corporation medical practice that leased it; the self-rental rule applied and the rental losses stayed passive.' },
       { type: 'Reg', cite: 'Reg. §1.199A-1(b)(14)', note: 'Self-rented property leased to a 50%-commonly-controlled business is treated as a trade or business for QBI purposes.' },
       { type: 'Admin', cite: 'Rev. Proc. 2010-13', note: 'Disclosure requirements if the grouping fix is elected.' }
     ],
     requirements: [
       'Identify every arrangement where the client (or spouse) rents property to an entity in which they materially participate.',
       'A written, arm\'s-length lease with rent supported by market comparables.',
-      'If grouping is the fix: proportionate ownership between rental and business (or insubstantiality) plus the Rev. Proc. 2010-13 disclosure.',
+      'If grouping is the fix: a tenant that is NOT a C corporation, proportionate ownership between rental and business (or insubstantiality), plus the Rev. Proc. 2010-13 disclosure.',
       'Annual review of rent level whenever depreciation strategies or major repairs will swing the rental between income and loss.'
     ],
     risks: [
@@ -75,6 +91,8 @@ TSIQ.strategyModules.push({
       'Cost segregation on an ungrouped self-rented building strands the loss in the passive bucket — sequencing error, common and expensive.',
       'Aggressive rent manipulation (far above or below market) invites recharacterization of the arrangement itself and state payroll/SE scrutiny.',
       'Grouping is binding and affects disposition-year loss recognition — model the exit first.',
+      'C-corp tenant: grouping is unavailable, so a cost segregation study on the building produces a passive loss the owner cannot use against the corporation\'s salary. Check the tenant\'s entity type before recommending depreciation strategies.',
+      'Professional practices: rent from the owner\'s own practice is specified-service income for §199A — do not count a QBI deduction on it above the threshold.',
       'Terminating material participation (e.g., semi-retirement) flips the analysis; the plan must be revisited on role changes.'
     ],
     bestFit: [
@@ -114,7 +132,8 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'This is preventive planning — its value shows up as losses that stay usable and audits that go nowhere, not as a line-item deduction.',
-      'The structural election involved is binding in future years, so we model your eventual exit from the building before filing it.'
+      'The structural election involved is binding in future years, so we model your eventual exit from the building before filing it.',
+      'The election is not available if your business is a regular C corporation — in that case we manage the rent level and the timing of deductions instead.'
     ]
   },
 

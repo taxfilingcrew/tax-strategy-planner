@@ -41,8 +41,12 @@ TSIQ.strategyModules.push({
       'lets taxpayers use published BLS indexes — dramatically simplifying ' +
       'compliance for distributors and retailers.',
       'S-corp note: a C corporation electing S status with LIFO inventory ' +
-      'triggers §1363(d) LIFO recapture — the reserve comes into income over ' +
-      'four years. Sequence entity and method changes deliberately.',
+      'triggers §1363(d) LIFO recapture — the ENTIRE reserve is included in ' +
+      'income on the final C-corporation return. Only the resulting increase ' +
+      'in TAX is spread: four equal annual installments, interest-free, the ' +
+      'first due with that final C return and the other three with the ' +
+      'S corporation\'s next three returns. Sequence entity and method ' +
+      'changes deliberately.',
       'UNICAP (§263A): larger taxpayers must capitalize allocable indirect ' +
       'costs (purchasing, storage, handling, overhead) into inventory. ' +
       'Small-business taxpayers under the §448(c) test are exempt (§263A(i)); ' +
@@ -60,7 +64,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §473; §472(b)(3) principles', note: 'Layer-liquidation consequences — dipping into old LIFO layers recaptures the deferral (qualified liquidation relief is narrow).' },
       { type: 'IRC', cite: 'IRC §263A; §263A(i)', note: 'UNICAP capitalization of indirect inventory costs; full exemption for taxpayers meeting the §448(c) gross-receipts test.' },
       { type: 'IRC', cite: 'IRC §471(c)', note: 'Small-business inventory methods: non-incidental materials and supplies, or conformity to books/AFS.' },
-      { type: 'IRC', cite: 'IRC §1363(d)', note: 'LIFO recapture on C-to-S conversion — the reserve picked up over four years; sequencing trap with entity planning.' },
+      { type: 'IRC', cite: 'IRC §1363(d)', note: 'LIFO recapture on C-to-S conversion — the full reserve is income in the last C-corporation year; the added tax is payable in four equal annual installments without interest. Sequencing trap with entity planning.' },
       { type: 'Admin', cite: 'Rev. Proc. 2015-13 / Form 3115', note: 'Automatic method-change procedures for adopting exempt treatment or changing inventory submethods; §481(a) catch-up.' }
     ],
     requirements: [
@@ -73,7 +77,7 @@ TSIQ.strategyModules.push({
       'LIFO is a deferral that reverses on layer liquidation — supply-chain dips, downsizing, or exit events recapture the reserve as income, often in an inopportune year.',
       'Book conformity puts LIFO\'s lower earnings on the financial statements lenders see — covenant math first, election second.',
       'Deflation or falling replacement costs makes LIFO worthless or harmful; commodity-cost direction is the whole thesis.',
-      'C-to-S conversion with a LIFO reserve triggers §1363(d) recapture — coordinate with any entity strategies in this plan.',
+      'C-to-S conversion with a LIFO reserve triggers §1363(d) recapture — the whole reserve is taxed in the final C year at corporate rates (only the payment is spread over four years). Coordinate with any entity strategies in this plan.',
       'Growth past the §448(c) ceiling ends the §263A(i)/§471(c) exemptions and forces method changes back (positive §481(a) adjustments).',
       'Compliance cost is real: LIFO pools, indexes, and annual computations must be maintained every year the election lives.'
     ],

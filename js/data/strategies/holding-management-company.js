@@ -55,9 +55,21 @@ TSIQ.strategyModules.push({
       'a natural vehicle for succession (children/successors employed at ' +
       'ManageCo).',
       'Character caution: management fees are ordinary services income to the ' +
-      'recipient — SE/payroll tax applies at ManageCo, and fee income is not ' +
-      'QBI-friendly if ManageCo is an SSTB-type consulting operation for ' +
-      '§199A purposes. The net group benefit must be modeled, not assumed.'
+      'recipient — SE/payroll tax applies at ManageCo. For §199A, fees from a ' +
+      'commonly owned PROFESSIONAL PRACTICE are not QBI above the threshold: ' +
+      'where ManageCo and a specified service business (medical, legal, ' +
+      'accounting, consulting, financial) are 50% or more commonly owned, the ' +
+      'part of ManageCo\'s business that serves the practice is itself ' +
+      'treated as a specified service business (Reg. §1.199A-5(c)(2)). ' +
+      'Routing a practice\'s profit through a management company does not ' +
+      'recover the deduction. The net group benefit must be modeled, not assumed.',
+      'California cost of each entity: an LLC owes the $800 annual tax PLUS ' +
+      'the LLC fee on its total California gross receipts ($900 at $250,000, ' +
+      '$2,500 at $500,000, $6,000 at $1 million, $11,790 at $5 million) and ' +
+      'files Form 568; an S corporation owes 1.5% of net income ($800 ' +
+      'minimum). Intercompany fees are gross receipts of ManageCo, so the ' +
+      'same dollars can be counted for the LLC fee twice — once in the ' +
+      'operating company and again in the management company.'
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §162(a)', note: 'Deductibility standard: ordinary, necessary, reasonable in amount, and paid for services actually rendered — each element is litigated in management-fee cases.' },
@@ -65,6 +77,8 @@ TSIQ.strategyModules.push({
       { type: 'Case', cite: 'Aspro, Inc. v. Comm\'r, 32 F.4th 673 (8th Cir. 2022)', note: 'Management fees paid to shareholders disallowed and treated as disguised dividends: no written agreements, no arm\'s-length pricing study, payments proportionate to ownership, deducted in lump sums at year-end. The blueprint for what NOT to do.' },
       { type: 'IRC', cite: 'IRC §§301, 316', note: 'The recharacterization destination in a C-corp group: nondeductible dividend to the owner, taxable without a corresponding deduction.' },
       { type: 'Reg', cite: 'Reg. §1.162-7', note: 'Reasonable compensation for services — the measuring stick applied to service fees between related parties.' },
+      { type: 'Reg', cite: 'Reg. §1.199A-5(c)(2)', note: 'Services or property provided to a 50%-or-more commonly owned specified service business are treated as a separate SSTB — management fees from the owner\'s own professional practice are not QBI above the threshold.' },
+      { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §17941, §17942; §23153, §23802', note: 'California LLC annual tax ($800) and gross-receipts fee; minimum franchise tax and 1.5% S-corporation tax — owed by each entity in the group.' },
       { type: 'IRC', cite: 'IRC §414(b), (c), (m)', note: 'Controlled-group and affiliated-service-group aggregation — retirement/benefit plans cannot be gamed by splitting employees between related entities.' }
     ],
     requirements: [
@@ -80,7 +94,8 @@ TSIQ.strategyModules.push({
       'Year-end lump-sum fees timed to zero out OpCo income signal profit-shifting, not services.',
       'Benefit-plan aggregation (§414) means the management company cannot be used to carve owners into a rich plan while excluding OpCo employees.',
       'Added compliance cost: another entity, payroll, return, and intercompany accounting — the group benefit must exceed the overhead.',
-      'State nexus and gross-receipts taxes can attach to intercompany fees.'
+      'California charges every entity: $800 a year per LLC or corporation, plus the LLC gross-receipts fee, which applies again to the intercompany fees ManageCo receives. Price that into the overhead comparison.',
+      'For a professional practice, management fees paid to a commonly owned ManageCo stay specified-service income (Reg. §1.199A-5(c)(2)) — do not present the structure as a way to recover the QBI deduction.'
     ],
     bestFit: [
       'Owners of MULTIPLE operating entities with genuinely shared management, staff, or back-office functions.',
@@ -121,7 +136,7 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'The fees must reflect real work at fair prices — this structure is documentation-heavy, and we will tell you honestly if your situation doesn\'t have enough genuine shared services to support it.',
-      'It adds an entity, a payroll, and a tax return, so the benefits need to clearly outweigh the added cost.',
+      'It adds an entity, a payroll, and a tax return — and in California at least $800 a year for the new company, more if it is an LLC with large receipts — so the benefits need to clearly outweigh the added cost.',
       'Retirement plan rules treat commonly owned companies as one group — this structure organizes benefits; it can\'t be used to leave employees out.'
     ]
   },

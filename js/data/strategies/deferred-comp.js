@@ -41,7 +41,9 @@ TSIQ.strategyModules.push({
       'acceleration.',
       'Failure cost: immediate inclusion of all vested deferrals, plus 20% ' +
       'additional tax, plus underpayment-rate-plus-1% premium interest ' +
-      '(§409A(a)(1)(B)) — the practitioner\'s reason to document mercilessly.',
+      '(§409A(a)(1)(B)) — the practitioner\'s reason to document mercilessly. ' +
+      'California adds its own 5% additional tax on the same amount (R&TC ' +
+      '§17508.2), on top of regular California income tax.',
       'The plan must stay UNFUNDED and unsecured to avoid current taxation: ' +
       'constructive receipt (Reg. §1.451-2) and economic benefit doctrines ' +
       'apply; a rabbi trust works only because its assets remain reachable ' +
@@ -55,10 +57,19 @@ TSIQ.strategyModules.push({
       'worse. The clean use cases are C-corp owners (corp deducts at 21% ' +
       'later; owner defers 37%-bracket income to lower-rate years) and ' +
       'owners negotiating deferred comp/consulting from an unrelated ' +
-      'acquirer post-sale.'
+      'acquirer post-sale.',
+      'The C-corp case has a cost that must be in the math: with no ' +
+      'deduction until payout, the money set aside is corporate profit taxed ' +
+      'NOW at 21% federal plus 8.84% California, and its earnings are taxed ' +
+      'at corporate rates each year. The owner is not deferring tax on that ' +
+      'income — he is swapping his 37%-plus personal rate today for roughly ' +
+      '28% corporate tax today, with the personal tax and the corporate ' +
+      'deduction both arriving at payout. The gain is the rate spread and ' +
+      'the timing, not the whole 37%.'
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §409A', note: 'Governs all NQDC: election timing, permissible distribution events, anti-acceleration; violations cause immediate inclusion + 20% additional tax + premium interest.' },
+      { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §17508.2', note: 'California additional tax on income included under §409A — 5% (reduced from 20% for taxable years beginning on or after January 1, 2013).' },
       { type: 'Reg', cite: 'Reg. §1.409A-1 through -6', note: 'The operating manual — definitions of deferral, separation from service, specified employees, plan aggregation, and correction concepts.' },
       { type: 'IRC', cite: 'IRC §404(a)(5)', note: 'Employer deduction deferred to the year the employee includes the compensation — the reason pass-through owner NQDC is usually self-defeating.' },
       { type: 'Reg', cite: 'Reg. §1.451-2', note: 'Constructive receipt — income credited, set apart, or made available without substantial limitation is taxed now; the doctrine every NQDC design must clear.' },
@@ -71,7 +82,8 @@ TSIQ.strategyModules.push({
       'Employer solvency confidence: deferred amounts are an unsecured claim; a rabbi trust mitigates change-of-heart risk, never creditor risk.'
     ],
     risks: [
-      '§409A failures are ruinous relative to the benefit — immediate inclusion, 20% additional tax, premium interest — and operational footfaults (paying 30 days early, a discretionary acceleration) count.',
+      '§409A failures are ruinous relative to the benefit — immediate inclusion, 20% additional federal tax, another 5% to California, premium interest — and operational footfaults (paying 30 days early, a discretionary acceleration) count.',
+      'Quoting the C-corp benefit as the owner\'s full marginal rate ignores the corporate tax (21% plus 8.84% in California) paid meanwhile on the retained funds.',
       'Credit risk is real: NQDC participants are general unsecured creditors; employer bankruptcy can wipe out decades of deferrals.',
       'Rate-assumption risk: deferring at today\'s rates to unknown future rates is a bet; legislation or a big payout year can invert it.',
       'For pass-through owners, §404(a)(5) makes the entity-side deduction wait for the inclusion — run the combined owner+entity math before assuming any benefit.',
@@ -98,7 +110,7 @@ TSIQ.strategyModules.push({
     plainEnglish: [
       'Normally you pay tax on compensation the year you earn it — even if that year happens to be your highest-tax year ever. A deferred compensation plan is a formal agreement, set up in advance, that part of your pay will be delivered in a later year instead: after retirement, after a business sale, or on a schedule you choose up front. You pay tax when the money arrives — ideally in years when your rate is much lower.',
       'The rules are strict and unforgiving: the decision to defer has to be made before you earn the money, the payout schedule has to be locked in from the start, and breaking the rules triggers steep penalties. This is a "set it up right or not at all" strategy, which is why it comes with real legal paperwork.',
-      'One honest caveat: for most owners of S corporations and partnerships, deferring your own pay also defers your own deduction — the math usually cancels out. Where this shines is for owners of C corporations and for owners selling their business, where the deferral genuinely moves income from a 37% year into much cheaper ones.'
+      'One honest caveat: for most owners of S corporations and partnerships, deferring your own pay also defers your own deduction — the math usually cancels out. Where this shines is for owners of C corporations and for owners selling their business, where the deferral genuinely moves income from a 37% year into much cheaper ones. Even then, a C corporation pays its own tax (about 28% with California) on the money it holds for you in the meantime, so the saving is the difference in rates, not the whole tax.'
     ],
     analogy: 'It\'s like a dam on a river of income: instead of the whole flow hitting in flood years, you release it steadily into the years where it does the least damage.',
     benefits: [

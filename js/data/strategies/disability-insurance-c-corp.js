@@ -36,8 +36,18 @@ TSIQ.strategyModules.push({
       'after-tax dollars (including employer-paid premiums imputed as W-2 ' +
       'income).',
       'The arbitrage: taxing a ~$3,000 premium costs a high-bracket owner ' +
-      '~$1,100/year; NOT doing so puts a potential $150,000/year benefit ' +
+      '~$1,100/year in federal tax — about $1,400 with California income tax ' +
+      '(California follows the same rule: premium taxed, benefits tax-free); ' +
+      'NOT doing so puts a potential $150,000/year benefit ' +
       'stream in the taxable column. Insure the disaster, not the premium.',
+      'California State Disability Insurance: employees pay SDI on all wages ' +
+      '(the wage cap was removed in 2024) and receive a weekly benefit for up ' +
+      'to 52 weeks; SDI benefits are not taxable by California and are ' +
+      'generally not taxable federally. Private policies usually offset SDI, ' +
+      'so size coverage on top of it. A corporate officer who is the sole ' +
+      'shareholder (or one of two spouse shareholders) may elect OUT of SDI — ' +
+      'check whether the owner did, because then the private policy is the ' +
+      'only coverage.',
       'Group policies with mixed employer/employee contributions allocate ' +
       'benefits between taxable and tax-free based on the premium split — ' +
       'for group plans, using a three-year averaging of policy-year ' +
@@ -74,6 +84,7 @@ TSIQ.strategyModules.push({
       'Inconsistent records — deducted premiums but a claimed §104(a)(3) exclusion at benefit time — is an easy IRS win; the exclusion follows what actually happened, not what is convenient later.',
       'Election designs must be adopted before the plan year (Rev. Rul. 2004-55); retroactive recharacterization after a claim fails.',
       'The imputed premium is a real (small) annual tax cost with no visible payoff unless disability strikes — clients need the framing to stick with it.',
+      'California: an owner who opted out of SDI has no state benefit underneath the private policy, and an owner who did not is paying SDI on every dollar of wages — either way the coverage amount should be set with SDI in the picture.',
       'Benefit taxation also drives coverage adequacy: a taxable 60%-of-salary benefit nets ~45% or less — size coverage for the after-tax need.'
     ],
     bestFit: [
@@ -112,7 +123,8 @@ TSIQ.strategyModules.push({
       'We re-check it each year so a payroll change never quietly undoes it'
     ],
     considerations: [
-      'This means paying a small amount of tax every year on the premium — the cost of making the big number tax-free.',
+      'This means paying a small amount of federal and California tax every year on the premium — the cost of making the big number tax-free.',
+      'California\'s own disability program pays a limited weekly benefit for up to a year; we check whether you are covered by it or opted out, and size your private coverage around that.',
       'The choice has to be made before a claim ever happens; it cannot be fixed after the fact.',
       'If employees are covered under a group plan, the design has to handle their side of the same choice fairly.'
     ]

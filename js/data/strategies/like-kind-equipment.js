@@ -21,9 +21,12 @@ TSIQ.strategyModules.push({
       'in full, and the replacement asset takes a full cost basis. The federal ' +
       'sting is usually neutralized because 100% bonus depreciation (§168(k), ' +
       'permanent under OBBBA) or §179 expenses the replacement in the same year ' +
-      '— but the offset is not automatic and fails in specific pockets: states ' +
-      'that decouple from bonus/§179, recapture landing as ordinary income while ' +
-      'the client expected deferral, and cash purchases late in a loss year. ' +
+      '— but the offset is not automatic and fails in specific pockets: ' +
+      'PASSENGER VEHICLES, whose first-year write-off is capped by §280F at ' +
+      'roughly $20,000 while the trade-in gain is taxed in full; states ' +
+      'that decouple from bonus/§179 (California allows no bonus and only ' +
+      '$25,000 of §179); recapture landing as ordinary income while ' +
+      'the client expected deferral; and cash purchases late in a loss year. ' +
       'This entry exists to correct stale pre-2018 client expectations and to ' +
       'flag the pockets where the "wash" is not a wash.',
     mechanics: [
@@ -38,6 +41,23 @@ TSIQ.strategyModules.push({
       'phase-out, 2026), so the year-one deduction usually equals or exceeds the ' +
       'recognized recapture — net federal effect near zero when the replacement ' +
       'costs at least as much as the trade-in allowance.',
+      'The offset FAILS for cars and light trucks: a passenger automobile ' +
+      '(6,000 lb gross vehicle weight or less) is a §280F luxury auto, with ' +
+      'depreciation including bonus limited to about $20,000 in each of the ' +
+      'first two years, about $12,000 in the third and about $7,000 a year ' +
+      'after that (indexed; see the annual revenue procedure). Trade a fully depreciated $45,000 ' +
+      'car for a $60,000 one: $45,000 of recapture is ordinary income this ' +
+      'year, the deduction on the new car is about $20,000, and the rest ' +
+      'comes over the following years. Vehicles over 6,000 lb are outside the ' +
+      'cap (see Heavy Vehicle §179).',
+      'California: no bonus depreciation and a $25,000 §179 limit, so for the ' +
+      'state the recapture is taxed now and the replacement is depreciated ' +
+      'over its life. California also adopted the real-property-only rule ' +
+      'for exchanges after January 10, 2019 only for taxpayers above ' +
+      '$250,000 of AGI ($500,000 joint or head of household); a taxpayer ' +
+      'below that could still defer an equipment exchange for California, ' +
+      'leaving different federal and state basis. Confirm that exception is ' +
+      'still in the current FTB instructions before relying on it.',
       'The offset FAILS at the state level in nonconformity states: several ' +
       'states disallow or severely limit bonus depreciation (and some cap §179), ' +
       'so the recapture is taxed currently while the replacement deduction ' +
@@ -54,6 +74,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §1031(a)(1) (as amended by TCJA, P.L. 115-97)', note: 'Like-kind deferral limited to REAL property for exchanges completed after 12/31/2017 — personal property exchanges are taxable.' },
       { type: 'IRC', cite: 'IRC §1245', note: 'Depreciation recapture — gain on disposed equipment is ordinary income to the extent of prior depreciation, recognized in the trade-in year.' },
       { type: 'IRC', cite: 'IRC §168(k)', note: '100% bonus depreciation, permanent under OBBBA (P.L. 119-21) for property acquired after 1/19/2025 — the usual federal offset to the recognized recapture.' },
+      { type: 'IRC', cite: 'IRC §280F(a)', note: 'Luxury automobile depreciation caps for passenger vehicles of 6,000 lb GVW or less — the reason a car trade-in is not a wash.' },
       { type: 'IRC', cite: 'IRC §179', note: 'Election to expense — $2,560,000 limit / $4,090,000 phase-out (2026); the alternative offset, but several states cap it.' },
       { type: 'Reg', cite: 'Reg. §1.1031(a)-3', note: 'Post-TCJA definition of real property for §1031 — what still qualifies (land, buildings, inherently permanent structures, certain structural components).' },
       { type: 'IRC', cite: 'IRC §1001', note: 'A trade-in is a realization event: amount realized equals the trade-in allowance credited against the replacement.' },
@@ -67,7 +88,8 @@ TSIQ.strategyModules.push({
     ],
     risks: [
       'Stale expectations: clients (and old software defaults) still assume equipment trades are tax-free — the recapture surprise shows up at filing, not at the dealership.',
-      'State nonconformity: recapture taxed now, replacement deducted slowly — a real current-year state cost in decoupled states.',
+      'State nonconformity: recapture taxed now, replacement deducted slowly — a real current-year state cost in decoupled states, California among them.',
+      'Car trade-ins: telling a client the trade is a wash when the replacement is a passenger vehicle under the §280F caps understates the year\'s income by the uncapped part of the recapture.',
       'Loss-year mismatch: recognizing recapture in a profitable year but the offsetting bonus deduction being trapped (e.g., contributing to an excess business loss under §461(l)) changes the timing math.',
       'Fleet/heavy-equipment businesses with continuous trade cycles now have annual recapture churn that must be tracked asset by asset.',
       'Mislabeling personal property as real property to force §1031 treatment invites exam adjustment — Reg. §1.1031(a)-3 draws the line, not the invoice description.'
@@ -108,7 +130,8 @@ TSIQ.strategyModules.push({
       'We handle all the tax reporting on the trade'
     ],
     considerations: [
-      'In some states the write-off that offsets the trade is limited, so a trade can create a real state tax bill — we quantify it first.',
+      'California limits the write-off that offsets the trade, so a trade can create a real state tax bill — we quantify it first.',
+      'For ordinary cars and light trucks the first-year write-off is capped, so trading one in can add to this year\'s taxable income even federally. Heavier trucks and SUVs do not have that cap.',
       'This is about avoiding a trap and timing trades well, not about generating new savings — real estate is where the old tax-free exchange still lives.'
     ]
   },

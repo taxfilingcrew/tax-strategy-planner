@@ -40,6 +40,19 @@ TSIQ.strategyModules.push({
       'owner and effects the cross-purchase — one policy per insured, centralized ' +
       'administration, and transfers of policies among partners fit the ' +
       '§101(a)(2)(B) transfer-for-value exceptions.',
+      'Company-owned policies — §101(j): for a policy issued after August 17, ' +
+      '2006 and owned by an employer (or a related person) on an employee, ' +
+      'officer, director or owner, death proceeds above the premiums paid are ' +
+      'TAXABLE INCOME unless (1) BEFORE the policy is issued the insured is ' +
+      'told in writing that the business intends to insure him, the maximum ' +
+      'face amount, and that the business will be the beneficiary, and ' +
+      'consents in writing; and (2) an exception applies (the insured was an ' +
+      'employee within 12 months of death or a director or highly compensated ' +
+      'employee at issue, or the proceeds go to the insured\'s family or buy ' +
+      'the insured\'s interest from them). The business then files Form 8925 ' +
+      'every year. A missed notice-and-consent cannot be fixed after issue ' +
+      'except by replacing the policy. Applies to entity-redemption plans ' +
+      'and, as a precaution, to an insurance LLC.',
       'Death proceeds are excluded from income under §101(a), but a policy ' +
       'transferred for valuable consideration loses the exclusion above basis-plus-' +
       'premiums unless an exception applies (transfer to the insured, to a partner ' +
@@ -60,6 +73,7 @@ TSIQ.strategyModules.push({
     authority: [
       { type: 'Case', cite: 'Connelly v. United States, 602 U.S. 257 (2024)', note: 'Unanimous: company-owned life insurance proceeds increase the estate-tax value of the decedent\'s shares; the corporation\'s contractual redemption obligation is not an offsetting liability. Redemption-style funding now carries a built-in estate-tax cost for taxable estates.' },
       { type: 'IRC', cite: 'IRC §101(a)', note: 'Death proceeds excluded from gross income; §101(a)(2) strips the exclusion after a transfer for valuable consideration, subject to the §101(a)(2)(A)-(B) exceptions (insured, partner of insured, partnership of insured, corporation in which insured is a shareholder/officer).' },
+      { type: 'IRC', cite: 'IRC §101(j); §6039I; Form 8925', note: 'Employer-owned life insurance: proceeds taxable above premiums paid unless written notice and consent precede issuance and a statutory exception applies; annual reporting on Form 8925.' },
       { type: 'IRC', cite: 'IRC §2703', note: 'Buy-sell price fixes estate value only if the agreement is a bona fide business arrangement, not a testamentary device, and comparable to arm\'s-length terms (§2703(b)); restrictions failing the test are disregarded.' },
       { type: 'IRC', cite: 'IRC §2042', note: 'Inclusion of proceeds in the insured\'s gross estate where the insured holds incidents of ownership — the reason owners should not own policies on their own lives in these structures.' },
       { type: 'IRC', cite: 'IRC §264(a)(1)', note: 'No deduction for premiums on a policy where the taxpayer is directly or indirectly a beneficiary — buy-sell funding is an after-tax cost.' },
@@ -78,9 +92,17 @@ TSIQ.strategyModules.push({
       'For family businesses, §2703(b) support: independent appraisal or a formula ' +
       'benchmarked to comparable arm\'s-length agreements.',
       'Insurable owners — underwriting problems discovered late can force a ' +
-      'sinking-fund or installment fallback.'
+      'sinking-fund or installment fallback.',
+      'For any policy the company (or an insurance LLC) will own: signed ' +
+      '§101(j) notice and consent from each insured BEFORE the policy is ' +
+      'issued, and Form 8925 filed with the return each year.'
     ],
     risks: [
+      '§101(j) failure: company-owned policies issued since 2006 without a ' +
+      'written notice-and-consent signed before issue pay out as taxable ' +
+      'income. It is common in small companies where the agent never raised ' +
+      'it — check every existing policy file for the signed form and for ' +
+      'Form 8925 on prior returns.',
       'Connelly exposure in existing redemption plans: for a taxable estate, ' +
       'company-owned proceeds inflate the decedent\'s share value at a 40% ' +
       'marginal estate rate with no offset. Every pre-2024 entity-purchase plan ' +
@@ -114,6 +136,9 @@ TSIQ.strategyModules.push({
       'policy-count explosion of a classic cross-purchase.'
     ],
     implementation: [
+      'For each company-owned policy, locate the §101(j) notice and consent ' +
+      'and confirm Form 8925 has been filed; where the consent is missing on ' +
+      'a post-2006 policy, plan a replacement or a change of ownership.',
       'Inventory any existing buy-sell and policy ownership; identify Connelly ' +
       'exposure (entity-owned policies + redemption obligation) and transfer-for-' +
       'value risk in any proposed restructuring path.',
@@ -146,7 +171,7 @@ TSIQ.strategyModules.push({
       'Your family receives full, fair value for your share — in cash',
       'Your partners keep control of the business without scrambling for money',
       'A pre-agreed price prevents disputes and can lock in the value for estate taxes',
-      'The insurance payout that funds it is generally income-tax-free'
+      'The insurance payout that funds it is generally income-tax-free, provided the paperwork was signed before the policy was issued'
     ],
     steps: [
       'We review any existing agreement and how your current policies are owned',
@@ -157,7 +182,8 @@ TSIQ.strategyModules.push({
     considerations: [
       'Life insurance premiums are a real, non-deductible cost — we weigh that against the protection purchased.',
       'If you already have an older agreement funded with company-owned insurance, recent law changes mean it may need restructuring; moving policies around the wrong way has its own tax traps, so this is not a do-it-yourself fix.',
-      'The agreed price has to be genuinely fair and kept current — a stale or lowball number can be ignored by the IRS.'
+      'The agreed price has to be genuinely fair and kept current — a stale or lowball number can be ignored by the IRS.',
+      'If the company owns the policies, each insured owner must sign a notice-and-consent form before the policy is issued, or the payout becomes taxable. We check that this was done on any policies you already have.'
     ]
   },
 

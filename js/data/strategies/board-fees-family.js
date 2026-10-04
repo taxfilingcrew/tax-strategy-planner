@@ -33,7 +33,9 @@ TSIQ.strategyModules.push({
       'services actually rendered. Benchmarks: what comparable small ' +
       'companies pay outside directors per meeting or per year.',
       'Recipient side: director fees are non-employee compensation — ' +
-      'reported on Form 1099-NEC, and SE income under Rev. Rul. 72-86, so ' +
+      'reported on Form 1099-NEC (from 2026 only when the year\'s fees reach ' +
+      '$2,000; the old $600 threshold ended with 2025 payments), and SE ' +
+      'income under Rev. Rul. 72-86 whether or not a 1099 is issued, so ' +
       'the recipient files Schedule SE. An adult child in the 12% bracket ' +
       'still nets roughly 26% combined on the fees — the shift only wins ' +
       'against a 37%-bracket owner plus the 21% corporate layer.',
@@ -57,7 +59,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §1402(a)', note: 'SE income definition sweeping in a director\'s trade or business of serving on boards.' },
       { type: 'IRC', cite: 'IRC §11', note: 'The 21% corporate rate — the entity-level layer the deduction removes before dividend double-tax.' },
       { type: 'IRC', cite: 'IRC §1(g)', note: 'Kiddie tax reaches only unearned income — director fees for real services are earned income taxed at the recipient\'s own rates.' },
-      { type: 'Admin', cite: 'Form 1099-NEC', note: 'Reporting for director fees of $600+ — non-employee compensation, not W-2 wages.' }
+      { type: 'Admin', cite: 'Form 1099-NEC', note: 'Reporting for director fees of $2,000 or more for payments made after 2025 (indexed after 2026; $600 before) — non-employee compensation, not W-2 wages. The fees are taxable and SE income below the threshold too.' }
     ],
     requirements: [
       'A C corporation with a functioning board — bylaws providing for directors, elections documented, meetings actually held.',
@@ -70,7 +72,8 @@ TSIQ.strategyModules.push({
       'The SE tax drag (Rev. Rul. 72-86) erodes the arbitrage — a fee shifted from a 37% owner to a 22%-bracket adult child nets far less than the bracket spread suggests once ~14.1% SE tax is added.',
       'Paper boards fail: no minutes, no materials, no votes means no services — disallowance plus accuracy penalties.',
       'Fees at levels far above small-company norms (a few hundred to a few thousand dollars per meeting) draw reasonableness challenges.',
-      'Recipients may need quarterly estimates for the income and SE tax — a compliance cost on their side of the ledger.'
+      'Recipients may need quarterly estimates for the income and SE tax — a compliance cost on their side of the ledger.',
+      'Retired parents as directors: the fees are earnings. For a parent drawing Social Security before full retirement age they count toward the earnings test (benefits withheld $1 for every $2 over the annual limit, about $24,000 in 2026); at any age they can raise the taxable share of benefits (up to 85%) and, two years later, Medicare Part B and D premiums through IRMAA. Run the recipient\'s return before setting the fee.'
     ],
     bestFit: [
       'Closely held C corporations with adult family members who can contribute real oversight.',
@@ -81,7 +84,7 @@ TSIQ.strategyModules.push({
       'Confirm the corporation\'s bylaws and elect the family directors properly; document in the corporate record book.',
       'Benchmark and set fees by board resolution (per-meeting or annual retainer) BEFORE payment; keep the comparables in the file.',
       'Run real meetings: agendas circulated in advance, financials reviewed, minutes recording attendance and votes.',
-      'Pay fees by corporate check/transfer; issue Form 1099-NEC each January.',
+      'Pay fees by corporate check/transfer; issue Form 1099-NEC each January to any director paid $2,000 or more in the year (2026 threshold).',
       'Advise each recipient on Schedule SE and quarterly estimates; coordinate their IRA opportunities from the earned income.',
       'Revisit fee levels annually against the services actually delivered.'
     ]
@@ -110,6 +113,7 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'The recipients pay self-employment tax on the fees, which reduces the net benefit — we run the full family math first and only proceed if it clearly wins.',
+      'For a parent already collecting Social Security, the fees can reduce benefits before full retirement age, make more of the benefits taxable, and raise Medicare premiums. We check their side before choosing who serves and what they are paid.',
       'The board service must be genuine: meetings, minutes, and fees that match the work. This is not a strategy for paper titles.'
     ]
   },

@@ -17,7 +17,10 @@ TSIQ.strategyModules.push({
       'separate entity holding the real estate or other high-value assets ' +
       '(PropCo), with OpCo paying market-rate rent to PropCo. The rent is ' +
       'deductible to OpCo under §162; the rental income in PropCo is not ' +
-      'subject to SE tax. The self-rental rule (Reg. §1.469-2(f)(6)) ' +
+      'subject to SE tax — which saves employment tax only where OpCo\'s ' +
+      'profit would otherwise bear it (a partnership, or wages from a C ' +
+      'corp). An S-corp owner\'s distributions already escape it, and a sole ' +
+      'proprietor cannot rent to himself. The self-rental rule (Reg. §1.469-2(f)(6)) ' +
       'recharacterizes net rental INCOME from a materially participating ' +
       'tenant business as nonpassive, so it cannot shelter passive losses — ' +
       'but the structure still delivers liability isolation, income-character ' +
@@ -34,14 +37,20 @@ TSIQ.strategyModules.push({
       'not reach the real estate, and vice versa — the most valuable asset ' +
       'is walled off from operating risk (slip-and-fall, employment claims, ' +
       'contract disputes).',
-      'Income character: rental income in PropCo escapes SE tax (§1402(a)(1)); ' +
+      'Income character: rental income in PropCo escapes SE tax (§1402(a)(1)) — ' +
+      'a real saving for partners, none for S-corp owners; ' +
       'the self-rental rule (Reg. §1.469-2(f)(6)) makes net rental income from ' +
       'the related operating tenant nonpassive, while self-rental LOSSES stay ' +
       'passive — plan which side of that asymmetry the client lands on.',
       'QBI placement: rental to a commonly controlled trade or business is ' +
       'treated as a trade or business for §199A (Reg. §1.199A-1(b)(14)), and ' +
       'entities can be aggregated under Reg. §1.199A-4 to manage the W-2 ' +
-      'wage/UBIA limits.',
+      'wage/UBIA limits. Limits: the rule applies only when the tenant is an ' +
+      'individual or pass-through — rent from a commonly owned C corporation ' +
+      'does not get it; rent from a commonly owned specified service ' +
+      'business is itself SSTB income (Reg. §1.199A-5(c)(2)); and PropCo ' +
+      'usually has no W-2 wages, so above the threshold its deduction is ' +
+      'capped by 2.5% of the building\'s unadjusted basis unless aggregated.',
       'SALT/PTET flexibility: state PTET elections are made entity by entity — ' +
       'the split lets the advisor route income to the entity where the ' +
       'election (or a state\'s rules) works best.',
@@ -69,7 +78,8 @@ TSIQ.strategyModules.push({
       'Self-rental asymmetry: net rental income is nonpassive (cannot absorb the client\'s passive losses), but if rent is set to create a loss, that loss is passive and may be trapped — rent-setting is a real planning decision, not a dial.',
       'Non-market rent invites §482-style reallocation and, in a C-corp OpCo, disguised-dividend recharacterization.',
       'Moving an appreciated building OUT of an existing C or S corporation is a taxable event — this structure is far cheaper to build at acquisition than to retrofit.',
-      'Transfer frictions: deed transfer taxes, lender consent, property-tax reassessment in some states.',
+      'Transfer frictions: deed transfer taxes and lender consent. California: moving real estate between an owner and an entity (or between entities) is a change in ownership that reassesses the property under Prop 13 unless the proportional-interest exclusion applies (exactly the same owners in the same percentages, R&TC §62(a)(2)); after an excluded transfer, later transfers of more than 50% of the entity interests trigger reassessment (§64(d)). PropCo as an LLC owes $800 a year plus the gross-receipts fee on the rent.',
+      'Do not pitch employment-tax savings to an S-corp owner — there are none. For them this structure is about liability and exit flexibility.',
       'Extra compliance: additional returns, leases, and bookkeeping — the benefit must justify the overhead.'
     ],
     bestFit: [
@@ -93,13 +103,13 @@ TSIQ.strategyModules.push({
     headline: 'Put your building and your business in separate boxes',
     plainEnglish: [
       'If your business owns its building — or you are about to buy one — keeping them in the same legal basket is risky. A lawsuit against the business could take the building with it. Splitting them means the business operates in one company and the property sits safely in another.',
-      'The business then pays fair-market rent to the property company, just as it would to any landlord. That rent is a normal deductible expense for the business, and the rental income comes to you without the extra payroll-style tax that hits business profits.',
+      'The business then pays fair-market rent to the property company, just as it would to any landlord. That rent is a normal deductible expense for the business and income to you. If your business is a partnership, the rent also avoids the self-employment tax your share of profit carries; if it is an S corporation, your profits already avoid that tax, so there is no extra tax saving — the reasons to do it are protection and flexibility.',
       'The split also keeps your options open. Someday you might sell the business but keep the building as a rental to the new owner, or trade the building for a bigger one without disturbing the business at all. Separate boxes make both possible.'
     ],
     analogy: 'It\'s like keeping your savings in a different account than your spending money — same owner, but a problem in one account can\'t drain the other.',
     benefits: [
       'Your most valuable asset is shielded from business lawsuits and debts',
-      'Rent moves money from the business to you without payroll-style taxes',
+      'For partnerships, rent reaches you without self-employment tax (no added saving for S corporations)',
       'Freedom to sell, keep, or trade the building separately from the business',
       'More levers for state tax planning and other strategies to build on'
     ],
@@ -112,7 +122,8 @@ TSIQ.strategyModules.push({
     considerations: [
       'This is easiest and cheapest to set up when you buy the property — moving a building out of an existing corporation can trigger tax, so we check that math first.',
       'The rent must be genuinely market-rate and actually paid — this is a real landlord/tenant relationship, not a paper one.',
-      'There is some added paperwork and cost (an extra tax return, a lease, separate accounts) that the benefits need to outweigh.'
+      'There is some added paperwork and cost (an extra tax return, a lease, separate accounts, and in California at least $800 a year for the property company) that the benefits need to outweigh.',
+      'In California, re-titling a building can raise its property tax assessment unless the ownership stays exactly the same — we check that before anything is moved.'
     ]
   },
 

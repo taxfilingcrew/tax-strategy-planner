@@ -56,19 +56,22 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §1(g)(4)', note: 'Definition of net unearned income — the mechanical $2,700 (2026) threshold arises from the two $1,350 layers.' },
       { type: 'IRC', cite: 'IRC §1(g)(2)(A)', note: 'Covered children: under 18, plus 18-year-olds and full-time students 19–23 whose earned income is not more than half their support.' },
       { type: 'IRC', cite: 'IRC §63(c)(5)(B)', note: 'Dependent standard deduction tracks earned income plus an add-on — why wages are doubly protected.' },
+      { type: 'Admin', cite: 'Form 8814; FTB 3800; FTB 3803', note: 'Parents\' election to report a child\'s interest and dividends (federal); California tax computation for children with investment income; California parents\' election.' },
       { type: 'Admin', cite: 'Form 8615', note: 'Tax for Certain Children Who Have Unearned Income — the computation attaches to the child\'s return.' },
       { type: 'Admin', cite: 'Rev. Proc. 2025-32', note: '2026 inflation adjustments, including the kiddie-tax unearned income layers.' }
     ],
     requirements: [
       'A child with earned income from the family business (or elsewhere) and actual or planned investment assets.',
       'Titling discipline: know which accounts are the child\'s (UTMA, custodial Roth, 529) and what income each produces.',
-      'Annual monitoring of the child\'s unearned income against the $2,700 threshold.',
+      'Annual monitoring of the child\'s unearned income against TWO lines: $1,350, above which a dependent child must file a return and pays tax at the child\'s own rate, and $2,700, above which the parents\' rate applies.',
       'Coordination with the Hiring Children, Kids\' Roth IRA, and Kids\' 401(k) strategies — this strategy sequences those dollars.'
     ],
     risks: [
       'Ignoring the trap: several years of wages accumulating in a taxable custodial account will eventually generate kiddie-taxable yield at the parents\' top rate.',
       'UTMA assets are irrevocably the child\'s — money moved there for tax reasons cannot be reclaimed, and large UTMA balances hurt financial aid more than parent-owned 529s.',
       'The kiddie tax follows students to age 23 — a "we\'re done at 18" assumption produces surprise Form 8615 filings in college years.',
+      'The filing trigger is lower than the kiddie-tax trigger: a dependent with more than $1,350 of unearned income (2026), or with wages plus any unearned income above the dependent standard deduction, must file even though no kiddie tax is due. "Under $2,700" does not mean "no return."',
+      'California has its own versions: FTB 3800 computes the child\'s tax at the parents\' rate on the California return, and FTB 3803 is the parents\' election to report the child\'s interest and dividends. Both are easy to miss when the federal form is prepared.',
       'Selling appreciated custodial positions to rebalance can itself trigger kiddie-taxable gains; plan dispositions around the child\'s covered years.'
     ],
     bestFit: [
@@ -81,7 +84,7 @@ TSIQ.strategyModules.push({
       'Route new wages by priority: custodial Roth IRA first (up to earned income or $7,500 for 2026), then plan deferrals if available, then 529.',
       'Keep taxable custodial holdings in low-distribution assets; set distributions to reinvest only where yield stays safely under $2,700.',
       'For students 19–23, test the earned-income-vs-support condition each year — wages may remove them from §1(g) scope.',
-      'Prepare Form 8615 with the child\'s return in any year the threshold is exceeded rather than discovering it on notice.'
+      'Prepare Form 8615 with the child\'s return in any year the $2,700 threshold is exceeded rather than discovering it on notice — and FTB 3800 with the California return. File a return for the child whenever unearned income passes $1,350, or use the parents\' election (Form 8814 / FTB 3803) where it costs less.'
     ]
   },
 
@@ -98,7 +101,7 @@ TSIQ.strategyModules.push({
       'Your kids\' earnings stay taxed at their low rates — or grow tax-free entirely',
       'Avoids surprise tax bills at your top rate on their investment accounts',
       'Turns the family payroll strategy into decades of protected compounding',
-      'Simple annual check — no new filings unless a threshold is crossed'
+      'Simple annual check — a child\'s return is needed once investment income passes $1,350, and we handle it'
     ],
     steps: [
       'We review every account in your kids\' names and what income it produces',

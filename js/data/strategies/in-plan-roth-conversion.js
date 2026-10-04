@@ -66,6 +66,7 @@ TSIQ.strategyModules.push({
     risks: [
       'Irrevocability: overshooting the bracket target cannot be undone — no recharacterization since TCJA.',
       'AGI cascade effects: SALT-cap phase-down, QBI phase-out, NIIT exposure on other income, and IRMAA surcharges can push the true marginal cost well above the nominal bracket.',
+      'California taxes the conversion as ordinary income — 9.3% on most of it for a typical client (about $9,300 on a $100,000 conversion), up to 13.3% at the top. A federal deduction that California does not allow (bonus depreciation, for example) creates a low-rate year federally but not for the state. And a client who expects to retire to a state with no income tax gives up the chance to take the money out free of California tax by converting while still a resident.',
       'Paying conversion tax from plan assets (or with penalty-bearing early money) destroys the arbitrage — outside cash only.',
       'The 5-year recapture rule surprises clients under 59½ who tap converted amounts early.',
       'Converting in a normal-income year at 32–37% is usually just prepaying tax at top rates — the strategy is the TIMING, not the conversion itself.'
@@ -107,7 +108,7 @@ TSIQ.strategyModules.push({
       'We repeat in each low-rate year until the pre-tax pile is right-sized'
     ],
     considerations: [
-      'You pay real tax now, from money outside the retirement account — the win is paying at a low rate instead of a high one later, so the timing has to be right.',
+      'You pay real tax now — federal and California — from money outside the retirement account. The win is paying at a low rate instead of a high one later, so the timing has to be right. If you plan to retire outside California, waiting may avoid the state tax altogether.',
       'A conversion is permanent once made — we size it carefully against near-final year-end numbers.'
     ]
   },

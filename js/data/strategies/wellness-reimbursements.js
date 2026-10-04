@@ -72,11 +72,11 @@ TSIQ.strategyModules.push({
       'Documentation connecting any reimbursement to a specific medical service or unreimbursed expense.'
     ],
     risks: [
-      'The marketed wellness-indemnity schemes are the whole risk story: participating employers owe back FICA/withholding, penalties, and interest, and the IRS has these programs squarely in view (CCA 202323006; OPR guidance to practitioners).',
+      'The marketed wellness-indemnity schemes are the whole risk story: participating employers owe back FICA/withholding, penalties, and interest, and the IRS has these programs squarely in view (CCA 201622031, CCA 201703013 and CCA 202323006 all reach the same result).',
       '"Everyone gets $1,000/month tax-free wellness benefits" pitches often arrive through payroll vendors or associations — clients hear "IRS-approved." It is not.',
       'Even legitimate reimbursement arrangements are group health plans — an uncompliant standalone design walks into the §4980D excise tax ($100/employee/day).',
       'Misclassified taxable perks (gym stipends excluded from W-2s) create small but pervasive payroll errors.',
-      'Preparer exposure: signing returns reflecting a known indemnity scheme implicates preparer penalty and OPR standards.'
+      'Preparer exposure: signing returns reflecting a known indemnity scheme implicates the §6694 preparer penalties and Circular 230 due-diligence standards.'
     ],
     bestFit: [
       'Employers who want genuine, modest wellness benefits (screenings, flu shots, EAP, cessation programs) inside a compliant health plan.',

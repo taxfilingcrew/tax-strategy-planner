@@ -23,9 +23,13 @@ TSIQ.strategyModules.push({
       '"rates snap back in 2026" argument that had favored Roth by default; the ' +
       'calculus is now client-specific: current bracket, retirement income ' +
       'floor (RMDs, Social Security), state-of-residence arbitrage, and estate ' +
-      'intentions. One piece is no longer elective: under SECURE 2.0 §603, a ' +
-      'participant whose prior-year FICA wages exceeded $150,000 (2026 ' +
-      'threshold) must make catch-up contributions as Roth.',
+      'intentions. One piece is no longer elective for some: under SECURE 2.0 ' +
+      '§603, a participant whose prior-year FICA wages FROM THE EMPLOYER ' +
+      'SPONSORING THE PLAN exceeded $150,000 (2026 threshold) must make ' +
+      'catch-up contributions as Roth. It is not a rule for all high ' +
+      'earners: a self-employed owner has no FICA wages and is exempt, and ' +
+      'so is an S-corp owner whose W-2 from the corporation was $150,000 or ' +
+      'less, whatever the K-1 shows.',
     mechanics: [
       'Same $24,500 limit either way (§402(g)) — but Roth dollars are worth ' +
       'more at equal balances, since the tax is already paid; a maxed Roth ' +
@@ -40,10 +44,15 @@ TSIQ.strategyModules.push({
       'no scheduled rate sunset. Rate risk is now legislative, not calendared, ' +
       'which weakens the reflexive "rates are going up" Roth pitch and makes ' +
       'the client\'s own income trajectory the dominant variable.',
-      'Mandatory Roth catch-up (SECURE 2.0 §603): prior-year FICA wages over ' +
-      '$150,000 (2026, indexed) force the $8,000/$11,250 catch-up into Roth — ' +
-      'affected clients lose that deduction whether they like it or not; plan ' +
-      'documents must support Roth or catch-up is unavailable entirely.',
+      'Mandatory Roth catch-up (SECURE 2.0 §603; §414(v)(7)): prior-year FICA ' +
+      'wages over $150,000 (2026, indexed) from the plan\'s sponsor force the ' +
+      '$8,000/$11,250 catch-up into Roth — affected clients lose that ' +
+      'deduction whether they like it or not, and if the plan has no Roth ' +
+      'feature they cannot make catch-up contributions at all. WHO IS ' +
+      'OUTSIDE THE RULE: sole proprietors and partners (self-employment ' +
+      'income is not FICA wages); S-corp owners paid $150,000 or less in W-2 ' +
+      'wages; and SEP and SIMPLE IRA participants. Wages from a different, ' +
+      'unrelated employer do not count toward the test.',
       'Roth 401(k) accounts no longer have lifetime RMDs (SECURE 2.0 aligned ' +
       'them with Roth IRAs beginning 2024) — strengthening Roth as an estate ' +
       'and longevity asset; heirs still take under the 10-year rule but ' +
@@ -65,10 +74,11 @@ TSIQ.strategyModules.push({
       'All-or-nothing thinking: the optimum is usually a split, revisited annually — locking either identity in for decades forfeits option value.',
       'Roth contributions in a 37%-bracket year with modest expected retirement income is simply overpaying — the arithmetic has to win, not the ideology.',
       'Ignoring §603: a high-wage 50+ client whose plan lacks a Roth feature cannot make catch-up contributions at all — a five-figure annual miss.',
+      'Over-applying §603: telling a self-employed owner, or an S-corp owner with a salary of $150,000 or less, that catch-up must be Roth costs them a deduction they are entitled to.',
       'State arbitrage cuts both ways: deducting at 0% state (TX/FL) now and withdrawing in a high-tax state later argues Roth; the reverse argues traditional.'
     ],
     bestFit: [
-      'High earners 50+ who must digest the mandatory Roth catch-up and want the rest of the split optimized around it.',
+      'Owners 50+ with W-2 wages over $150,000 from the business, who must digest the mandatory Roth catch-up and want the rest of the split optimized around it.',
       'Clients with large existing pre-tax balances heading toward heavy RMDs.',
       'Owners with volatile income — the split can be re-aimed every year (Roth-heavy in loss years, traditional-heavy in spike years).'
     ],
@@ -104,7 +114,7 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'Choosing Roth means giving up a deduction now — it only pays if today\'s rate is genuinely lower than your future rate, which is a projection, not a certainty.',
-      'For higher earners over 50, part of the choice is now made by law — the extra "catch-up" savings must go in the pay-tax-now bucket.'
+      'If you are over 50 and your W-2 pay from the business was more than $150,000 last year, part of the choice is now made by law — the extra "catch-up" savings must go in the pay-tax-now bucket. This does not apply if you are self-employed or your salary is at or under that amount.'
     ]
   },
 

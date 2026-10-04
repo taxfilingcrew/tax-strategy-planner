@@ -37,6 +37,29 @@ TSIQ.strategyModules.push({
       'deferred plus 50% of the next 2% (max cost 4% of pay, only for those who ' +
       'defer); (c) QACA auto-enrollment variants with slightly cheaper formulas ' +
       'and 2-year vesting (§401(k)(13)).',
+      'Automatic enrollment is now MANDATORY for most new plans (§414A, SECURE ' +
+      '2.0 §101): a 401(k) established after December 29, 2022 must, for ' +
+      'plan years beginning after 2024, auto-enroll eligible employees at 3% ' +
+      'to 10% of pay and escalate 1% a year to at least 10% (maximum 15%). ' +
+      'Exempt: employers with 10 or fewer employees, businesses less than 3 ' +
+      'years old, and plans that existed before that date. A new safe harbor ' +
+      'plan for an employer over those thresholds must be built with ' +
+      'auto-enrollment — the QACA variant fits naturally.',
+      'Timing for a NEW plan: a calendar-year safe harbor 401(k) must be in ' +
+      'place by October 1 so employees have at least three months to defer ' +
+      'in the first year. (An EXISTING 401(k) can add a 3% nonelective safe ' +
+      'harbor up to 30 days before year-end, or after that at 4%.)',
+      'California: an employer with one or more employees and no retirement ' +
+      'plan must register for CalSavers (the state auto-IRA program) and ' +
+      'remit payroll deductions, or face penalties of $250 per employee, ' +
+      'rising to $750. Sponsoring a 401(k) is the exemption — report the ' +
+      'plan to CalSavers so the mandate is closed out.',
+      'Credits that offset the cost for a small employer: the §45E startup ' +
+      'credit (up to $5,000 a year for three years; 100% of costs for ' +
+      'employers with 50 or fewer employees), the §45E(f) credit for employer ' +
+      'contributions (up to $1,000 per employee earning $100,000 or less, ' +
+      'phasing down over five years), and the $500 auto-enrollment credit ' +
+      '(§45T) for three years.',
       'Safe harbor nonelective/match dollars are immediately 100% vested ' +
       '(except QACA\'s 2-year cliff).',
       'The 3% nonelective doubles as (most of) the cross-testing gateway — ' +
@@ -57,19 +80,24 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §401(k)(12)', note: 'Traditional safe harbor: 3% nonelective or basic match (100% of first 3% + 50% of next 2%), immediately vested.' },
       { type: 'IRC', cite: 'IRC §401(k)(13)', note: 'QACA automatic-enrollment safe harbor with reduced match formula and 2-year vesting.' },
       { type: 'Admin', cite: 'SECURE Act §103 (P.L. 116-94)', note: 'Eliminated the notice requirement for nonelective safe harbor and allowed retroactive adoption — 3% up to 30 days before year-end; 4% until the close of the following plan year.' },
-      { type: 'Admin', cite: 'Notice 2025-67', note: '2026 deferral limit ($24,500) and catch-up amounts the design unlocks for the owner.' }
+      { type: 'Admin', cite: 'Notice 2025-67', note: '2026 deferral limit ($24,500) and catch-up amounts the design unlocks for the owner.' },
+      { type: 'IRC', cite: 'IRC §414A', note: 'Automatic enrollment required for 401(k) plans established after 12/29/2022, effective for plan years beginning after 12/31/2024; exceptions for employers with 10 or fewer employees and businesses under 3 years old.' },
+      { type: 'IRC', cite: 'IRC §45E; §45T', note: 'Small-employer plan startup credit, employer-contribution credit, and auto-enrollment credit.' },
+      { type: 'Admin', cite: 'Cal. Gov. Code §100000 et seq. (CalSavers)', note: 'California employers with one or more employees must offer a retirement plan or register for CalSavers; penalties under §100033.' }
     ],
     requirements: [
       'A 401(k) covering at least one non-owner employee (owner-only plans have no ADP test — safe harbor adds nothing there).',
       'Budget commitment: 3% of all eligible compensation (nonelective) or up to 4% of participating payroll (match), every year the design is in effect.',
-      'Plan document amendment and, for match designs, the annual participant notice before the plan year.',
+      'Plan document amendment and, for match designs, the annual participant notice before the plan year. A new plan must be effective by October 1 of its first calendar year.',
       'Payroll integration to compute and deposit the safe harbor contribution correctly.'
     ],
     risks: [
       'Mid-year suspension of safe harbor contributions is possible only in narrow circumstances and re-triggers full-year ADP testing — treat the commitment as annual.',
       'The match design does not satisfy the cross-testing gateway — owners who later want a profit-sharing or cash balance overlay usually wish they had chosen nonelective; design for the end state.',
       'Immediate vesting means safe harbor dollars walk out the door with short-tenure employees — no forfeiture recapture.',
-      'Sloppy notice/timing on match designs voids safe harbor status for the year, resurrecting the tests the client paid to avoid.'
+      'Sloppy notice/timing on match designs voids safe harbor status for the year, resurrecting the tests the client paid to avoid.',
+      'Setting up a new plan without automatic enrollment when the employer has more than 10 employees and is at least 3 years old is a plan-qualification failure under §414A.',
+      'Starting too late: a new safe harbor plan adopted after October 1 cannot be a safe harbor plan for that calendar year.'
     ],
     bestFit: [
       'Owners with staff whose low participation is capping HCE deferrals (corrective refunds are the tell).',
@@ -79,7 +107,8 @@ TSIQ.strategyModules.push({
     implementation: [
       'Pull the last ADP/ACP test results — quantify what the owner is currently losing to refunds.',
       'Choose the formula around the end-state design: 3% nonelective if any profit-sharing/cash-balance stacking is plausible; match only if pure deferral-enablement at minimum cost is the goal.',
-      'Amend the plan (or adopt with safe harbor provisions); calendar the SECURE Act §103 retroactive windows if the year is already underway.',
+      'Amend the plan (or adopt with safe harbor provisions); calendar the SECURE Act §103 retroactive windows if the year is already underway. For a new plan: adopt by October 1, include automatic enrollment unless the small/new-employer exception applies, and claim the §45E and §45T credits on Form 8881.',
+      'Report the plan to CalSavers as the employer\'s exemption.',
       'Deliver the participant notice (match designs) before the plan year.',
       'Fund safe harbor contributions with payroll; deduct on the business return.',
       'Once testing relief is in place, raise the owner\'s deferral to the maximum — model that under the deferral strategy.'
@@ -109,7 +138,8 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'The employee contribution is a real annual commitment — about 3 to 4 percent of pay — so we budget it against what unlocking your maximum saves you.',
-      'This matters only if you have employees; owner-only plans can already contribute the max.'
+      'This matters only if you have employees; owner-only plans can already contribute the max.',
+      'A brand-new plan has to be in place by October 1 to count for that year, and most new plans must now sign employees up automatically. California also requires every employer with staff to offer either its own plan or the state\'s CalSavers program — a 401(k) takes care of that.'
     ]
   },
 

@@ -20,8 +20,9 @@ TSIQ.strategyModules.push({
       'deducts even with personal days attached; primarily personal means zero ' +
       'airfare even if some business occurs. Lodging and meals deduct only for ' +
       'the business days either way. Business-day counting therefore drives ' +
-      'everything: travel days count, weekend days sandwiched between business ' +
-      'days count when staying is reasonable, and standby days required by the ' +
+      'everything: travel days count, weekend days between business ' +
+      'days count when going home and back would be impractical or cost more ' +
+      'than staying, and standby days required by the ' +
       'client count. Foreign trips have a harder allocation regime (§274(c); ' +
       'Reg. §1.274-4), and a spouse\'s costs are nondeductible unless the ' +
       'spouse is an employee traveling for a bona fide business purpose ' +
@@ -30,9 +31,10 @@ TSIQ.strategyModules.push({
     mechanics: [
       'Domestic primary-purpose test (Reg. §1.162-2(b)): whether a trip is ' +
       'primarily business or primarily personal is a facts question in which ' +
-      'the TIME devoted to each is the most important factor. Win the day ' +
-      'count and the round-trip transportation is 100% deductible; lose it and ' +
-      'the transportation is 100% personal.',
+      'the TIME devoted to each is the most important factor. It is the leading ' +
+      'factor, not the only one: a trip with more business days than personal ' +
+      'days normally carries the round-trip transportation in full, and one ' +
+      'that is mainly personal carries none of it.',
       'On-site costs allocate regardless of the transportation answer: lodging, ' +
       '50% of meals, and local costs deduct for business days only; personal ' +
       'days are personal.',
@@ -43,9 +45,22 @@ TSIQ.strategyModules.push({
       'Friday-and-Monday meeting schedule makes Saturday and Sunday business ' +
       'days for lodging/meal purposes).',
       'Foreign travel (§274(c); Reg. §1.274-4): transportation must be ' +
-      'ALLOCATED between business and personal days unless the trip is ≤1 week ' +
-      'or personal time is <25% of the trip — deliberately scheduling within ' +
-      'those safe harbors preserves the full deduction.',
+      'ALLOCATED between business and personal days unless the trip is one ' +
+      'week or less (seven consecutive days, not counting the day of ' +
+      'departure) or personal time is under 25% of the trip — deliberately ' +
+      'scheduling within those exceptions preserves the full transportation ' +
+      'deduction. The trip must still be primarily for business; the ' +
+      'exceptions remove the allocation, not the purpose test.',
+      'Foreign conventions and seminars (§274(h)): a meeting held OUTSIDE the ' +
+      'North American area is deductible only if it is directly related to ' +
+      'the business AND it was as reasonable to hold it there as within ' +
+      'North America (purpose of the meeting, where the sponsor\'s members ' +
+      'live, where its other meetings are held). Conventions on cruise ships ' +
+      'are capped at $2,000 a year and allowed only on a U.S.-registered ' +
+      'ship calling at U.S. ports, with written statements attached to the ' +
+      'return. No deduction at all for investment or financial-planning ' +
+      'seminars under §212, or for travel claimed as a form of education ' +
+      '(§274(m)(2)).',
       'Spouse/dependent travel (§274(m)(3)): nondeductible unless the spouse is ' +
       'a bona fide EMPLOYEE of the payor, travels for a genuine business ' +
       'purpose, and the costs would otherwise be deductible. Note the ' +
@@ -62,7 +77,8 @@ TSIQ.strategyModules.push({
       { type: 'Reg', cite: 'Reg. §1.274-4', note: 'Mechanics of the foreign-travel allocation and the business-day counting rules used by analogy in practice.' },
       { type: 'IRC', cite: 'IRC §274(m)(3)', note: 'Spouse, dependent, or companion travel nondeductible unless an employee with a bona fide business purpose whose expenses are otherwise deductible.' },
       { type: 'IRC', cite: 'IRC §274(d)', note: 'Strict substantiation for travel: amount, time, place, business purpose — contemporaneous records.' },
-      { type: 'IRC', cite: 'IRC §274(n)', note: '50% limitation on meals while traveling.' }
+      { type: 'IRC', cite: 'IRC §274(n)', note: '50% limitation on meals while traveling.' },
+      { type: 'IRC', cite: 'IRC §274(h); §274(m)(2)', note: 'Conventions outside the North American area must be as reasonable to hold there as within it; cruise-ship conventions limited to $2,000 a year on U.S.-registered ships with reporting; no deduction for §212 investment seminars or for travel as a form of education.' }
     ],
     requirements: [
       'Genuine business reason for the destination — client, conference, property, vendor — documented before the trip.',
@@ -73,14 +89,15 @@ TSIQ.strategyModules.push({
     risks: [
       'A trip that is really a vacation with a token meeting fails the primary-purpose test — zero transportation deduction and exam credibility damage.',
       'Reconstructed itineraries fail §274(d); this deduction is won or lost on contemporaneous records.',
-      'Foreign trips outside the safe harbors require allocation many preparers miss — an automatic adjustment when examined.',
+      'Foreign trips outside the exceptions require allocation many preparers miss — an automatic adjustment when examined.',
+      'Overseas conferences: a convention in Europe or on a cruise ship does not deduct just because the content is business — §274(h) requires a reason to hold it outside North America, and cruise conventions are capped at $2,000.',
       'Deducting a spouse\'s airfare and the double-room premium without employee status is a recurring, easily-spotted adjustment.',
       'Aggressive "business" day counts (an hour of email does not make a business day) invite recharacterization of the whole trip.'
     ],
     bestFit: [
       'Owners who travel to clients, conferences, or properties and extend trips personally.',
       'Businesses with recurring multi-city or international travel.',
-      'Couples working in the business together (spouse-employee planning makes both tickets deductible).'
+      'Couples working in the business together — the spouse\'s ticket is deductible only when the spouse is a real employee AND has a business reason to be on that particular trip.'
     ],
     implementation: [
       'Before booking, design the trip: schedule business on both ends of a weekend where sensible, and keep foreign trips within the ≤1 week or <25% personal safe harbors.',
@@ -96,7 +113,7 @@ TSIQ.strategyModules.push({
     headline: 'Plan trips so the business part actually gets deducted',
     plainEnglish: [
       'When a trip mixes business and pleasure, the tax result depends less on what you spent and more on how the trip was structured. Here is the surprising rule for domestic trips: if the trip is mainly business, the entire airfare is deductible — even if you tack on a few beach days. If it is mainly personal, none of the airfare counts, even if you took a meeting. The hotel and meals follow the days themselves: business days count, personal days do not.',
-      'That means the calendar is a planning tool. Meetings on Friday and Monday can make the weekend in between count as business days for your hotel. Keeping an overseas trip inside certain time limits protects the whole airfare. Small scheduling choices, made before you book, change the math.',
+      'That means the calendar is a planning tool. Meetings on Friday and Monday can make the weekend in between count as business days for your hotel, when flying home and back would not be practical. Keeping an overseas trip inside certain time limits protects the whole airfare. Small scheduling choices, made before you book, change the math.',
       'The other half is simple paperwork: a trip file with your itinerary, meeting confirmations, and receipts, kept as you go. It takes minutes and it is the difference between deductions that survive questions and deductions that vanish.'
     ],
     analogy: 'It\'s like airline seat selection — the flight costs the same either way, but the person who plans ahead gets far more out of it.',
@@ -115,6 +132,7 @@ TSIQ.strategyModules.push({
     considerations: [
       'The trip has to genuinely be about business — a vacation with one meeting sprinkled in does not qualify, and we will tell you so.',
       'A spouse\'s travel costs only count if they truly work for the business and have a real role on the trip.',
+      'Conferences held overseas or on cruise ships have extra rules — some are not deductible at all — so check with us before you register.',
       'Meals on the road are only ever half deductible — that is the law, not a choice.'
     ]
   },

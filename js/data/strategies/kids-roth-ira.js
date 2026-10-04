@@ -18,7 +18,10 @@ TSIQ.strategyModules.push({
       'lesser of compensation or the annual limit — $7,500 for 2026. There ' +
       'is no minimum age in §408A; the constraint is compensation, which the ' +
       'family payroll strategy supplies. Because the child\'s wages are ' +
-      'already income-tax-free under the standard deduction, the Roth costs ' +
+      'already free of FEDERAL income tax under the $16,100 standard ' +
+      'deduction (California\'s standard deduction is only about $5,700, so ' +
+      'wages above that bear a small state tax, around 1%, and require a ' +
+      'California return), the Roth costs ' +
       'nothing in foregone deduction, and qualified distributions are ' +
       'tax-free after five years and age 59½ — a 50-plus-year tax-free ' +
       'compounding runway. The contribution CASH need not be the wage ' +
@@ -66,7 +69,8 @@ TSIQ.strategyModules.push({
       'Contributions exceeding the child\'s actual compensation are excess contributions — 6% excise per year under §4973 until corrected. Reconcile to the W-2 every year.',
       'If the underlying wages fail exam (not bona fide), the compensation supporting the Roth fails with them — the payroll substance is the foundation.',
       'Control transfers at majority: an 18-to-21-year-old can drain the account (tax and penalty apply to earnings, not basis). Family governance, not tax law, is the mitigation.',
-      'Retirement accounts owned by the student are treated favorably in federal aid formulas, but withdrawals during college count as income — sequence around FAFSA years if funds will be tapped.'
+      'Retirement accounts owned by the student are treated favorably in federal aid formulas, but withdrawals during college count as income — sequence around FAFSA years if funds will be tapped.',
+      '"Tax-free wages" is a federal statement. In California a child earning more than the state standard deduction (about $5,700) owes a small state tax and must file — tell the client so the state return is not missed.'
     ],
     bestFit: [
       'Every family running the kids-on-payroll strategy — this is the default destination for the first $7,500 of each child\'s wages.',
@@ -88,7 +92,7 @@ TSIQ.strategyModules.push({
     plainEnglish: [
       'Once your child earns real wages — for example, from working in the family business — they qualify for one of the best deals in the tax code: a Roth IRA. They can put in up to $7,500 a year (2026), or their total wages if less. The money grows for decades, and when it comes out in retirement, every dollar — all the growth included — is completely tax-free.',
       'It gets better. Your child does not have to give up their paycheck to do this. The rule only requires that they EARNED at least as much as goes in. So your child can keep their wages, and you can gift them the money for the contribution. Same result, and the gift is far below any gift-tax concern.',
-      'Time is what makes this extraordinary. Money invested at 12 or 15 has half a century to compound. A few years of contributions in the early teens, left alone, can grow into a very large tax-free nest egg by retirement — started with wages that were barely taxed at all.'
+      'Time is what makes this extraordinary. Money invested at 12 or 15 has half a century to compound. A few years of contributions in the early teens, left alone, can grow into a very large tax-free nest egg by retirement — started with wages that carried no federal income tax and only a small California tax.'
     ],
     analogy: 'Planting a tree at your child\'s age versus yours is the whole difference — same seed, same soil, but theirs gets fifty growing seasons head to head with your fifteen.',
     benefits: [
@@ -105,7 +109,8 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'The account legally becomes your child\'s to control when they reach adulthood — worth knowing as balances grow.',
-      'This works only as long as the underlying wages are real and documented; the payroll strategy comes first.'
+      'This works only as long as the underlying wages are real and documented; the payroll strategy comes first.',
+      'California taxes a child\'s wages above about $5,700 at a low rate, so a child earning more than that files a small state return each year.'
     ]
   },
 

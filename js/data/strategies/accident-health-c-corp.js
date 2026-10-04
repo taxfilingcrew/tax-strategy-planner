@@ -49,8 +49,21 @@ TSIQ.strategyModules.push({
       'low-friction starting point.',
       'ACA market reforms: a reimbursement arrangement with 2+ participants ' +
       'must be integrated with group coverage or fit a sanctioned design ' +
-      '(ICHRA, excepted-benefit HRA); a one-participant plan is exempt ' +
-      '(§9831(a)(2)).',
+      '(ICHRA, excepted-benefit HRA); a plan with fewer than two participants ' +
+      'who are current employees is exempt (§9831(a)(2)). Count PARTICIPANTS: ' +
+      'an owner-employee whose spouse and children are covered as his ' +
+      'dependents is one participant; a husband and wife who are both ' +
+      'employees and each participate are two, and the exemption is gone — ' +
+      '"family-only" is not the test.',
+      'Versus an S corporation, be precise about the edge. For insurance ' +
+      'PREMIUMS there is almost none: a 2% S-corp shareholder\'s premiums go ' +
+      'on the W-2 (Box 1 only, no FICA) and come back off as a §162(l) ' +
+      'deduction — the same income-tax and payroll-tax result. The C-corp ' +
+      'advantage is the UNINSURED costs (deductibles, copays, dental, vision ' +
+      'through a reimbursement plan), which an S-corp owner can deduct only ' +
+      'above 7.5% of AGI, if at all. That advantage has to outweigh the ' +
+      'C corporation\'s second layer of tax and, in California, the 8.84% ' +
+      'corporate tax.',
       'The FICA layer: none of this runs through wages, so it also avoids ' +
       'both halves of employment tax versus paying the owner more salary to ' +
       'cover the same costs personally.'
@@ -82,7 +95,7 @@ TSIQ.strategyModules.push({
     bestFit: [
       'Existing C-corps with owner-employees carrying significant family premiums and out-of-pocket medical costs.',
       'Entity-choice engagements where heavy, recurring family medical spend is a genuine input alongside QBI, payroll, and double-tax considerations.',
-      'Owner-only or family-only C-corps that can use the one-participant exemption and skip most of the compliance friction.'
+      'Owner-only C-corps (spouse and children covered as the owner\'s dependents, not as separately participating employees) that can use the one-participant exemption and skip most of the compliance friction.'
     ],
     implementation: [
       'Confirm C-corp status and the owner\'s W-2 employment; benchmark total compensation for reasonableness.',
@@ -99,7 +112,7 @@ TSIQ.strategyModules.push({
     headline: 'The C-corporation health benefit most owners never use',
     plainEnglish: [
       'If your business is a regular C-corporation, you hold a benefit that owners of other business types simply do not get: the corporation can pay for your family\'s health coverage — premiums, and with the right plan, out-of-pocket costs too — deduct every dollar, and none of it counts as income to you.',
-      'Owners of S-corporations and partnerships have to run these costs through their personal returns, where limits and thresholds shave the benefit down. A C-corp owner on payroll is treated like any employee, and employee health benefits are among the most tax-favored dollars in the entire system: no income tax, no payroll tax, fully deductible to the company.',
+      'To be fair to other business types: for health insurance premiums, an S-corporation owner already gets nearly the same result through a personal deduction. The real difference is everything insurance does not pay — deductibles, copays, dental, vision. Owners of S-corporations and partnerships can deduct those only in limited cases; a C-corp owner on payroll is treated like any employee, so with the right plan the company pays them, deducts them, and none of it is income to you.',
       'The requirements are about doing it formally: a written plan set up before the money moves, receipts for anything reimbursed, and fair treatment of other employees if you have them. For families with real, recurring medical costs, this benefit alone sometimes changes which business structure makes sense — so we look at it as part of the whole picture, not in isolation.'
     ],
     analogy: 'Most owners pay medical bills from their own pocket after tax has taken its cut — like shopping with money that shrank on the way to the store. This lets the company shop first, at full value, with dollars that never shrank.',
@@ -116,7 +129,7 @@ TSIQ.strategyModules.push({
       'We keep the records, testing, and deductions clean each year'
     ],
     considerations: [
-      'This treatment belongs to C-corporations — if your business is an S-corporation or partnership, we use different (smaller) health strategies or evaluate whether a structure change makes overall sense.',
+      'This treatment belongs to C-corporations — if your business is an S-corporation or partnership, we use different health strategies. Changing structure just for this rarely pays: a C-corporation\'s profits are taxed twice, and California adds an 8.84% corporate tax.',
       'If you have employees, the reimbursement rules generally require covering them fairly, which changes the cost-benefit math.',
       'A C-corporation has its own tax trade-offs — we never recommend the structure for this benefit alone.'
     ]

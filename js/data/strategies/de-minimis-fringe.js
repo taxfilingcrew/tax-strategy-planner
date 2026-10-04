@@ -18,8 +18,10 @@ TSIQ.strategyModules.push({
       'accounting for it is unreasonable or administratively impracticable — ' +
       'occasional snacks and coffee, holiday gifts of low-value property, ' +
       'occasional meal money for overtime, group meals, flowers for life ' +
-      'events. Properly classified, these are deductible to the employer and ' +
-      'tax-free to the employee with zero payroll reporting. Two hard edges: ' +
+      'events. Properly classified, these are tax-free to the employee with ' +
+      'zero payroll reporting and deductible to the employer — food and ' +
+      'beverages at 50%, not in full (§274(n); the old 100% rule for de ' +
+      'minimis meals ended after 2017), other items in full. Two hard edges: ' +
       'CASH and cash equivalents (gift cards) are NEVER de minimis regardless ' +
       'of amount (Reg. §1.132-6(c)), and there is no statutory dollar bright ' +
       'line — frequency and value are judged together. Employer-provided cell ' +
@@ -37,9 +39,17 @@ TSIQ.strategyModules.push({
       'minimis. A $15 gift card is W-2 wages; a $15 coffee mug is not. ' +
       '(Occasional meal money/cab fare for overtime is the narrow exception, ' +
       'and it must be occasional.)',
-      'No dollar bright line exists in the statute or regs. Practice lore ' +
-      'treats items under roughly $25–$100 as comfortable when infrequent, but ' +
-      'that is calibration, not law — frequency can disqualify even trivial amounts.',
+      'No dollar bright line exists in the statute or regs, but the IRS has ' +
+      'said where the line is NOT: it has advised that an item worth $100 ' +
+      'does not qualify as de minimis (CCA 200108042), and it treated a $35 ' +
+      'holiday gift coupon as taxable (TAM 200437030, on the cash-equivalent ' +
+      'ground). Keep individual items well under $100 — most practitioners ' +
+      'work to $25–$75 — and remember frequency can disqualify even trivial ' +
+      'amounts.',
+      'Deduction side: coffee, snacks, occasional supper money and group ' +
+      'meals for staff are 50% deductible (§274(n)). Company-wide holiday ' +
+      'parties and picnics remain 100% deductible (§274(e)(4)), as do ' +
+      'non-food items such as flowers and low-value holiday gifts of property.',
       'Cell phones (Notice 2011-72): a phone provided primarily for ' +
       'noncompensatory business reasons (after-hours availability, client ' +
       'contact) is a working-condition fringe and the personal use is de ' +
@@ -59,6 +69,8 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §132(a)(4), (e)', note: 'The exclusion: property or service so small in value, accounting for it is unreasonable or administratively impracticable — value and frequency weighed together.' },
       { type: 'Reg', cite: 'Reg. §1.132-6', note: 'Operative rules and examples; (c) makes cash and cash equivalents (gift certificates/cards) never excludable as de minimis; (d) occasional meal money/transit fare rules.' },
       { type: 'Admin', cite: 'Notice 2011-72', note: 'Employer-provided cell phones for noncompensatory business reasons: business use is a working-condition fringe; personal use is de minimis — no recordkeeping required.' },
+      { type: 'Admin', cite: 'CCA 200108042', note: 'IRS Chief Counsel advice that a nonmonetary award worth $100 does not qualify as a de minimis fringe.' },
+      { type: 'IRC', cite: 'IRC §274(n); §274(e)(4)', note: '50% limit on food and beverage deductions, including de minimis meals and snacks after 2017; recreational or social activities primarily for employees (holiday party, picnic) remain fully deductible.' },
       { type: 'IRC', cite: 'IRC §274(o)', note: 'For amounts paid after 2025: employer eating-facility and §119 convenience-meal costs nondeductible — the employer-deduction change that reshapes on-site meal programs in 2026.' },
       { type: 'IRC', cite: 'IRC §274(j)(3)(A)(ii)', note: 'Parallel codified rule for achievement awards confirming Congress\'s view that cash equivalents and gift cards are taxable — useful cross-support in exam.' }
     ],
@@ -71,7 +83,8 @@ TSIQ.strategyModules.push({
     risks: [
       'Gift cards are the universal trap — any amount, any occasion, they are W-2 wages, and payroll exams reclassify them across every employee and every open year.',
       'Routine provision destroys the exclusion: daily supper money, a monthly "small" gift, or standing meal allowances are compensation.',
-      'There is no safe-harbor dollar amount — advisers who promise "$75 is always fine" are guessing; keep value low and frequency genuinely occasional.',
+      'There is no safe-harbor dollar amount — advisers who promise "$75 is always fine" are guessing, and the IRS has rejected $100 outright (CCA 200108042); keep value low and frequency genuinely occasional.',
+      'Deducting break-room food and staff meals at 100% is a common return error — they are 50% items.',
       'On-site meal programs keep the employee exclusion but lose the employer deduction in 2026 (§274(o)) — budget accordingly.',
       'Perks aimed only at owners look like disguised distributions, not fringe benefits.'
     ],
@@ -94,7 +107,7 @@ TSIQ.strategyModules.push({
     teaser: 'The small perks you already give can stay off everyone\'s tax forms — if handled right',
     headline: 'Keep the small stuff tax-free — for you and your team',
     plainEnglish: [
-      'The tax law has a common-sense rule: perks too small to be worth tracking — coffee and snacks in the break room, an occasional team lunch, flowers when an employee has a baby, a modest holiday gift — do not count as taxable pay. Your business deducts them, your employees owe nothing, and nothing touches a W-2.',
+      'The tax law has a common-sense rule: perks too small to be worth tracking — coffee and snacks in the break room, an occasional team lunch, flowers when an employee has a baby, a modest holiday gift — do not count as taxable pay. Your business deducts them (food and drinks at half, most other items in full), your employees owe nothing, and nothing touches a W-2.',
       'But there are two tripwires. First, cash and gift cards NEVER qualify — a $20 gift card is legally taxable wages, no matter how small or festive. Second, "occasional" is part of the deal: the same perk given routinely becomes taxable pay. Most businesses stumble on one of these without knowing it, and it surfaces at the worst time — during a payroll audit, multiplied across every employee and every year.',
       'The fix is a simple written policy: which perks you give, how often, and what is off-limits. Ten minutes of structure protects years of goodwill from becoming a payroll problem.'
     ],
@@ -113,7 +126,7 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'Gift cards are the one everyone gets wrong — they are always taxable pay. We will suggest tax-free alternatives your team will like just as much.',
-      'These perks must stay small and occasional — regular allowances are pay, and we will be honest about where the line is.',
+      'These perks must stay small and occasional — regular allowances are pay, and we will be honest about where the line is. There is no official dollar limit, but the IRS has said $100 is too much, so we keep individual items well below that.',
       'Starting in 2026, businesses running full on-site meal programs lose the deduction for them — if that is you, we will plan for it.'
     ]
   },

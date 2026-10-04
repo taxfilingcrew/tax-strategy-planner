@@ -31,9 +31,25 @@ TSIQ.strategyModules.push({
       'Employment tax: an S-corp owner pays FICA only on W-2 reasonable comp; ' +
       'distributions escape it (Rev. Rul. 59-221). A general partner pays SE ' +
       'tax on guaranteed payments (§707(c)) and on the full distributive ' +
-      'share of trade-or-business income (§1402(a)); the §1402(a)(13) ' +
-      'limited-partner exclusion is contested ground for LLC members who ' +
-      'actively participate (see Soroban, Renkemeyer line).',
+      'share of trade-or-business income (§1402(a)). The §1402(a)(13) ' +
+      'limited-partner exclusion does not rescue ACTIVE owners: the Tax Court ' +
+      '(Renkemeyer; Soroban, 161 T.C. 310 (2023)) looks at what the partner ' +
+      'does, and in 2026 two courts of appeals agreed that the state-law ' +
+      'label is not enough — the Second Circuit affirmed Soroban (limited ' +
+      'partners must be passive investors), and the Fifth Circuit in Sirius ' +
+      'Solutions withdrew its January 2026 opinion and held in August 2026 ' +
+      'that a limited partner is one who plays no significant role in ' +
+      'managing or running the business. Denham Capital is pending in the ' +
+      'First Circuit. Plan on SE tax for any owner who works in the business.',
+      'California entity taxes change the comparison: an S corporation pays ' +
+      '1.5% of net income ($800 minimum); an LLC taxed as a partnership pays ' +
+      '$800 plus a fee on total California gross receipts ($900 at $250,000, ' +
+      '$2,500 at $500,000, $6,000 at $1 million, $11,790 at $5 million) — a ' +
+      'fee on receipts, owed even in a loss year; a limited partnership or ' +
+      'LLP pays $800 only; a general partnership pays nothing. On a ' +
+      'low-margin, high-revenue business the LLC fee can exceed the 1.5% ' +
+      'tax; on a high-margin business the 1.5% is the larger cost. Both ' +
+      'forms can elect the 9.3% pass-through entity tax.',
       'Allocations: partnerships can specially allocate income, loss, and ' +
       'cash flow disproportionately to ownership if the allocations have ' +
       'substantial economic effect (§704(b); Reg. §1.704-1(b)). S corps are ' +
@@ -66,7 +82,10 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §752', note: 'Partnership liabilities included in outside basis — supports losses and debt-financed distributions; no S-corp analogue.' },
       { type: 'IRC', cite: 'IRC §1366(d)', note: 'S-corp loss limitation: stock basis plus basis in DIRECT shareholder loans only — entity-level debt gives no basis.' },
       { type: 'IRC', cite: 'IRC §§754, 743(b)', note: 'Election to adjust inside basis on transfers of partnership interests (sale or death) — fresh depreciation for the transferee.' },
-      { type: 'Case', cite: 'Renkemeyer, Campbell & Weaver LLP v. Comm\'r, 136 T.C. 137 (2011)', note: 'Law-firm LLP partners actively performing services could not use the §1402(a)(13) limited-partner exclusion — their shares were SE income.' }
+      { type: 'Case', cite: 'Renkemeyer, Campbell & Weaver LLP v. Comm\'r, 136 T.C. 137 (2011)', note: 'Law-firm LLP partners actively performing services could not use the §1402(a)(13) limited-partner exclusion — their shares were SE income.' },
+      { type: 'Case', cite: 'Soroban Capital Partners LP v. Comm\'r, 161 T.C. 310 (2023), aff\'d (2d Cir. 2026)', note: 'A state-law limited partner qualifies for §1402(a)(13) only if functioning as a passive investor; the Second Circuit affirmed in 2026.' },
+      { type: 'Case', cite: 'Sirius Solutions, L.L.L.P. v. Comm\'r, No. 24-60240 (5th Cir. Aug. 12, 2026) (substituted opinion)', note: 'Withdrew the January 2026 opinion that had looked only to state-law status; a "limited partner" is one who plays no significant role in managing or running the business. Vacated and remanded. Rejects the Tax Court\'s passive-investor wording but still turns on the partner\'s actual role.' },
+      { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §17941, §17942, §23802', note: 'California LLC annual tax and gross-receipts fee; 1.5% S-corporation tax with the $800 minimum.' }
     ],
     requirements: [
       'Two or more owners (a single-member LLC defaults to disregarded status; the partnership option requires real co-ownership).',
@@ -75,7 +94,8 @@ TSIQ.strategyModules.push({
       'Willingness to handle K-1 complexity: capital accounts, §704(c) layers on contributed property, and liability allocations.'
     ],
     risks: [
-      'SE-tax exposure on the full distributive share for active partners — the partnership\'s biggest recurring cost versus the S corp; the limited-partner exclusion for active LLC members is an audit-active area (Renkemeyer line), so do not promise SE savings inside a partnership.',
+      'SE-tax exposure on the full distributive share for active partners — the partnership\'s biggest recurring cost versus the S corp; the limited-partner exclusion is an audit-active area and, after the 2026 Second and Fifth Circuit decisions, unavailable to owners with a real management role — do not promise SE savings inside a partnership.',
+      'Leaving California out of the comparison: 1.5% of S-corp income versus an LLC fee of up to $11,790 on gross receipts can swing the answer by thousands a year in either direction.',
       'Choosing S for the payroll savings and later discovering the deal needs preferred returns, waterfalls, or new investor classes the single-class-of-stock rule forbids — a common and expensive regret.',
       'Terminating S status inadvertently (a second class of stock via side agreements, an ineligible shareholder) blows the election.',
       'Partnership complexity is real: §704(c) allocations, capital-account maintenance, and liability recomputations raise prep cost and error risk.',
@@ -120,6 +140,7 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'The flexible partnership route means active owners pay self-employment tax on their full share of profits — flexibility has a price, and we quantify it.',
+      'California taxes the two differently: an S corporation pays 1.5% of its profit, while an LLC pays $800 plus a fee based on its total sales, even in a year with no profit. We include both in the side-by-side numbers.',
       'The S corporation\'s rules are strict: equal sharing, limited types of owners. If your plans include investors or uneven splits, it can box you in.',
       'Switching structures later is possible but can trigger tax, so we aim to get it right before the business appreciates.'
     ]

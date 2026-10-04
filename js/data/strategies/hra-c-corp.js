@@ -45,8 +45,18 @@ TSIQ.strategyModules.push({
       'ACA market reforms (PHSA §2711 annual-limit ban and §2713 preventive ' +
       'mandate, imported into the Code): a standalone HRA covering 2+ ' +
       'employees violates them unless integrated with a group health plan or ' +
-      'structured as a QSEHRA, ICHRA, or excepted-benefit HRA. A one-employee ' +
-      'plan is exempt (§9831(a)(2)).',
+      'structured as a QSEHRA, ICHRA, or excepted-benefit HRA. A plan with ' +
+      'fewer than two PARTICIPANTS who are current employees is exempt ' +
+      '(§9831(a)(2)) — the test counts participants, not the size of the ' +
+      'workforce, and two family members who each participate as employees ' +
+      'are two participants.',
+      'PCORI fee: an HRA is a self-insured health plan, so the sponsor owes ' +
+      'the Patient-Centered Outcomes Research fee — a few dollars per covered ' +
+      'life per year, indexed — reported on Form 720 by July 31 following the ' +
+      'plan year. An HRA paired with an INSURED medical plan still owes its ' +
+      'own fee (counting one life per participant); one paired with the ' +
+      'employer\'s self-insured plan with the same plan year is counted once. ' +
+      'Small, but a missed annual filing.',
       'Self-insured plan nondiscrimination under §105(h): if the HRA favors ' +
       'highly compensated individuals as to eligibility or benefits, the HCI\'s ' +
       'excess reimbursements become taxable — cover a nondiscriminatory class ' +
@@ -65,7 +75,7 @@ TSIQ.strategyModules.push({
     requirements: [
       'A C-corporation with the owner on payroll as a bona fide W-2 employee.',
       'A written plan document adopted before expenses are reimbursed, with a defined employee class and reimbursement limits.',
-      'ACA compliance path: one-employee exemption, integration with group coverage, or a sanctioned HRA design (QSEHRA/ICHRA/excepted-benefit).',
+      'ACA compliance path: the one-participant exemption, integration with group coverage, or a sanctioned HRA design (QSEHRA/ICHRA/excepted-benefit).',
       'Substantiation of every reimbursement (receipts/EOBs) before payment.',
       '§105(h) nondiscrimination testing if self-insured and covering a broader workforce.'
     ],
@@ -79,15 +89,16 @@ TSIQ.strategyModules.push({
     bestFit: [
       'Existing C-corps with owner-employees and significant recurring family medical costs.',
       'Clients weighing entity choice where heavy medical spend tilts the C-corp math.',
-      'Small C-corps whose only participant is the owner (one-employee exemption) or that already sponsor group coverage to integrate with.'
+      'Small C-corps whose only participant is the owner (one-participant exemption) or that already sponsor group coverage to integrate with.'
     ],
     implementation: [
       'Confirm entity type and the owner\'s W-2 employee status; verify reasonable compensation overall.',
-      'Choose the ACA compliance path: one-employee plan, integration with the group policy, or a QSEHRA/ICHRA/excepted-benefit design.',
+      'Choose the ACA compliance path: one-participant plan, integration with the group policy, or a QSEHRA/ICHRA/excepted-benefit design.',
       'Adopt the written plan document and corporate resolution before the first reimbursement; set the annual limit and covered class.',
       'Run reimbursements through a substantiation process (third-party administrator recommended once non-owner employees participate).',
       'Deduct on Form 1120; keep reimbursements off the W-2; retain substantiation for exam.',
-      'Re-test §105(h) annually as headcount changes.'
+      'Re-test §105(h) annually as headcount changes.',
+      'Calendar the PCORI fee: Form 720 (second-quarter return) by July 31 each year for the plan year that ended in the prior calendar year.'
     ]
   },
 

@@ -22,7 +22,9 @@ TSIQ.strategyModules.push({
       'or SAFETY ACHIEVEMENT as part of a meaningful presentation. The ' +
       'deduction/exclusion cap is $400 per employee per year for nonqualified ' +
       'awards, $1,600 where the awards are made under a written qualified plan ' +
-      'that does not discriminate in favor of highly compensated employees. ' +
+      'that does not discriminate in favor of highly compensated employees ' +
+      'AND whose awards average $400 or less for the year — so $1,600 is the ' +
+      'ceiling on one award, not a budget for every honoree. ' +
       'Advisory: the dollars are small per employee, but across a workforce it ' +
       'beats a taxable bonus dollar-for-dollar and builds retention structure.',
     mechanics: [
@@ -36,7 +38,13 @@ TSIQ.strategyModules.push({
       'Limits: $400/employee/year for nonqualified awards; $1,600 aggregate ' +
       '(qualified + nonqualified) when paid under a QUALIFIED PLAN — a written, ' +
       'established program that does not discriminate in favor of highly ' +
-      'compensated employees and whose average award cost does not exceed $400.',
+      'compensated employees and whose average award cost does not exceed $400. ' +
+      'The average counts every qualified-plan award the employer makes in ' +
+      'the year (awards of nominal value are left out). Give five employees ' +
+      '$1,600 each and the average is $1,600: the plan is not a qualified ' +
+      'plan and each award falls back to the $400 limit. One $1,600 award ' +
+      'needs several small ones beside it — for example one at $1,600 and ' +
+      'six at $200 average $400.',
       'Length-of-service timing rules (§274(j)(4)(B)): no award within the ' +
       'employee\'s first 5 years, and not more often than every 5 years for ' +
       'the same employee.',
@@ -62,6 +70,7 @@ TSIQ.strategyModules.push({
     risks: [
       'Gift cards are the classic failure: they are cash equivalents, fully taxable W-2 wages, and reclassification in a payroll exam brings back-taxes and penalties across every recipient.',
       'Awards exceeding the deductible limit make the EXCESS taxable to the employee (§74(c)(2)) — the clean design stays inside the caps.',
+      'Promising "$1,600 for each honoree" breaks the $400 average-cost test and drops every award to the $400 limit — budget the catalog to the average, not the maximum.',
       'Length-of-service awards inside the first 5 years, or more often than every 5 years, fail entirely.',
       '"Safety awards" to owners, managers, or office staff fail by statute — this prong is for the field workforce.',
       'The dollars are modest — position this as compensation hygiene and retention structure, not a headline tax play.'
@@ -87,13 +96,13 @@ TSIQ.strategyModules.push({
     plainEnglish: [
       'Almost anything you give an employee is taxable to them — bonuses, gift cards, even a turkey certificate. There is one carve-out the tax law still allows: real, physical gifts given to recognize years of service or safety milestones. Done right, the business deducts the cost, and the employee owes nothing. Not even payroll tax.',
       'The rules are picky but easy to follow once set up. The gift must be an actual item — a watch, quality tools, equipment they would love — never cash or a gift card. It has to mark a real milestone, like five or ten years with you. And it should be presented properly, at a team lunch or company meeting, not slipped into a paycheck.',
-      'With a simple written plan, you can give each honoree up to $1,600 of value this way. Compare that to a bonus, where a $1,600 gesture costs you payroll taxes and leaves the employee with maybe $1,100 after withholding. Same generosity, better math, and honestly — a watch presented in front of the team beats a line on a paystub.'
+      'With a simple written plan, a single award can be worth as much as $1,600, as long as the awards you give in a year average $400 or less — think one standout gift for a 25-year veteran alongside more modest ones for five-year milestones. Compare that to a bonus, where a $1,600 gesture costs you payroll taxes and leaves the employee with maybe $1,100 after withholding. Same generosity, better math, and honestly — a watch presented in front of the team beats a line on a paystub.'
     ],
     analogy: 'It\'s the difference between a gold watch presented at the company dinner and the same amount tucked into a paycheck — one is a moment nobody taxes, the other is just more taxable pay.',
     benefits: [
       'Fully deductible to the business',
       'Completely tax-free to the employee — no income tax, no payroll tax',
-      'Up to $1,600 per honoree with a simple written plan',
+      'An individual award of up to $1,600 with a simple written plan (awards must average $400 or less)',
       'Builds the kind of recognition program that keeps good people'
     ],
     steps: [

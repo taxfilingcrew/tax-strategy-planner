@@ -36,9 +36,25 @@ TSIQ.strategyModules.push({
       'is the streamlined administrative implementation (consolidating and ' +
       'superseding Rev. Procs. 2003-43, 2004-48, and 2007-62).',
       'General window: the completed Form 2553 must be filed within 3 years ' +
-      'and 75 days of the intended effective date. (A narrow exception with ' +
-      'no time limit exists for corporations meeting additional consistency ' +
-      'tests where no year at issue is open.)',
+      'and 75 days of the intended effective date. The time limit does NOT ' +
+      'apply (Rev. Proc. 2013-30, §5.04) when: the corporation is not also ' +
+      'seeking a late entity-classification election; it failed to qualify ' +
+      'solely because Form 2553 was not timely filed; the corporation and ' +
+      'every shareholder reported consistently with S status for the first ' +
+      'intended year and every year since; at least 6 months have passed ' +
+      'since the corporation filed its return for that first year; and ' +
+      'neither the corporation nor any shareholder was notified by the IRS ' +
+      'of a problem with the S status within 6 months of that timely filed ' +
+      'return. A client who has filed 1120-S for years with no IRS notice ' +
+      'usually fits, however old the missed election.',
+      'Defects other than lateness: Rev. Proc. 2022-19 lets a corporation fix ' +
+      'several common S-election problems without a private letter ruling — ' +
+      'non-identical governing provisions (operating-agreement language that ' +
+      'looks like a second class of stock but was never acted on), missing ' +
+      'shareholder consents or officer signature on Form 2553, a missing ' +
+      'administrative acceptance letter, disproportionate distributions ' +
+      'under identical governing provisions, and inconsistent filings. Check ' +
+      'it before assuming an eligibility problem needs a PLR.',
       'Substantive tests: (1) the entity intended to be an S corporation as ' +
       'of the effective date and failed solely because the election was not ' +
       'filed timely; (2) reasonable cause for the failure and diligent action ' +
@@ -57,6 +73,7 @@ TSIQ.strategyModules.push({
     ],
     authority: [
       { type: 'Admin', cite: 'Rev. Proc. 2013-30', note: 'The streamlined relief: eligibility tests, the 3-year-75-day window, required reasonable-cause and shareholder-consistency statements, no user fee. Supersedes Rev. Procs. 2003-43, 2004-48, 2007-62.' },
+      { type: 'Admin', cite: 'Rev. Proc. 2022-19', note: 'Taxpayer-assistance procedures for S-election defects that do not need a letter ruling: non-identical governing provisions, missing consents or signatures, disproportionate distributions, missing acceptance letter, inconsistent returns.' },
       { type: 'IRC', cite: 'IRC §1362(b)(5)', note: 'Statutory authority for the IRS to treat a late S election as timely upon a showing of reasonable cause.' },
       { type: 'IRC', cite: 'IRC §1362(a)–(b)', note: 'Election mechanics and the 2-month-15-day deadline the client missed.' },
       { type: 'Admin', cite: 'Form 2553', note: 'The election form; for relief, completed with the Rev. Proc. 2013-30 legend, reasonable-cause statement, and shareholder consistency statements.' },
@@ -67,14 +84,14 @@ TSIQ.strategyModules.push({
       'Failure to qualify is solely the late/missing Form 2553 (or companion classification election).',
       'Reasonable cause and diligent correction, stated under penalties of perjury.',
       'The entity and every shareholder filed all affected returns consistently with S status (e.g., 1120-S filed or no C-corp return filed; shareholders picked up passthrough income).',
-      'Filing within 3 years and 75 days of the intended effective date (limited exceptions).'
+      'Filing within 3 years and 75 days of the intended effective date — or, beyond that, meeting the §5.04 conditions (consistent S filings every year, six months since the first return, no IRS notice about the status).'
     ],
     risks: [
       'Consistency is the usual deal-breaker: if any year was filed as a C corporation, or a shareholder reported inconsistently, streamlined relief is unavailable — the PLR route is the only fallback.',
       'Relief validates the election, not the compensation: retroactive S years still need reasonable comp — expect to address unpaid-payroll exposure for those years (see the Reasonable Compensation Study strategy).',
       'A weak reasonable-cause narrative invites rejection; "we forgot" needs surrounding diligence facts.',
-      'Eligibility defects in ANY covered year (ineligible shareholder, second class of stock) sink the whole retroactive period.',
-      'State S-status conformity is separate — some states require their own election or notification, and late-relief practice varies.'
+      'Eligibility defects in ANY covered year (ineligible shareholder, a true second class of stock) sink the whole retroactive period — though paper defects such as non-identical operating-agreement language can often be cured under Rev. Proc. 2022-19.',
+      'California: no separate election — a corporation that is an S corporation federally is one for California, so federal relief carries over. File Form 100S for the covered years; the 1.5% tax ($800 minimum) applies to each of them.'
     ],
     bestFit: [
       'Clients who formed an entity, intended S status, and discover at tax time (or in an exam) that Form 2553 was never filed or was filed late.',
@@ -83,7 +100,7 @@ TSIQ.strategyModules.push({
     ],
     implementation: [
       'Pull the IRS record: request the entity\'s account transcript or call the Business & Specialty line to confirm no valid election exists and identify the intended effective date.',
-      'Verify the window: within 3 years + 75 days of the intended effective date, and confirm every year\'s filings (entity and all shareholders) are consistent with S status.',
+      'Verify the window: within 3 years + 75 days of the intended effective date, or the no-time-limit conditions of §5.04; confirm every year\'s filings (entity and all shareholders) are consistent with S status.',
       'Draft the reasonable-cause statement and collect shareholder consistency statements signed under penalties of perjury.',
       'Complete Form 2553 with "FILED PURSUANT TO REV. PROC. 2013-30" at the top; attach to the current 1120-S or file separately with the service center.',
       'Address the retroactive years\' reasonable compensation and any payroll cleanup in parallel.',
@@ -113,7 +130,7 @@ TSIQ.strategyModules.push({
       'We tidy up any related payroll items so the past years hold up'
     ],
     considerations: [
-      'The program has a time window — roughly three years — so this is worth checking now, not later.',
+      'The standard program covers roughly three years back. Older missed elections can often still be fixed if you have filed as an S corporation every year and the IRS has never questioned it — worth checking now either way.',
       'It only works if your tax filings were consistent with the S corporation choice; if a year was filed differently, a slower, costlier request is the backup route.',
       'Fixing the election can also mean cleaning up owner payroll for the covered years — we will scope that honestly before filing.'
     ]

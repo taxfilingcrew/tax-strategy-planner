@@ -16,7 +16,8 @@ TSIQ.strategyModules.push({
   advisor: {
     summary:
       'Fills the gap between elective deferrals and the §415(c) annual additions ' +
-      'ceiling — $72,000 for 2026 — with non-Roth after-tax employee ' +
+      'ceiling — the LESSER of $72,000 (2026) or 100% of the participant\'s ' +
+      'compensation — with non-Roth after-tax employee ' +
       'contributions, then immediately converts them via in-plan Roth rollover ' +
       '(§402A(c)(4)) or rollover to a Roth IRA. After a maxed $24,500 deferral ' +
       'and typical employer contributions, this can move $30,000–$45,000+ per ' +
@@ -27,9 +28,15 @@ TSIQ.strategyModules.push({
       'accounting tracks the after-tax subaccount separately, and Notice 2014-54 ' +
       'lets basis and earnings be split cleanly on distribution.',
     mechanics: [
-      'Capacity = $72,000 §415(c) ceiling (2026) − elective deferrals − employer ' +
-      'contributions. Example: $24,500 deferral + $12,500 employer leaves ' +
-      '$35,000 of after-tax capacity.',
+      'Capacity = §415(c) ceiling − elective deferrals − employer ' +
+      'contributions, where the ceiling is the lesser of $72,000 (2026) or ' +
+      '100% of compensation (W-2 wages from the business, or earned income ' +
+      'for the self-employed — K-1 profit of an S corporation does not ' +
+      'count). Example at $150,000 of pay: $24,500 deferral + $12,500 ' +
+      'employer leaves $35,000 of after-tax capacity. At $50,000 of S-corp ' +
+      'salary the ceiling is $50,000, so a $24,500 deferral and a $12,500 ' +
+      'employer contribution leave only $13,000 — and the after-tax ' +
+      'contribution has to come out of that same paycheck.',
       'The plan document must permit BOTH non-Roth after-tax employee ' +
       'contributions AND in-plan Roth conversions (or in-service distribution of ' +
       'the after-tax account). Most off-the-shelf plans allow neither — check ' +
@@ -46,7 +53,7 @@ TSIQ.strategyModules.push({
       'pro-rata fraction.'
     ],
     authority: [
-      { type: 'IRC', cite: 'IRC §415(c)', note: 'Annual additions ceiling — $72,000 for 2026 — that after-tax contributions can fill.' },
+      { type: 'IRC', cite: 'IRC §415(c)', note: 'Annual additions ceiling — the lesser of $72,000 (2026) or 100% of compensation — that after-tax contributions can fill.' },
       { type: 'IRC', cite: 'IRC §402A(c)(4)', note: 'In-plan Roth rollovers, including otherwise nondistributable amounts (as expanded by ATRA 2012).' },
       { type: 'IRC', cite: 'IRC §401(m)', note: 'ACP nondiscrimination test applies to employee after-tax contributions in plans with staff.' },
       { type: 'Admin', cite: 'Notice 2014-54', note: 'Allocation of pre-tax and after-tax amounts among simultaneous rollover destinations — the authority for clean basis separation.' },
@@ -72,7 +79,7 @@ TSIQ.strategyModules.push({
     ],
     implementation: [
       'Read the plan document / adoption agreement for after-tax and in-plan conversion provisions; amend or restate if absent (solo plans: pick a provider whose document includes both).',
-      'Compute this year\'s capacity: $72,000 − deferrals − employer contributions.',
+      'Compute this year\'s capacity: the lesser of $72,000 or 100% of pay, minus deferrals and employer contributions. For an S-corp owner on a modest salary, the pay limit usually binds first.',
       'Set up after-tax payroll contributions (W-2 owners) or plan contributions (solo), with automatic same-period Roth conversion if the provider offers it.',
       'For staff plans, have the TPA project ACP results BEFORE the owner funds.',
       'Confirm the 1099-R for conversions shows only converted earnings (if any) as taxable; reconcile on the return.',
@@ -85,7 +92,7 @@ TSIQ.strategyModules.push({
     headline: 'Supercharge your Roth: up to triple the savings growing tax-free forever',
     plainEnglish: [
       'A Roth account is the best deal in retirement savings: the money grows for decades and you never pay tax on it again — not on the growth, not when you take it out. The catch is the front door is tiny: normal Roth contributions are capped at a few thousand dollars a year, and high earners are locked out entirely.',
-      'But inside a 401(k) there is a bigger door most people never notice. The law allows total yearly contributions of up to $72,000 — far beyond the usual limits — if your plan is set up to accept a special extra type of contribution. Once those dollars are in, we convert them to Roth right away, where they grow tax-free for good.',
+      'But inside a 401(k) there is a bigger door most people never notice. The law allows total yearly contributions of up to $72,000 (or your pay from the business, if that is less) — far beyond the usual limits — if your plan is set up to accept a special extra type of contribution. Once those dollars are in, we convert them to Roth right away, where they grow tax-free for good.',
       'These extra contributions do not reduce this year\'s tax bill — you fund them with money you have already paid tax on. The payoff comes later, and it compounds: decades of growth the IRS never touches, and no required withdrawals forcing money out on the government\'s schedule.'
     ],
     analogy: 'It\'s like finding out the express lane you thought was closed to you has a second entrance — and it fits three times as much luggage.',
@@ -103,7 +110,8 @@ TSIQ.strategyModules.push({
     ],
     considerations: [
       'This does not cut this year\'s taxes — it is a wealth-building move whose payoff is tax-free growth for decades.',
-      'It only makes sense after your regular retirement contributions are already maxed and cash flow is comfortable.'
+      'It only makes sense after your regular retirement contributions are already maxed and cash flow is comfortable.',
+      'The total can never be more than what the business pays you. If you take a small salary from your S corporation, the room for this is smaller than the headline number.'
     ]
   },
 

@@ -61,6 +61,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §2036(a)', note: 'Retained life enjoyment or retained control over beneficial enjoyment pulls contributed assets back into the gross estate at full undiscounted value unless the bona fide sale / adequate consideration exception applies.' },
       { type: 'Case', cite: 'Estate of Powell v. Comm\'r, 148 T.C. 392 (2017)', note: 'Deathbed FLP funded with marketable securities under a POA; Tax Court applied §2036(a)(2) — the decedent\'s ability, in conjunction with others, to dissolve the partnership was a retained right to designate enjoyment. Full value included; the modern warning case.' },
       { type: 'Case', cite: 'Estate of Bongard v. Comm\'r, 124 T.C. 95 (2005)', note: 'Articulates the bona fide sale exception: a legitimate and significant nontax reason for creating the entity, with contributors receiving interests proportionate to contributions.' },
+      { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §62(a)(2), §64(c), §64(d); BOE-100-B', note: 'Proportional-interest exclusion on funding an entity; reassessment on a change in control (more than 50% to one person) or on cumulative transfers of more than 50% of the original co-owners\' interests; legal-entity ownership statement due within 90 days.' },
       { type: 'IRC', cite: 'IRC §2704', note: 'Lapsing voting/liquidation rights treated as transfers; "applicable restrictions" on liquidation more restrictive than state-law default are disregarded in valuing family transfers.' },
       { type: 'IRC', cite: 'IRC §2701', note: 'Special valuation rules for preferred/frozen interests retained by the senior generation — avoided by keeping capital and profits interests plain and pro-rata.' },
       { type: 'IRC', cite: 'IRC §2503(b); §2513', note: 'Annual exclusion ($19,000 per donee, 2026, indexed) and gift-splitting — the exclusion each discounted gift leverages. Present-interest status of restricted FLP gifts should be supported (distribution rights or withdrawal powers).' },
@@ -100,7 +101,21 @@ TSIQ.strategyModules.push({
       'under $15M/$30M, gifting can INCREASE the family\'s total tax. Run the ' +
       'estate-tax-saved vs capital-gains-cost comparison first.',
       'Sloppy administration after formation (commingling, skipped K-1s, ' +
-      'non-pro-rata cash pulls) retroactively poisons the whole structure.'
+      'non-pro-rata cash pulls) retroactively poisons the whole structure.',
+      'California property tax: putting real estate into the partnership is ' +
+      'excluded from reassessment only if the owners and their percentages ' +
+      'are exactly the same before and after (R&TC §62(a)(2)). The ' +
+      'contributors then become "original co-owners," and once more than 50% ' +
+      'of their interests has been transferred — cumulatively, gifts ' +
+      'included — every property that came in under the exclusion is ' +
+      'reassessed to market value (§64(d)). Reassessment also follows if any ' +
+      'one person ends up with more than 50% (§64(c)). The Prop 19 ' +
+      'parent-child exclusion does not apply to interests in an entity. A ' +
+      'gifting program that crosses 50% can cost more in property tax than ' +
+      'it saves in estate tax; file BOE-100-B within 90 days of a change in ' +
+      'control or ownership (10% penalty for missing it).',
+      'California entity cost: a limited partnership owes the $800 annual ' +
+      'tax; an LLC owes $800 plus the gross-receipts fee.'
     ],
     bestFit: [
       'Estates meaningfully above the $15M single / $30M married exemption where ' +
@@ -120,6 +135,10 @@ TSIQ.strategyModules.push({
       'Engage counsel to form the FLP/LLC with §2704-aware governance (avoid ' +
       'restrictions beyond state-law default; avoid §2701 preferred structures); ' +
       'fund it and let it operate — books, bank account, distributions pro-rata.',
+      'For California real estate: track the cumulative percentage of ' +
+      'original co-owner interests transferred and plan to stay at or under ' +
+      '50% unless the reassessment cost has been priced; file BOE-100-B when ' +
+      'required.',
       'Obtain a qualified appraisal of the entity and of each interest to be ' +
       'gifted (entity-level value, then interest-level discounts).',
       'Execute gifts of limited/non-managing interests — annual-exclusion gifts ' +
@@ -157,7 +176,8 @@ TSIQ.strategyModules.push({
     considerations: [
       'You must genuinely let go — keep living off assets you "gave away" and the IRS can pull everything back into your estate at full value.',
       'Gifted assets keep your original cost basis, so heirs may face more capital gains later; for some families, holding assets until death is the better tax answer, and we run that comparison first.',
-      'This structure only works with real upkeep — appraisals, tax filings, and disciplined recordkeeping every year.'
+      'This structure only works with real upkeep — appraisals, tax filings, and disciplined recordkeeping every year.',
+      'If the partnership holds California real estate, giving away more than half of it over time causes the property to be reassessed for property tax at today\'s value. We track that line and plan the gifts around it.'
     ]
   },
 

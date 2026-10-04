@@ -49,14 +49,30 @@ TSIQ.strategyModules.push({
       'regime; §170(f)(2)(A)), computed with the §7520 rate; the remainder ' +
       'must be ≥10% of initial FMV (§664(d)(1)(D) CRAT / §664(d)(2)(D) CRUT). ' +
       'Appreciated-stock contributions are subject to the 30%-of-AGI ceiling ' +
-      'with a 5-year carryforward.',
+      'with a 5-year carryforward. From 2026 two OBBBA limits shave the ' +
+      'deduction: only the part of a year\'s itemized charitable gifts above ' +
+      '0.5% of AGI counts, and for a 37%-bracket donor itemized deductions ' +
+      'are worth at most 35 cents on the dollar. Model the deduction net of ' +
+      'both.',
       'Funding timing: contribute before any legally binding sale agreement. ' +
       'Under the anticipatory assignment-of-income doctrine, a donor who ' +
       'contributes after the sale is effectively locked in is taxed on the ' +
-      'gain personally; Rev. Rul. 78-197 frames the bright line — proceeds are ' +
-      'taxed to the donor only if the charity/trust is legally bound to sell ' +
-      'at the time of the gift. LOIs, shareholder votes, and signed purchase ' +
-      'agreements before funding are the danger zone.',
+      'gain personally. Rev. Rul. 78-197 states the IRS\'s test — proceeds are ' +
+      'taxed to the donor if the donee is legally bound, or can be compelled, ' +
+      'to sell at the time of the gift — but it is not a safe harbor the ' +
+      'courts are bound by. In Estate of Hoensheid v. Commissioner, T.C. ' +
+      'Memo. 2023-34, the donor was taxed on the whole gain although no ' +
+      'binding obligation existed, because by the time the shares were ' +
+      'transferred the sale was "virtually certain" (price agreed, approvals ' +
+      'given, bonuses paid out). Fund the trust before a letter of intent ' +
+      'and before terms are settled, not merely before the purchase ' +
+      'agreement is signed.',
+      'S-corporation stock cannot go into a CRT: a charitable remainder ' +
+      'trust is not an eligible S-corporation shareholder (Rev. Rul. 92-48), ' +
+      'so the transfer terminates the S election. For an S corp the workable ' +
+      'routes are a contribution of ASSETS by the corporation itself to a ' +
+      'term-of-years CRT (20 years maximum, with built-in-gains and ' +
+      'unrelated-business-income issues to clear), or a sale first.',
       'Wealth replacement: the income stream (or the tax saved) funds premiums ' +
       'on survivorship life insurance inside an ILIT sized to the remainder — ' +
       'heirs receive insurance proceeds estate-tax-free; charity receives the ' +
@@ -68,18 +84,24 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §664(c)', note: 'The trust itself is exempt from income tax (UBTI is subject to a 100% excise tax rather than disqualification).' },
       { type: 'IRC', cite: 'IRC §170(f)(2)(A); §170(b)(1)(C)', note: 'Deduction limited to the remainder interest\'s actuarial value; appreciated long-term property deductions capped at 30% of AGI with 5-year carryforward.' },
       { type: 'IRC', cite: 'IRC §7520', note: 'The actuarial rate (120% of the midterm AFR) used to value the remainder — the rate environment materially changes the deduction and feasibility.' },
-      { type: 'Admin', cite: 'Rev. Rul. 78-197', note: 'Assignment-of-income bright line — gain taxed to the donor only where the donee is legally bound (or can be compelled) to complete the sale at the time of the gift.' },
+      { type: 'Admin', cite: 'Rev. Rul. 78-197', note: 'The IRS\'s stated test for assignment of income on a gift before a sale — gain taxed to the donor where the donee is legally bound (or can be compelled) to complete the sale at the time of the gift. Not a safe harbor in court.' },
+      { type: 'Case', cite: 'Estate of Hoensheid v. Comm\'r, T.C. Memo. 2023-34', note: 'Donor taxed on the full gain where shares were given to charity two days before closing: no binding obligation, but the sale was virtually certain. Also lost the deduction for a defective appraisal.' },
+      { type: 'Admin', cite: 'Rev. Rul. 92-48', note: 'A charitable remainder trust cannot be a qualified subchapter S trust — it is not a permitted S-corporation shareholder.' },
+      { type: 'IRC', cite: 'IRC §170(b)(1)(I); §68 (as amended by OBBBA)', note: 'From 2026: itemized charitable deductions allowed only above 0.5% of AGI; itemized deductions limited to a 35% benefit for taxpayers in the 37% bracket.' },
       { type: 'Admin', cite: 'Form 5227', note: 'Split-interest trust annual information return; distributions reported to the beneficiary on Schedule K-1.' }
     ],
     requirements: [
       'A highly appreciated, marketable (or readily salable) asset — low-basis stock, real estate free of mortgages (debt-financed property creates UBTI problems), or a business interest without a binding buyer.',
-      'Funding completed BEFORE any binding sale obligation — document the state of negotiations at the contribution date.',
+      'Funding completed well BEFORE the sale is settled — ideally before a letter of intent — and documented: the state of negotiations at the contribution date is the evidence.',
+      'The asset is NOT S-corporation stock (a CRT is not a permitted shareholder) and is not mortgaged.',
       'Payout between 5% and 50% AND an actuarial remainder of at least 10% of contributed value at the §7520 rate.',
       'Genuine charitable intent — the remainder is real money that goes to charity, not a fee for tax deferral.',
       'A trustee (or co-trustee arrangement) able to administer valuations, the four-tier accounting, and Form 5227 annually.'
     ],
     risks: [
-      'Assignment of income is the signature exam issue: fund after a deal is effectively done and the entire gain lands back on the donor\'s return — timing documentation is the defense.',
+      'Assignment of income is the signature exam issue: fund after a deal is effectively done and the entire gain lands back on the donor\'s return. "No signed contract yet" is not enough (Hoensheid) — timing well ahead of the deal, and documentation of it, is the defense.',
+      'Contributing S-corporation stock terminates the S election for every shareholder.',
+      'The deduction is smaller than older illustrations show: 0.5%-of-AGI floor and the 35% cap for top-bracket donors from 2026, on top of the 30%-of-AGI ceiling.',
       'Irrevocability: the asset is gone; only the payout stream remains. Changed family circumstances cannot unwind it.',
       'The 10% remainder and (for CRATs) the 5% exhaustion test can fail at drafting — a disqualified trust means no deduction and a taxable sale.',
       'Tier-1 trap: if the trustee invests for ordinary income, distributions carry out ordinary income first — investment policy drives the beneficiary\'s tax rate.',
@@ -96,7 +118,7 @@ TSIQ.strategyModules.push({
       'Confirm no binding sale obligation exists; memorialize the negotiation status in the file BEFORE funding.',
       'Model CRUT vs. CRAT payouts, the §7520-rate deduction, and the four-tier income projection against a lump-sum sale in this tool\'s scenarios.',
       'Estate counsel drafts the trust (payout rate sized to pass the 10% remainder test); obtain qualified appraisals for non-marketable assets.',
-      'Fund the trust; the trustee sells and reinvests; claim the deduction (30%-of-AGI ceiling, Form 8283 for property).',
+      'Fund the trust; the trustee sells and reinvests; claim the deduction (30%-of-AGI ceiling, 0.5% floor, 35% cap at the top bracket; Form 8283 and a qualified appraisal for non-marketable property).',
       'If replacing wealth for heirs, establish the ILIT and fund premiums from the payout stream.',
       'File Form 5227 and issue the K-1 annually; monitor the four-tier accounts and investment policy.'
     ]
@@ -124,7 +146,8 @@ TSIQ.strategyModules.push({
       'You receive payments every year; we handle the trust\'s tax filings'
     ],
     considerations: [
-      'Timing is everything: the trust must own the asset before any sale is locked in — tell us before you sign anything, even a letter of intent.',
+      'Timing is everything: the trust must own the asset before a sale is even close to settled — tell us before you sign anything, including a letter of intent. Waiting until the deal is nearly done loses the benefit.',
+      'Stock in an S corporation cannot go into this kind of trust. If your company is an S corporation, we look at other routes.',
       'The gift is permanent — the asset belongs to the trust, and the remainder truly goes to charity, so this fits people who genuinely want to give.',
       'The yearly payments are taxable as you receive them — the tax is spread out and often lower, not erased.'
     ]

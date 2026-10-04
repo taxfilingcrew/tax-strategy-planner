@@ -53,8 +53,21 @@ TSIQ.strategyModules.push({
       'the trust compounds pre-tax.',
       'Basis trade-off: trust assets keep carryover basis; if grantor status ' +
       'ends or death occurs, planning is needed (note balance vs. remaining ' +
-      'basis; possible swap of high-basis assets back into the estate via the ' +
-      'substitution power to capture the §1014 step-up on the right assets).'
+      'basis). The substitution power is the repair tool, and the direction ' +
+      'matters: the grantor puts cash or HIGH-basis assets INTO the trust and ' +
+      'takes the trust\'s LOW-basis assets back in exchange, at equal value. ' +
+      'The low-basis assets are then in the estate and get the §1014 step-up ' +
+      'at death; the trust is left holding assets with little built-in gain.',
+      'California property tax: a sale or gift of California real estate to ' +
+      'an irrevocable trust for the children is a change in ownership. Since ' +
+      'Proposition 19 the parent-child exclusion covers only a home the child ' +
+      'occupies as a principal residence (within a value cap) and family ' +
+      'farms, so a rental or commercial building sold to the trust is ' +
+      'reassessed to market value. Selling INTERESTS in an entity that owns ' +
+      'the real estate avoids immediate reassessment only while no one ' +
+      'person acquires more than 50% and cumulative transfers of original ' +
+      'co-owner interests stay at or under 50% (R&TC §64(c), (d)). A later ' +
+      'swap of real estate back to the grantor is another transfer to test.'
     ],
     authority: [
       { type: 'Admin', cite: 'Rev. Rul. 85-13', note: 'Grantor and grantor trust are the same taxpayer — a sale between them is ignored for income tax: no gain, no interest income/deduction.' },
@@ -62,6 +75,7 @@ TSIQ.strategyModules.push({
       { type: 'Admin', cite: 'Rev. Rul. 2004-64', note: 'Grantor\'s payment of the trust\'s income tax is not an additional gift — the "tax burn" that accelerates the wealth shift.' },
       { type: 'IRC', cite: 'IRC §1274(d); §7872', note: 'The note must bear at least the AFR to avoid imputed-gift recharacterization of below-market loans.' },
       { type: 'IRC', cite: 'IRC §2036', note: 'The inclusion risk: an undercapitalized trust or retained control can pull the transferred assets back into the gross estate — the reason for the seed gift and arm\'s-length note terms.' },
+      { type: 'Admin', cite: 'Cal. Const. art. XIII A, §2.1 (Proposition 19); Rev. & Tax. Code §64(c), (d)', note: 'Change-in-ownership rules for California real estate and for interests in legal entities that hold it — the property tax cost of moving real estate into the trust.' },
       { type: 'Admin', cite: 'Rev. Rul. 2023-2', note: 'No §1014 basis step-up at death for grantor-trust assets not includible in the gross estate — the carryover-basis cost of the freeze.' },
       { type: 'IRC', cite: 'IRC §2010 (as amended by OBBBA, P.L. 119-21)', note: 'Basic exclusion $15M per person, PERMANENT and indexed — resets the math on who needs a freeze at all.' }
     ],
@@ -77,6 +91,7 @@ TSIQ.strategyModules.push({
       'Valuation exam risk: discounts on closely-held interests are the primary IRS attack; adequate-disclosure gift reporting starts the statute of limitations.',
       'Carryover basis: heirs inherit the trust\'s low basis — for low-basis, low-growth assets the lost §1014 step-up can exceed the estate tax saved. Model both taxes before committing.',
       'Death before the note is repaid creates unsettled income-tax questions on the unpaid note — structure to retire the note during life where possible.',
+      'California real estate sold to the trust is reassessed for property tax (Prop 19) unless it is held in an entity and the 50% tests are respected — on a long-held building the added property tax can rival the estate tax saved.',
       'Grantor status must be maintained (and the income tax burn afforded) — turning it off mid-stream can trigger gain to the extent the note exceeds basis.',
       'OBBBA\'s permanent exemption means a freeze sized for the old sunset math may be unnecessary complexity for estates under ~$30M (married) — rerun the numbers before recommending.'
     ],
@@ -91,7 +106,8 @@ TSIQ.strategyModules.push({
       'Estate counsel drafts the IDGT with the chosen grantor trigger; obtain the appraisal.',
       'Make and report the seed gift (Form 709 with adequate disclosure).',
       'Close the sale: note at AFR, security agreement, and a payment calendar the trustee actually follows.',
-      'Annually: confirm note payments, revisit the swap power for basis management, and re-run the estate projection as the exemption indexes.'
+      'Annually: confirm note payments, revisit the swap power for basis management (cash or high-basis assets in, low-basis assets out), and re-run the estate projection as the exemption indexes.',
+      'Before any California real estate moves: get the property tax answer (direct transfer, or entity interests within the 50% limits) and file the change-in-ownership statements.'
     ]
   },
 
@@ -119,7 +135,8 @@ TSIQ.strategyModules.push({
     considerations: [
       'With today\'s permanent $15 million per-person exemption, many families simply don\'t need this — we run the numbers first and tell you honestly if you\'re one of them.',
       'Assets moved this way don\'t get the usual "fresh start" on capital gains at death, so there\'s a trade-off we measure before recommending it.',
-      'This is a real transaction with real paperwork — the trust must be properly funded and the note actually paid, every year.'
+      'This is a real transaction with real paperwork — the trust must be properly funded and the note actually paid, every year.',
+      'For California real estate, selling it to the trust can trigger a property tax reassessment at today\'s value. We work out that cost, and whether holding the property through a company avoids it, before anything is signed.'
     ]
   },
 

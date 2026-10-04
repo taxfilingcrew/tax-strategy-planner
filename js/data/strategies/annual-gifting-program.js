@@ -22,7 +22,7 @@ TSIQ.strategyModules.push({
       'married couple with three married children and six grandchildren has 12 ' +
       'donees and can move $456,000 per year with zero gift tax and zero ' +
       'exemption used. Post-OBBBA, the case for lifetime gifting is ' +
-      'appreciation-shifting, income-shifting, state estate taxes, and asset ' +
+      'appreciation-shifting, income-shifting, and asset ' +
       'protection — not exemption panic — and asset selection now matters more ' +
       'than speed: carryover basis under §1015 means low-basis assets held by an ' +
       'older client are often better kept for the §1014 step-up.',
@@ -97,16 +97,26 @@ TSIQ.strategyModules.push({
       'valuation open forever.',
       '529 front-load mortality risk: the donor dying within the five-year ' +
       'spread pulls the unallocated portion back into the estate.',
-      'State exposure survives federal permanence: a dozen-plus states levy ' +
-      'estate or inheritance taxes with far lower thresholds (Washington ' +
-      'prominently among them; Idaho has none) — lifetime gifts can remove ' +
-      'assets from a state estate-tax base even when federal tax is not in play.'
+      'California has NO estate, inheritance or gift tax, so for a California ' +
+      'resident there is no state death tax for gifting to avoid. A state ' +
+      'angle exists only for a client who owns real estate in, or may move ' +
+      'to, one of the dozen-plus states that tax estates at far lower ' +
+      'thresholds (Washington and Oregon among them).',
+      'California real estate is a poor gift asset: a gift of real property ' +
+      'to a child is a change in ownership, and since Proposition 19 only a ' +
+      'home the child moves into as a principal residence (within a value ' +
+      'cap) and family farms escape reassessment. A gifted rental is ' +
+      'reassessed to market value — the property tax increase starts ' +
+      'immediately — and the child takes the parent\'s low basis as well. ' +
+      'Gifts of interests in an entity that holds California real estate ' +
+      'count toward the change-in-control and 50%-cumulative-transfer tests ' +
+      '(R&TC §64(c), (d)).'
     ],
     bestFit: [
       'Estates above or growing toward the $15M/$30M federal exemption, where ' +
       'every excluded dollar and its future growth avoids a 40% marginal rate.',
-      'Clients in state estate-tax jurisdictions (e.g., Washington) whose ' +
-      'thresholds are a fraction of the federal exemption.',
+      'Clients with real estate in, or a likely move to, a state with its own ' +
+      'estate tax (California has none).',
       'Multi-generation families with many natural donees — children, their ' +
       'spouses, grandchildren — where the per-donee math multiplies.',
       'Clients holding cash or high-basis, high-growth assets to give, with ' +
@@ -145,7 +155,7 @@ TSIQ.strategyModules.push({
       'Six-figure annual transfers with zero gift tax for a typical multi-generation family',
       'All future growth on gifted dollars happens outside your taxable estate',
       'Unlimited extra room for tuition and medical bills paid directly',
-      'Can sidestep state death taxes that kick in far below the federal level'
+      'Keeps your lifetime exemption untouched for larger transfers later'
     ],
     steps: [
       'We map your family tree into a giving plan and confirm you keep more than enough for life',
@@ -156,6 +166,7 @@ TSIQ.strategyModules.push({
     considerations: [
       'Gifts are permanent — we size the program so your own security is never in question.',
       'Giving away the wrong asset can cost your heirs more in capital gains than it saves in estate tax, so asset selection comes before generosity.',
+      'California has no estate or gift tax of its own, so this is about the federal tax and about moving growth to the next generation. California real estate is usually the wrong thing to give: a gifted rental is reassessed for property tax right away.',
       'Some moves (splitting gifts with a spouse, the five-year college-fund deposit) require a gift-tax form even when no tax is owed — skipping it causes problems later.'
     ]
   },

@@ -16,8 +16,8 @@ TSIQ.strategyModules.push({
     summary:
       '§461(l) — made permanent by OBBBA — caps the aggregate business loss a ' +
       'noncorporate taxpayer can deduct against nonbusiness income in one year: ' +
-      '$256,000 single / $512,000 MFJ for 2026 (OBBBA reverted the thresholds to the original TCJA base; Rev. Proc. 2025-32; verify ' +
-      'against the final Rev. Proc. figure). The disallowed excess business loss ' +
+      '$256,000 single / $512,000 MFJ for 2026 (OBBBA reset the inflation base, which is why the figure is lower than 2025; Rev. Proc. 2025-32). ' +
+      'The disallowed excess business loss ' +
       'becomes an NOL carryover to the following year (§461(l)(2)) — so the ' +
       'limitation is a one-year timing toll, but the carryover then inherits the ' +
       '§172 80% cap and loses the ability to offset the CURRENT year\'s wages ' +
@@ -32,7 +32,7 @@ TSIQ.strategyModules.push({
     mechanics: [
       'Compute aggregate business deductions minus aggregate business income ' +
       'and gains across ALL trades or businesses; the excess over the threshold ' +
-      '($256k/$512k for 2026, indexed under §461(l)(3)(B)) is disallowed for ' +
+      '($256k/$512k for 2026, indexed under §461(l)(3)(C)) is disallowed for ' +
       'the year and reported on Form 461.',
       'Employee wages are NOT attributable to a trade or business for this ' +
       'computation (§461(l)(3), as clarified by the CARES Act) — a $700k-wage ' +
@@ -43,6 +43,14 @@ TSIQ.strategyModules.push({
       'The disallowed EBL converts to an NOL carryover next year (§461(l)(2)) ' +
       '— then subject to the §172 80% limitation. The cost is deferral plus the ' +
       'possible rate differential, not permanent disallowance.',
+      'California: the state has its own excess business loss limit, computed ' +
+      'on FTB 3461, and it works differently — the disallowed amount is NOT ' +
+      'turned into an NOL; it is carried forward as an excess business loss ' +
+      'and re-tested against the limit in the following year. California did ' +
+      'not adopt the federal suspension for 2018–2020, its threshold for the ' +
+      'year can differ from the federal figure, and its NOL deduction is ' +
+      'separately suspended for 2024–2026 for taxpayers with $1 million or ' +
+      'more of income. Keep a separate California carryforward schedule.',
       'Ordering: §461(l) applies AFTER basis, at-risk (§465), and passive ' +
       'activity (§469) limits — a loss must clear all three gates before the ' +
       'EBL cap even matters.',
@@ -56,6 +64,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §461(l)', note: 'Excess business loss limitation for noncorporate taxpayers — made permanent by OBBBA (P.L. 119-21).' },
       { type: 'IRC', cite: 'IRC §461(l)(2)', note: 'Disallowed excess business loss treated as an NOL carryover to the following taxable year.' },
       { type: 'IRC', cite: 'IRC §461(l)(3)', note: 'Definition of excess business loss; thresholds indexed for inflation; employee wages excluded from business income (CARES Act, P.L. 116-136, clarification).' },
+      { type: 'Admin', cite: 'FTB 3461 (California Limitation on Business Losses); Cal. Rev. & Tax. Code §17560.5', note: 'California excess business loss limitation: disallowed loss carried forward as an excess business loss, not converted to an NOL.' },
       { type: 'IRC', cite: 'IRC §§465, 469', note: 'At-risk and passive-loss limits apply BEFORE §461(l) — the ordering that determines which gate actually traps the loss.' },
       { type: 'IRC', cite: 'IRC §172', note: 'The converted carryover enters the NOL regime — 80% limitation, no carryback, indefinite carryforward.' },
       { type: 'Admin', cite: 'Form 461', note: 'Limitation on Business Losses — computation and reporting of the disallowed amount.' }
@@ -69,6 +78,7 @@ TSIQ.strategyModules.push({
     risks: [
       'This tool\'s engine does NOT enforce §461(l) (documented v1 simplification) — a modeled loss above the threshold overstates the current-year benefit; the advisor must adjust.',
       'The trapped loss becomes next year\'s NOL and then hits the §172 80% cap — stacking limitations can stretch recovery over several years.',
+      'California carries the disallowed loss forward under its own rule (still an excess business loss, re-limited each year) — using the federal NOL figure on the state return is an error.',
       'Misclassifying wages or portfolio gains as business income to absorb losses is a computational error the IRS catches on Form 461 matching.',
       'Recharacterizing owner comp purely to manage §461(l) collides with S-corp reasonable-compensation requirements.',
       'The threshold is per-year: a loss deliberately split across two years by delaying deductions must survive economic-substance and elective-timing rules (deduction elections like bonus/§179 are the safe levers).'
@@ -82,7 +92,7 @@ TSIQ.strategyModules.push({
       'Project the aggregate business loss for the year; compare against the 2026 threshold ($256k/$512k per Rev. Proc. 2025-32).',
       'Sequence elective deductions: elect out of bonus by class, or moderate §179, so the usable loss lands at (not over) the cap when the excess would be trapped.',
       'Where legitimate, accelerate business income (billing timing, §1231 gain recognition) into the loss year to absorb the loss currently.',
-      'File Form 461 with the return; carry the disallowed amount into the following year\'s NOL schedule.',
+      'File Form 461 with the return; carry the disallowed amount into the following year\'s NOL schedule. For California, file FTB 3461 and carry the disallowed amount forward as an excess business loss on a separate state schedule.',
       'Re-run this tool\'s projection with the loss manually capped to see the honest current-year number.'
     ]
   },
