@@ -121,34 +121,108 @@ window.TSIQ = window.TSIQ || {};
 
   /**
    * What each strategy adds, in applyOrder, on top of the ones before it:
-   * first-year savings and savings over the whole projection. A timing
-   * strategy (deferral, accelerated depreciation) has a large first-year
-   * figure and a small or negative total — the total is the honest number.
-   * Returns [{ strategy, firstYear, cumulative, kind }], kind being
-   * 'savings' | 'timing' | 'foundation' | 'cost' (a benefit the business pays
-   * for) | 'existing' (the value of something the client already has).
+   * first-year savings and savings over the whole projection, plus the same
+   * figures year by year. A timing strategy (deferral, accelerated
+   * depreciation, bunching) has a large first-year figure that is given back
+   * in later years — the total is the honest number.
+   * Returns [{ strategy, firstYear, cumulative, kind, byYear, planCostsByYear }]:
+   *   kind — 'savings' | 'timing' | 'foundation' | 'cost' (a benefit the
+   *     business pays for) | 'existing' (the value of something the client
+   *     already has, e.g. an NOL carryforward)
+   *   byYear — savings each year, after the strategy's own plan costs
+   *   planCostsByYear — the plan costs the strategy adds each year
+   * A strategy is 'timing' when its projection total is under half of its
+   * first-year figure, or when later years give back more than a quarter of it.
    */
   TSIQ.incrementalSavings = function (baseProfile, selections, years, growthRate, inflationRate) {
     var ordered = selections.slice().sort(function (a, b) {
       return a.strategy.applyOrder - b.strategy.applyOrder;
     });
-    var base = TSIQ.computeScenario(baseProfile, [], years, growthRate, inflationRate);
-    var prevFirst = base.years[0].totalBurden, prevTotal = base.totals.totalBurden;
+    var prev = TSIQ.computeScenario(baseProfile, [], years, growthRate, inflationRate);
     var running = [], steps = [];
     ordered.forEach(function (sel) {
       running.push(sel);
       var r = TSIQ.computeScenario(baseProfile, running, years, growthRate, inflationRate);
-      var firstYear = prevFirst - r.years[0].totalBurden;
-      var cumulative = prevTotal - r.totals.totalBurden;
+      var byYear = [], planCostsByYear = [], givenBack = 0;
+      for (var y = 0; y < years; y++) {
+        var d = prev.years[y].totalBurden - r.years[y].totalBurden;
+        byYear.push(d);
+        planCostsByYear.push((r.years[y].planCosts || 0) - (prev.years[y].planCosts || 0));
+        if (y > 0 && d < 0) givenBack -= d;
+      }
+      var firstYear = byYear[0];
+      var cumulative = prev.totals.totalBurden - r.totals.totalBurden;
       var kind = 'savings';
       if (sel.strategy.existingBenefit && cumulative >= 500) kind = 'existing'; // e.g. an NOL the client already has
       else if (firstYear <= -500 && cumulative <= -500) kind = 'cost';   // e.g. a new staff benefit
       else if (firstYear < 500 && cumulative < 500) kind = 'foundation';
-      else if (firstYear >= 500 && cumulative < 0.5 * firstYear) kind = 'timing';
-      steps.push({ strategy: sel.strategy, firstYear: firstYear, cumulative: cumulative, kind: kind });
-      prevFirst = r.years[0].totalBurden; prevTotal = r.totals.totalBurden;
+      else if (firstYear >= 500 && (cumulative < 0.5 * firstYear || givenBack > 0.25 * firstYear)) kind = 'timing';
+      steps.push({ strategy: sel.strategy, firstYear: firstYear, cumulative: cumulative, kind: kind,
+        byYear: byYear, planCostsByYear: planCostsByYear });
+      prev = r;
     });
     return steps;
+  };
+
+  /**
+   * Splits a plan's value into what a client can be told is a saving and what
+   * is not. From the steps of TSIQ.incrementalSavings:
+   *   permanent — recurring savings (kinds savings, foundation, cost), year by
+   *     year: gross tax saved, the client's own plan costs, and the net
+   *   timing — tax moved between years: the first-year deferral and its net
+   *     value over the projection
+   *   existing — the value of something the client already owns
+   */
+  TSIQ.valueSummary = function (steps, years) {
+    var zero = function () { var a = []; for (var y = 0; y < years; y++) a.push(0); return a; };
+    var out = {
+      years: years,
+      permanent: { gross: zero(), planCosts: zero(), net: zero(), firstYear: 0, total: 0, count: 0 },
+      timing: { firstYear: 0, total: 0, count: 0 },
+      existing: { firstYear: 0, total: 0, count: 0 }
+    };
+    steps.forEach(function (st) {
+      if (st.kind === 'timing' || st.kind === 'existing') {
+        out[st.kind].firstYear += st.firstYear;
+        out[st.kind].total += st.cumulative;
+        out[st.kind].count++;
+        return;
+      }
+      out.permanent.count++;
+      for (var y = 0; y < years; y++) {
+        out.permanent.net[y] += st.byYear[y];
+        out.permanent.planCosts[y] += st.planCostsByYear[y];
+        out.permanent.gross[y] += st.byYear[y] + st.planCostsByYear[y];
+      }
+    });
+    out.permanent.firstYear = years > 0 ? out.permanent.net[0] : 0;
+    out.permanent.total = out.permanent.net.reduce(function (a, b) { return a + b; }, 0);
+    return out;
+  };
+
+  /**
+   * The client's net position year by year, on permanent savings only:
+   * tax saved − the client's own plan costs − the advisor's fee. The one-time
+   * plan fee falls in year 1; the annual fee in every year.
+   * Returns { rows: [{ year, savings, planCosts, fee, net, cumulative }],
+   *   totals, breakEvenYear } — breakEvenYear is the first year (1-based) in
+   *   which the running total is zero or better, or null if it never is.
+   */
+  TSIQ.feeSchedule = function (summary, fees) {
+    fees = fees || {};
+    var planning = fees.planning || 0, annual = fees.annual || 0;
+    var rows = [], cumulative = 0, breakEvenYear = null;
+    var totals = { savings: 0, planCosts: 0, fee: 0, net: 0 };
+    for (var y = 0; y < summary.years; y++) {
+      var fee = annual + (y === 0 ? planning : 0);
+      var savings = summary.permanent.gross[y], planCosts = summary.permanent.planCosts[y];
+      var net = savings - planCosts - fee;
+      cumulative += net;
+      if (breakEvenYear === null && cumulative >= 0) breakEvenYear = y + 1;
+      rows.push({ year: y + 1, savings: savings, planCosts: planCosts, fee: fee, net: net, cumulative: cumulative });
+      totals.savings += savings; totals.planCosts += planCosts; totals.fee += fee; totals.net += net;
+    }
+    return { rows: rows, totals: totals, breakEvenYear: breakEvenYear };
   };
 
   /** Convenience: baseline is a scenario with no strategies. */

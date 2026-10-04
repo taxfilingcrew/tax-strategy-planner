@@ -176,6 +176,32 @@ TSIQ.render = TSIQ.render || {};
     }, data.scenarios[0]);
     var firstYearSavings = data.baseline.years[0].totalBurden - best.result.years[0].totalBurden;
     var cumSavings = data.baseline.totals.totalBurden - best.result.totals.totalBurden;
+    // Lead with permanent savings; tax that is only moved between years and
+    // value the client already owns are stated separately, never added in.
+    var firstLabel = 'Estimated first-year tax savings';
+    var cumLabel = 'Estimated savings over ' + data.years + ' years';
+    var splitNote = '';
+    if (data.profile && best.selections) {
+      var value = TSIQ.valueSummary(TSIQ.incrementalSavings(data.profile, best.selections,
+        data.years, data.growthRate, data.inflationRate), data.years);
+      if (value.timing.count > 0 || value.existing.count > 0) {
+        firstYearSavings = value.permanent.firstYear;
+        cumSavings = value.permanent.total;
+        firstLabel = 'Estimated permanent tax savings in the first year';
+        cumLabel = 'Estimated permanent savings over ' + data.years + ' years';
+        splitNote = '<p><strong>Not included in the figures above:</strong> ' +
+          (value.timing.count > 0
+            ? usd(value.timing.firstYear) + ' of tax moved out of ' + TSIQ.TABLES_2026.taxYear +
+              ' into later years (timing — its net effect over ' + data.years + ' years is ' +
+              (value.timing.total < 0 ? '&minus;' : '') + usd(Math.abs(value.timing.total)) + ')'
+            : '') +
+          (value.timing.count > 0 && value.existing.count > 0 ? ', and ' : '') +
+          (value.existing.count > 0
+            ? usd(value.existing.total) + ' from a loss carryforward you already have'
+            : '') +
+          '. These are real, but they are not savings the plan creates, so we show them separately.</p>';
+      }
+    }
 
     var uniqueStrategies = [];
     data.scenarios.forEach(function (sc) {
@@ -199,9 +225,10 @@ TSIQ.render = TSIQ.render || {};
       '<div class="page">' +
       '<h2>The Bottom Line</h2>' +
       '<div class="big-number"><div class="amount">' + usd(firstYearSavings) + '</div>' +
-      '<div class="label">Estimated first-year tax savings</div></div>' +
+      '<div class="label">' + firstLabel + '</div></div>' +
       '<div class="big-number"><div class="amount">' + usd(cumSavings) + '</div>' +
-      '<div class="label">Estimated savings over ' + data.years + ' years</div></div>' +
+      '<div class="label">' + cumLabel + '</div></div>' +
+      splitNote +
       '<p>Without a plan, taxes are simply what happens to you. With a plan, they become a number we manage. ' +
       'The pages that follow show where you stand today, the specific strategies we recommend, and exactly ' +
       'what each one is worth to you.</p>' +

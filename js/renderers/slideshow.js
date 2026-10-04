@@ -39,7 +39,14 @@ TSIQ.render = TSIQ.render || {};
     'th:first-child,td:first-child{text-align:left}' +
     'thead th{color:#aab8c8;font-weight:400;font-size:1.9vh;text-transform:uppercase;letter-spacing:1px}' +
     '.total-row td{border-top:2px solid var(--deck-accent);border-bottom:none;font-weight:600}' +
-    '.green{color:#5dd08a}' +
+    '.green{color:#5dd08a}.red{color:#e8756a}' +
+    '.small-table{font-size:2vh;min-width:0}.small-table th,.small-table td{padding:.9vh 1.8vw}' +
+    '.be td{background:#16303a}.small-table td:first-child{white-space:nowrap}' +
+    '.note{font-size:1.9vh;color:#8fa0b3;max-width:78vw;margin-top:3vh;line-height:1.5}' +
+    '.assume{font-size:2.3vh;line-height:1.45;max-width:82vw}.assume li{margin-bottom:1.5vh}' +
+    '.assume-table{max-width:84vw}.assume-table td{vertical-align:top;line-height:1.5}' +
+    '.assume-table td:nth-child(2),.assume-table th:nth-child(2){text-align:left}' +
+    '.assume-table td:first-child{white-space:nowrap;font-weight:600}' +
     '.nav{position:fixed;bottom:3vh;right:3vw;display:flex;gap:12px;align-items:center;z-index:10}' +
     '.nav button{background:#1e2a38;color:#eef2f7;border:1px solid #3a4a5c;border-radius:6px;padding:10px 18px;font-size:16px;cursor:pointer}' +
     '.nav button:hover{background:#2c3a4a}' +
@@ -205,11 +212,19 @@ TSIQ.render = TSIQ.render || {};
     // What each strategy adds (best scenario, in order): first year and the
     // whole projection, so a deferral is never shown as a permanent saving.
     var stepSavings = {};
+    var splitNote = '';
     if (data.profile && best.selections) {
-      TSIQ.incrementalSavings(data.profile, best.selections, data.years,
-        data.growthRate, data.inflationRate).forEach(function (st) {
-        stepSavings[st.strategy.id] = st;
-      });
+      var allSteps = TSIQ.incrementalSavings(data.profile, best.selections, data.years,
+        data.growthRate, data.inflationRate);
+      allSteps.forEach(function (st) { stepSavings[st.strategy.id] = st; });
+      // The headline is the real change in this year's bill. Say how much of
+      // it is a permanent saving, a deferral, or already the client's.
+      var value = TSIQ.valueSummary(allSteps, data.years);
+      if (value.timing.count > 0 || value.existing.count > 0) {
+        splitNote = ' Of this year\'s figure, <b>' + usd(value.permanent.firstYear) + '</b> is permanent savings' +
+          (value.timing.count > 0 ? '; ' + usd(value.timing.firstYear) + ' is tax moved to later years' : '') +
+          (value.existing.count > 0 ? '; ' + usd(value.existing.firstYear) + ' is a carryforward you already had' : '') + '.';
+      }
     }
 
     var brand = TSIQ.brand || {};
@@ -421,9 +436,9 @@ TSIQ.render = TSIQ.render || {};
       '<span>Federal <b class="mono" style="color:#fff">' + usd(planR.totalFederal) + '</b></span>' +
       '<span>State <b class="mono" style="color:#fff">' + usd(planR.totalState) + '</b></span></div></div></div>' +
       '<div class="anim-4" style="margin-top:60px;background:var(--gold);border-radius:16px;padding:44px 60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 18px 50px rgba(15,26,36,.4)">' +
-      '<div><div style="font-size:19px;text-transform:uppercase;letter-spacing:.12em;color:var(--navy-700);font-weight:700">Total tax savings in ' + year + '</div>' +
+      '<div><div style="font-size:19px;text-transform:uppercase;letter-spacing:.12em;color:var(--navy-700);font-weight:700">Estimated change in your ' + year + ' tax bill</div>' +
       '<div style="font-size:22px;color:var(--navy-700);margin-top:8px">A <b>' + pctSmaller + '% smaller</b> bill this year &mdash; and ' +
-      '<b>' + usd(cumSavings) + '</b> kept over the next ' + data.years + ' years.</div></div>' +
+      '<b>' + usd(cumSavings) + '</b> kept over the next ' + data.years + ' years.' + splitNote + '</div></div>' +
       '<div class="mono" style="font-size:128px;font-weight:700;line-height:.9;color:var(--navy)">' + usd(yr1Savings) + '</div></div>' +
       '</div>' + foot(firmName, data.clientName) + '</section>';
 

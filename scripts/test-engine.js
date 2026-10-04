@@ -613,5 +613,68 @@ is('SSTB suggestion: not below the phase-out', S('sstb-threshold-management').su
 is('SSTB suggestion: inside the phase-out', !!S('sstb-threshold-management').suggest({ filingStatus: 'single', isSSTB: true, passthroughK1: 250000 }), true);
 near('S-corp suggestion: salary placeholder is half of profit', S('s-corp-election').suggest({ scheduleCNet: 150000 }).params.salary, 75000);
 
+/* ---------------------------------------------------------------------------
+ * Proposal figures: permanent savings vs. timing vs. existing value, and the
+ * year-by-year comparison with the fee.
+ * ------------------------------------------------------------------------- */
+
+/* 52. valueSummary on a hand-built set of steps (3 years):
+ *     savings 4,000 a year after 1,000 of plan costs; a staff benefit costing
+ *     2,000 a year net (3,000 of plan costs); a deferral of 9,000 that comes
+ *     back as 4,650 twice; a 5,000 carryforward.
+ *     Permanent net = 4,000 − 2,000 = 2,000 a year; plan costs 4,000;
+ *     gross 6,000. Timing: 9,000 first year, −300 net. Existing: 5,000. */
+var vs = TSIQ.valueSummary([
+  { kind: 'savings', firstYear: 4000, cumulative: 12000, byYear: [4000, 4000, 4000], planCostsByYear: [1000, 1000, 1000] },
+  { kind: 'cost', firstYear: -2000, cumulative: -6000, byYear: [-2000, -2000, -2000], planCostsByYear: [3000, 3000, 3000] },
+  { kind: 'timing', firstYear: 9000, cumulative: -300, byYear: [9000, -4650, -4650], planCostsByYear: [0, 0, 0] },
+  { kind: 'existing', firstYear: 5000, cumulative: 5000, byYear: [5000, 0, 0], planCostsByYear: [0, 0, 0] }
+], 3);
+near('value: permanent first year', vs.permanent.firstYear, 2000);
+near('value: permanent total', vs.permanent.total, 6000);
+near('value: permanent gross', vs.permanent.gross[1], 6000);
+near('value: plan costs', vs.permanent.planCosts[1], 4000);
+near('value: deferral kept out of savings', vs.timing.firstYear, 9000);
+near('value: deferral net over the projection', vs.timing.total, -300);
+near('value: carryforward kept out of savings', vs.existing.total, 5000);
+
+/* 53. feeSchedule. Gross savings 10,000 / 12,000 / 12,000, plan costs 2,500
+ *     a year, fee 9,000 once plus 1,000 a year.
+ *     Year 1: 10,000 − 2,500 − 10,000 = −2,500. Year 2: 12,000 − 2,500 −
+ *     1,000 = 8,500 → running 6,000 (break-even). Year 3: 8,500 → 14,500. */
+var fsch = TSIQ.feeSchedule({ years: 3, permanent: { gross: [10000, 12000, 12000], planCosts: [2500, 2500, 2500] } },
+  { planning: 9000, annual: 1000 });
+near('fee table: year 1 net', fsch.rows[0].net, -2500);
+near('fee table: year 1 fee includes the plan fee', fsch.rows[0].fee, 10000);
+near('fee table: year 2 running total', fsch.rows[1].cumulative, 6000);
+is('fee table: break-even year', fsch.breakEvenYear, 2);
+near('fee table: total net', fsch.totals.net, 14500);
+near('fee table: total fee', fsch.totals.fee, 12000);
+is('fee table: no break-even is reported as none',
+  TSIQ.feeSchedule({ years: 1, permanent: { gross: [1000], planCosts: [0] } }, { planning: 5000, annual: 0 }).breakEvenYear, null);
+
+/* 54. On a real plan the three parts add up to the whole, plan costs are
+ *     attributed to the strategy that causes them, and a strategy that gives
+ *     back more than a quarter of its first-year figure is timing. */
+var vp = { filingStatus: 'single', scheduleCNet: 150000 };
+var vsel = [
+  { strategy: S('s-corp-election'), params: { salary: 80000, adminCost: 2500, entityTaxRatePct: 0, entityTaxMin: 0 } },
+  { strategy: S('prepaid-expenses'), params: { prepaidAmount: 15000, keepsPrepaying: 'no' } },
+  { strategy: S('nol-planning'), params: { nolAvailable: 20000 } }
+];
+var vsteps = TSIQ.incrementalSavings(vp, vsel, 3, 0, 0);
+var vsum = TSIQ.valueSummary(vsteps, 3);
+var vwhole = TSIQ.computeBaseline(vp, 3, 0, 0).totals.totalBurden - TSIQ.computeScenario(vp, vsel, 3, 0, 0).totals.totalBurden;
+near('value: parts add up to the whole', vsum.permanent.total + vsum.timing.total + vsum.existing.total, vwhole, 0.01);
+var scStep = vsteps.filter(function (x) { return x.strategy.id === 's-corp-election'; })[0];
+near('value: S-corp admin cost attributed to the S-corp step', scStep.planCostsByYear[0], 2500);
+near('value: permanent gross less plan costs = net', vsum.permanent.gross[0] - vsum.permanent.planCosts[0], vsum.permanent.net[0], 0.01);
+is('value: prepaid expenses counted as timing', vsteps.filter(function (x) { return x.strategy.id === 'prepaid-expenses'; })[0].kind, 'timing');
+is('value: NOL counted as existing', vsteps.filter(function (x) { return x.strategy.id === 'nol-planning'; })[0].kind, 'existing');
+var dafSteps = TSIQ.incrementalSavings({ filingStatus: 'mfj', wages: 200000, stateRate: 0.08, propertyTax: 8000, mortgageInterest: 4000, charitable: 8000 },
+  [{ strategy: S('daf-bunching'), params: { bunchedContribution: 24000, bunchEveryNYears: 3 } }], 10, 0.03, 0.025);
+is('value: a strategy that gives back in off years is timing', dafSteps[0].kind, 'timing');
+is('value: its net over the projection is still positive', dafSteps[0].cumulative > 0, true);
+
 console.log('Engine tests: ' + passed + ' passed, ' + failures + ' failed.');
 if (failures) process.exit(1);

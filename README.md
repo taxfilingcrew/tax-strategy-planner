@@ -144,6 +144,20 @@ Not yet modeled: AMT, depreciation recapture on sale, §461(l), AGI percentage
 limits on charitable gifts, the 25% rate on unrecaptured §1250 gain, and the
 scheduled SALT-cap changes after 2026.
 
+**Proposal figures (pitch deck, slideshow, PDF report).** The outputs are built
+so a fee can be compared with a number that holds up:
+
+- The headline is *permanent* savings, after the client's own costs of running
+  the plan. Tax that is only moved between years (timing) and value the client
+  already owns (an NOL carryforward) are shown on separate lines and never
+  added in (`TSIQ.valueSummary`).
+- The deck's investment slide is a year-by-year table: permanent savings, less
+  plan costs, less the fee, with the break-even year marked
+  (`TSIQ.feeSchedule`). Enter the one-time and annual fee next to the deck
+  button.
+- Assumptions slides list the client data and the inputs behind each strategy
+  and state that the figures are estimates until the return is prepared.
+
 **Library status:** an October 2026 review found problems in most strategies.
 Every finding on the 56 modeled strategies has now been fixed (engine-level
 problems, California treatment, shared limits, eligibility checks, defaults
