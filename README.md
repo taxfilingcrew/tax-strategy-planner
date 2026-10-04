@@ -17,8 +17,9 @@ no security warnings, and it travels with the folder when shared.)
 
 **On a Mac:** the `.cmd` files are Windows-only. Double-click **`index.html`**,
 or double-click **`Launch Tax Strategy Planner (Mac).command`** for the
-standalone window (the first time, right-click it and choose Open, since macOS
-blocks a downloaded script on a plain double-click).
+standalone window. macOS blocks a downloaded script the first time: after the
+warning, go to System Settings > Privacy & Security, scroll to Security, and
+click Open Anyway next to the launcher's name. Once is enough.
 
 **Or in a browser (any computer):** double-click **`index.html`**. Same app either way.
 
