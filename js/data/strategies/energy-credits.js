@@ -18,10 +18,10 @@ TSIQ.strategyModules.push({
       'not an evergreen one. Residential clean energy (§25D) is dead for ' +
       'expenditures after 2025; the clean vehicle credits (§30D, §25E, §45W) ' +
       'ended for vehicles acquired after 9/30/2025; §48E/§45Y wind and solar ' +
-      'projects must begin construction by 7/4/2026 or be placed in service ' +
-      'by 12/31/2027 (VERIFY exact deadlines — they are the whole ballgame); ' +
-      '§30C alternative fuel refueling property ends for property placed in ' +
-      'service after 6/30/2026. Where a business project still qualifies, the ' +
+      'projects qualify only if construction began by 7/4/2026 (now passed) ' +
+      'or the project is placed in service by 12/31/2027; ' +
+      '§30C alternative fuel refueling property (EV chargers) ended for ' +
+      'property placed in service after 6/30/2026. Where a business project still qualifies, the ' +
       'base §48E investment credit is 6%, rising to 30% with prevailing wage ' +
       'and apprenticeship compliance (or for small projects under the ' +
       'exception), plus domestic-content and energy-community bonuses; basis ' +
@@ -31,10 +31,11 @@ TSIQ.strategyModules.push({
       'home) — no credit for expenditures after 12/31/2025. Clean vehicle ' +
       'credits (§30D new, §25E used, §45W commercial) — no credit for ' +
       'vehicles acquired after 9/30/2025. §30C EV charging / alternative ' +
-      'fuel refueling — property must be placed in service by 6/30/2026 and ' +
-      'must sit in an eligible (low-income or non-urban) census tract.',
+      'fuel refueling — no credit for property placed in service after ' +
+      '6/30/2026; chargers installed by then needed an eligible (low-income ' +
+      'or non-urban) census tract.',
       '§48E clean electricity investment credit (solar/wind focus of OBBBA ' +
-      'cuts): projects must either begin construction by 7/4/2026 (12 months ' +
+      'cuts): projects must either have begun construction by 7/4/2026 (12 months ' +
       'after enactment, with continuity requirements) or be placed in service ' +
       'by 12/31/2027 — VERIFY both dates and the begun-construction standard ' +
       'before advising; Treasury guidance has tightened physical-work and ' +
@@ -67,7 +68,7 @@ TSIQ.strategyModules.push({
     requirements: [
       'A project that still fits inside the surviving deadlines — verified against current statute and Treasury begun-construction guidance, not marketing materials.',
       'For 30% on 1 MW+ projects: prevailing wage and apprenticeship compliance documented from the start of construction.',
-      'For §30C: the charging property must be in an eligible census tract and placed in service by the deadline.',
+      'For §30C: only charging property placed in service on or before 6/30/2026, in an eligible census tract — nothing installed later qualifies.',
       'Ownership with tax appetite (nonrefundable credit) or a §6418 transfer plan; basis-reduction and recapture tracking.',
       'FEOC supply-chain screening for projects starting construction in 2026 or later.'
     ],
@@ -81,7 +82,7 @@ TSIQ.strategyModules.push({
     ],
     bestFit: [
       'Businesses already planning rooftop solar or on-site generation that can realistically start construction or be in service inside the windows.',
-      'Fleet operators needing charging infrastructure in eligible census tracts before the §30C cutoff.',
+      'Fleet operators who placed charging infrastructure in service by 6/30/2026 in an eligible census tract and have not yet claimed §30C.',
       'Clients with steady tax liability to absorb a nonrefundable credit (or willing to sell it under §6418).'
     ],
     implementation: [
@@ -98,8 +99,8 @@ TSIQ.strategyModules.push({
     teaser: 'A closing window to have the government fund a big piece of your next upgrade',
     headline: 'The energy credit window is closing — move or skip it',
     plainEnglish: [
-      'For years, the government paid businesses back up to 30% of the cost of solar panels, EV chargers, and similar energy projects. In 2025, Congress decided to wind most of that down. Some credits are already gone; the ones that remain now come with hard deadlines.',
-      'If you were already thinking about solar for your building or chargers for your fleet, this changes the math from "someday" to "now or never." A project that starts construction in time can still capture the full credit; the same project started a few months late gets nothing.',
+      'For years, the government paid businesses back up to 30% of the cost of solar panels, EV chargers, and similar energy projects. In 2025, Congress decided to wind most of that down. The credit for EV chargers ended on June 30, 2026, and the credits for home solar and electric vehicles are gone. What remains for a business comes with hard deadlines.',
+      'For solar on a business building, the test is simple: the project had to start construction by July 4, 2026, or it has to be finished and running by the end of 2027. A project that meets one of those can still capture the full credit; one that misses both gets nothing.',
       'Our job is to give you the honest version: we verify the actual deadlines, whether your project can realistically meet them, and what the credit is worth after all the fine print — before you sign anything a salesperson put in front of you.'
     ],
     analogy: 'It\'s like a store closing sale: the discount is real, but only on what\'s still on the shelf — and the doors lock on a set date whether you\'re ready or not.',
@@ -132,25 +133,29 @@ TSIQ.strategyModules.push({
 
   /**
    * Adds the advisor-verified energy credit to otherCredits in YEAR 1 ONLY
-   * (investment credits are placed-in-service-year events, unlike the other
-   * credits in this category). Engine applies it nonrefundably after the
-   * child tax credit. The §50(c) basis reduction and the depreciation on the
-   * energy property are not modeled here — handle depreciation via the
-   * bonus-depreciation strategy or business income inputs.
+   * (investment credits are placed-in-service-year events). Needs a business
+   * or rental activity. The engine applies it nonrefundably and carries any
+   * unused part forward. The §50(c) basis reduction and the depreciation on
+   * the energy property are not modeled here.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    if (yearIndex === 0) {
-      var amt = Math.max(0, params.creditAmount || 0);
-      p.otherCredits = (p.otherCredits || 0) + amt;
-      notes.push(TSIQ.fmt.usd(amt) + ' energy investment credit applied in year 1 only ' +
-        '(placed-in-service year; nonrefundable).');
-      notes.push('VERIFY DEADLINES before relying on this: §48E wind/solar requires ' +
-        'construction begun by 7/4/2026 or placed in service by 12/31/2027; §30C ends ' +
-        '6/30/2026; §25D and EV credits are already terminated. Basis reduction (50% of ' +
-        'credit, §50(c)) and equipment depreciation are not modeled here.');
+    if (yearIndex !== 0) return { profile: p, notes: notes };
+    if (!TSIQ.credit.hasBusiness(p) && !(p.rentalNet || 0)) {
+      notes.push('The remaining energy credits are business credits — no business or rental activity found ' +
+        'in this profile. The home credits (§25D, §25C) ended after 2025. No benefit modeled.');
+      return { profile: p, notes: notes };
     }
+    var amt = Math.max(0, params.creditAmount || 0);
+    p.otherCredits = (p.otherCredits || 0) + amt;
+    notes.push(TSIQ.fmt.usd(amt) + ' energy investment credit applied in year 1 only ' +
+      '(placed-in-service year; nonrefundable — any unused part carries forward).');
+    notes.push('CHECK ELIGIBILITY FIRST: a wind or solar project qualifies under §48E only if ' +
+      'construction began by July 4, 2026 (that date has passed) or it is placed in service by ' +
+      '12/31/2027. The EV-charger credit (§30C) ended for property placed in service after ' +
+      '6/30/2026, and the home and vehicle credits are gone. Basis reduction (50% of credit, ' +
+      '§50(c)) and equipment depreciation are not modeled here.');
     return { profile: p, notes: notes };
   }
 });

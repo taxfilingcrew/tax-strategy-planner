@@ -68,7 +68,7 @@ TSIQ.strategyModules.push({
       'Spouse takes a job with subsidized coverage mid-year: every month of mere ELIGIBILITY disallows the deduction, even if the family never enrolls.',
       'W-2 wages below the premium level cap the deduction — coordinate with reasonable-compensation planning.',
       'Payroll providers that route the inclusion through FICA boxes create needless payroll tax; the setup must be checked the first year.',
-      'IRS FAQ guidance treats the §162(l) deduction as reducing QBI for the S corp owner — a modest §199A offset this model does not compute; flag when QBI is material.'
+      'IRS FAQ guidance treats the §162(l) deduction as reducing QBI for the S corp owner — the model reduces QBI once, for the entity\'s deduction of the premiums; the IRS reading can reduce it a second time at the shareholder level, which is not modeled.'
     ],
     bestFit: [
       'S-corp owners currently paying health premiums personally with after-tax dollars.',
@@ -113,7 +113,8 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'annualPremiums', label: 'Annual health insurance premiums', type: 'currency', default: 18000 }
+    { key: 'annualPremiums', label: 'Annual health insurance premiums', type: 'currency', default: 18000 },
+    { key: 'alreadyDeducted', label: 'Premiums the return already deducts above the line', type: 'currency', default: 0 }
   ],
 
   appliesTo: function (profile) {
@@ -123,18 +124,20 @@ TSIQ.strategyModules.push({
   /**
    * The entity deduction and the W-2 Box 1 inclusion offset each other, so
    * the net modeled effect vs. paying premiums personally is the §162(l)
-   * above-the-line deduction: adjustments += premiums. No FICA cost is added
-   * (the inclusion is FICA-exempt per Announcement 92-16). The §162(l)
-   * earned-income limit is enforced by capping at ownerWages. Simplification:
-   * the IRS position that this deduction also reduces §199A QBI is not
-   * modeled (noted for the advisor).
+   * above-the-line deduction: adjustments += premiums not already deducted.
+   * The entity's deduction for the premiums (as wages) lowers the K-1 profit
+   * that counts as QBI, so the same amount goes to qbiReduction. No FICA cost
+   * is added (the inclusion is FICA-exempt per Announcement 92-16 when paid
+   * under a plan for employees). The §162(l) earned-income limit is enforced
+   * by capping at ownerWages.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
 
     if (!(p.ownerWages > 0)) {
-      if (yearIndex === 0) {
+      if (first) {
         notes.push('Requires S-corp W-2 wages to the owner — the §162(l) deduction for a ' +
           '2% shareholder is limited to W-2 wages from the corporation, and the premiums ' +
           'must be paid/reimbursed by the entity and added to Box 1 wages. Pair with the ' +
@@ -143,21 +146,33 @@ TSIQ.strategyModules.push({
       return { profile: p, notes: notes };
     }
 
+    var health = TSIQ.health.year(state);
     var premiums = params.annualPremiums || 0;
-    var deduction = Math.min(premiums, p.ownerWages);
+    var already = Math.max(0, params.alreadyDeducted || 0);
+    var allowed = Math.min(premiums, p.ownerWages);
+    var deduction = Math.max(0, allowed - already - health.covered);
     p.adjustments = (p.adjustments || 0) + deduction;
+    p.qbiReduction = (p.qbiReduction || 0) + deduction;
+    health.covered += deduction;
+    health.sehi += deduction;
 
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(deduction) + ' of health premiums deducted above the line ' +
-        '(§162(l)): entity pays/reimburses, adds to W-2 Box 1 (FICA-exempt per Ann. 92-16), ' +
-        'shareholder deducts — the wage inclusion and entity deduction wash, leaving this ' +
-        'deduction as the net benefit vs. paying premiums personally.');
+    if (first) {
+      notes.push(TSIQ.fmt.usd(deduction) + ' of health premiums counted as a NEW above-the-line deduction ' +
+        '(§162(l)): entity pays/reimburses, adds to W-2 Box 1, shareholder deducts — the wage inclusion ' +
+        'and entity deduction wash, leaving this deduction as the net benefit vs. paying premiums ' +
+        'personally. The entity\'s deduction also lowers the profit that counts for the QBI deduction.');
+      if (already <= 0 && deduction > 0) {
+        notes.push('This assumes the return deducts none of these premiums today. If it already does, ' +
+          'enter that amount in "Premiums the return already deducts" — otherwise the saving shown is not real.');
+      }
       if (premiums > p.ownerWages) {
         notes.push('Premiums exceed owner W-2 wages — deduction capped at wages ' +
           '(§162(l) earned-income limit). Consider raising reasonable compensation.');
       }
-      notes.push('No deduction is allowed for any month either spouse is ELIGIBLE for a ' +
-        'subsidized employer health plan — confirm before implementing.');
+      notes.push('The Box 1 amount escapes Social Security and Medicare tax only if the premiums are paid ' +
+        'under a plan for employees generally or for a class of employees (§3121(a)(2)(B), ' +
+        'Announcement 92-16) — put the arrangement in writing. No deduction is allowed for any month ' +
+        'either spouse is ELIGIBLE for a subsidized employer health plan.');
     }
     return { profile: p, notes: notes };
   }

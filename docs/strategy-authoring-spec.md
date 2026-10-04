@@ -143,6 +143,35 @@ Both do nothing when `caRules` is off. State entity taxes (California 1.5%
 S-corp, 8.84% C-corp, $800 minimum) go in `entityStateTax`; rates are in
 `TSIQ.TABLES_2026.california`.
 
+## Shared limits and helpers
+
+Strategies that share one legal limit coordinate through helpers in
+`js/data/tax-tables-2026.js`. Use them instead of re-deriving the limit:
+
+- `TSIQ.plan` — retirement plans. `TSIQ.plan.owner(p, state)` returns the
+  owner's plan compensation (`route` `'se'` = Schedule C earned income, net
+  profit less half of SE tax; `'w2'` = wages from the owner's corporation; a
+  K-1 share of profit is not compensation). `TSIQ.plan.year(state)` is the
+  running record of what earlier retirement strategies contributed this year
+  (`deferral`, `catchUp`, `employer`, `db`, `simple`, `stack`); add to it after
+  applying. `employerRoom`, `dbCeiling`, `combinedDisallowed` (§404(a)(7)) and
+  `staffCost` cover the common limits. A SIMPLE IRA blocks every other plan.
+- `TSIQ.health.year(state)` — health premiums already deducted this year, so
+  one premium is never counted by two strategies.
+- `TSIQ.staffBenefit` — benefits paid to non-owner staff (ICHRA, QSEHRA,
+  §127). They are money out of the business: model them either in place of
+  the same taxable pay (saving = employer payroll tax) or as a new benefit
+  (deducted and added to `planCosts`). Require staff payroll
+  (`entityW2Wages` above `ownerWages`).
+- `TSIQ.credit` — `hasBusiness(p)` and `addBack(p, amount)` for the credits
+  whose deduction is disallowed (§280C, §44(d)(7), §45F(f)).
+
+A cost the client pays to get a benefit (staff contributions, plan fees) goes
+in `planCosts`; never present a deduction for money spent as a saving on its
+own. A default must not assume an amount the client may not have: default to
+0, or derive it from Section 1 with `defaultFrom(profile)` (which may also
+return a select value).
+
 ## Projection context
 
 `state.yearIndex`, `state.projectionYears` and `state.growthFactor`

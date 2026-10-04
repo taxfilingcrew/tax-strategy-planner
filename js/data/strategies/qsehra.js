@@ -20,11 +20,10 @@ TSIQ.strategyModules.push({
       'excluded from the employee\'s income — without violating the ACA market ' +
       'reforms, because a compliant QSEHRA is statutorily defined not to be a ' +
       'group health plan. Reimbursements are capped by indexed dollar limits ' +
-      '(approximately $6,450 self-only / $13,100 family for 2026 — verify ' +
-      'against the current-year Rev. Proc. before implementation) and must be ' +
+      '($6,450 self-only / $13,100 family for 2026, Rev. Proc. 2025-32) and must be ' +
       'offered to all eligible employees on the same terms. This is an ' +
-      'EMPLOYEE-benefit play: the owner\'s deduction is the modeled benefit ' +
-      'here; self-employed owners, partners, and >2% S-corp shareholders ' +
+      'EMPLOYEE-benefit play: the owner\'s gain is the payroll tax saved versus paying the same amount as wages; ' +
+      'self-employed owners, partners, and >2% S-corp shareholders ' +
       'cannot themselves participate tax-free.',
     mechanics: [
       'Employer funds reimbursements 100% (no employee salary reductions ' +
@@ -38,8 +37,8 @@ TSIQ.strategyModules.push({
       '(variation allowed only by age and family size, tracking individual ' +
       'premium pricing). Employees with under 90 days of service, under age 25, ' +
       'part-time, and seasonal workers may be excluded.',
-      'Annual dollar caps are indexed; the 2026 amounts are approximately ' +
-      '$6,450 self-only / $13,100 family (verify current figures). Reimbursing ' +
+      'Annual dollar caps are indexed; the 2026 amounts are ' +
+      '$6,450 self-only / $13,100 family, prorated for a partial year. Reimbursing ' +
       'above the cap disqualifies the arrangement.',
       'Employee-side interactions: QSEHRA reimbursement reduces any premium ' +
       'tax credit dollar-for-dollar (affordability test under §36B), and the ' +
@@ -57,7 +56,7 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §6652(o)', note: 'Penalty for failing the required 90-day advance employee notice.' }
     ],
     requirements: [
-      'Fewer than 50 full-time-equivalent employees (not an ALE) and no group health plan offered to any employee — including no group dental/vision unless excepted.',
+      'Fewer than 50 full-time-equivalent employees (not an ALE) and no group health plan offered to any employee. Excepted benefits count as a group health plan here: a stand-alone dental or vision plan or a health FSA disqualifies the QSEHRA (Notice 2017-67, Q&A-2). An ICHRA is also a group health plan — the two cannot be offered together.',
       'Written plan offered to all eligible employees on the same terms; funded solely by the employer.',
       'Written employee notice at least 90 days before each plan year (or by eligibility date) covering the benefit amount and PTC/MEC disclosures.',
       'Proof of minimum essential coverage from each employee before reimbursing; substantiation of each expense.',
@@ -114,41 +113,51 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'annualReimbursement', label: 'Total annual reimbursements to employees', type: 'currency', default: 6000 }
+    { key: 'annualReimbursement', label: 'Total annual reimbursements to employees', type: 'currency', default: 6000 },
+    TSIQ.staffBenefit.modeInput
   ],
 
   appliesTo: function (profile) {
-    return true; // needs business income; validated with a note in apply()
+    return true; // needs a business with non-owner staff; validated with a note in apply()
   },
 
   /**
-   * Models the EMPLOYER deduction only: reimbursements reduce business income.
-   * Against scheduleCNet this also saves SE tax; against passthroughK1 it
-   * does not. The owner's own participation is not modeled (self-employed
-   * owners / >2% S-corp shareholders are excluded from tax-free treatment).
-   * Per-employee indexed caps (§9831(d)) are a compliance matter, not
-   * enforced here — the input is total plan cost.
+   * A benefit for non-owner staff. Needs W-2 payroll other than the owner's.
+   * See TSIQ.staffBenefit for the two comparison modes. The owner's own
+   * participation is not modeled (self-employed owners / >2% S-corp
+   * shareholders are excluded from tax-free treatment). Per-employee caps
+   * (§9831(d)) are a compliance matter — the input is total plan cost.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
     var amt = params.annualReimbursement || 0;
-    if (p.scheduleCNet > 0) {
-      p.scheduleCNet = p.scheduleCNet - amt;
-      if (yearIndex === 0) {
-        notes.push(TSIQ.fmt.usd(amt) + ' QSEHRA reimbursements deducted against Schedule C income (also reduces SE tax).');
+    var hasBusiness = p.scheduleCNet > 0 || p.passthroughK1 > 0 || p.ownerWages > 0;
+    var staffPayroll = TSIQ.staffBenefit.payroll(p);
+    if (!hasBusiness || !(staffPayroll > 0)) {
+      if (first) {
+        notes.push(hasBusiness
+          ? 'No benefit modeled: Section 1 shows no W-2 payroll for anyone other than the owner. ' +
+            'A self-employed owner or more-than-2% S corporation shareholder cannot take part in a QSEHRA tax-free. Enter the staff payroll in "W-2 wages paid by the business" if the business has employees.'
+          : 'QSEHRA needs an operating business with employees — no business income found. No benefit modeled.');
       }
-    } else if (p.passthroughK1 > 0) {
-      p.passthroughK1 = p.passthroughK1 - amt;
-      if (yearIndex === 0) {
-        notes.push(TSIQ.fmt.usd(amt) + ' QSEHRA reimbursements deducted against pass-through income.');
-      }
-    } else {
-      notes.push('QSEHRA requires an operating business with employees — no business income found in this profile. No benefit modeled.');
       return { profile: p, notes: notes };
     }
-    if (yearIndex === 0) {
-      notes.push('Per-employee 2026 caps are indexed (~$6,450 self / ~$13,100 family — verify against the current Rev. Proc.). Requires <50 FTEs and no group health plan.');
+    
+    var mode = params.replaces === 'new' ? 'new' : 'wages';
+    var out = TSIQ.staffBenefit.apply(p, amt, mode, state);
+    if (first) {
+      notes.push(mode === 'new'
+        ? TSIQ.fmt.usd(amt) + ' of QSEHRA reimbursements modeled as a NEW benefit: deducted from business income and ' +
+          'shown under "Cost of running the plan". The result is the owner\'s net cost after tax — this is ' +
+          'a benefit for staff, not a tax saving for the owner.'
+        : TSIQ.fmt.usd(amt) + ' of QSEHRA reimbursements modeled in place of the same amount of taxable pay. The ' +
+          'business deducts it either way; the owner\'s saving is the ' + TSIQ.fmt.usd(out.ficaSaved) +
+          ' of employer payroll tax no longer due (shown as a negative "Other payroll taxes" line). ' +
+          'The employees also stop paying income and payroll tax on it — that part is their saving, ' +
+          'not the owner\'s.');
+      notes.push('2026 caps: $6,450 per employee (self-only) / $13,100 (family). Requires fewer than 50 full-time-equivalent employees and no group health plan of any kind — dental, vision and health FSAs count.');
     }
     return { profile: p, notes: notes };
   }

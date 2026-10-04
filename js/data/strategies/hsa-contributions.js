@@ -71,7 +71,7 @@ TSIQ.strategyModules.push({
       'Clients already on (or able to switch to) HDHP coverage, especially healthy families who can cash-flow medical costs and invest the HSA.',
       'High-bracket clients wanting another above-the-line deduction after retirement accounts are maxed.',
       'Ages 55–64: catch-up window plus the approaching age-65 penalty-free access.',
-      'Business owners who can route contributions through a cafeteria plan for the added FICA savings.'
+      'Employees (including C-corporation owner-employees) who can route contributions through a cafeteria plan for the added FICA savings. Sole proprietors, partners and more-than-2% S-corp shareholders cannot use a cafeteria plan.'
     ],
     implementation: [
       'Confirm HDHP status of the current policy against the 2026 §223(c)(2) parameters (Rev. Proc. 2025-19); if shopping the exchange, note bronze/catastrophic plans now qualify.',
@@ -111,8 +111,14 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
+    // defaultFrom: self-only for a single filer with no dependents, family otherwise.
     { key: 'coverage', label: 'HDHP coverage type', type: 'select', default: 'family',
-      options: [{ value: 'self', label: 'Self-only' }, { value: 'family', label: 'Family' }] },
+      options: [{ value: 'self', label: 'Self-only' }, { value: 'family', label: 'Family' }],
+      defaultFrom: function (profile) {
+        var alone = (profile.filingStatus === 'single' || profile.filingStatus === 'mfs') &&
+          !((profile.kidsCTC || 0) + (profile.otherDeps || 0) > 0);
+        return alone ? 'self' : 'family';
+      } },
     { key: 'catchUp55', label: 'Age 55+ catch-up ($1,000)', type: 'select', default: 'no',
       options: [{ value: 'no', label: 'No' }, { value: 'yes', label: 'Yes' }] }
   ],

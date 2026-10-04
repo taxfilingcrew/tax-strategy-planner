@@ -50,7 +50,7 @@ TSIQ.strategyModules.push({
     authority: [
       { type: 'IRC', cite: 'IRC §105(b)', note: 'Exclusion for employer reimbursements of medical expenses of the employee, spouse, and dependents — the family sweep that carries the owner.' },
       { type: 'IRC', cite: 'IRC §106(a)', note: 'Exclusion for employer-provided accident/health coverage.' },
-      { type: 'Reg', cite: 'Reg. §1.105-5', note: 'Definition of an accident or health plan — a written plan for employees is required; the plan need not be insured.' },
+      { type: 'Reg', cite: 'Reg. §1.105-5; Reg. §1.105-11(b)(1)(i)', note: '§1.105-5 defines an accident or health plan (it may be uninsured, and that section does not itself require a writing). The separate-written-plan requirement for a self-insured medical reimbursement plan is in §1.105-11(b)(1)(i). Adopt the plan in writing before any expense is reimbursed.' },
       { type: 'Admin', cite: 'Rev. Rul. 71-588', note: 'The controlling ruling: sole proprietor\'s spouse-employee covered by the business medical plan; reimbursements (including for the owner as family member) excludable and deductible.' },
       { type: 'IRC', cite: 'IRC §162(a)', note: 'Business deduction for the reimbursements as compensation/employee-benefit expense.' },
       { type: 'IRC', cite: 'IRC §9831(a)(2)', note: 'Plans with fewer than two current-employee participants are exempt from the ACA group-market reforms.' },
@@ -114,32 +114,68 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'annualMedicalReimbursed', label: 'Annual family medical costs reimbursed', type: 'currency', default: 15000 }
+    { key: 'annualMedicalReimbursed', label: 'Annual family medical costs reimbursed', type: 'currency', default: 15000 },
+    { key: 'alreadyDeducted', label: 'Of that, premiums the return already deducts above the line', type: 'currency', default: 0 },
+    { key: 'spouseCashWage', label: 'New cash wages paid to the spouse (if any)', type: 'currency', default: 0 }
   ],
 
   appliesTo: function (profile) {
-    return true; // needs Schedule C income; validated with a note in apply()
+    return true; // needs Schedule C income and a spouse; validated with a note in apply()
   },
 
   /**
-   * Deducts reimbursed family medical costs against scheduleCNet — capturing
-   * both income tax and SE tax savings (the point of the strategy). Requires
-   * Schedule C income; the spouse's W-2 wage cost is assumed already
-   * reflected or de minimis (not separately modeled). Do not stack the same
-   * premiums with the SE health insurance strategy.
+   * Deducts reimbursed family medical costs against scheduleCNet — income tax
+   * and SE tax savings. Requires Schedule C income and a married filer (the
+   * plan covers the spouse as the employee). Premiums the return already
+   * deducts as self-employed health insurance are MOVED, not added: that
+   * above-the-line deduction is removed, so only the SE tax saving remains on
+   * that part. New cash wages to the spouse: deducted on Schedule C, taxed on
+   * the joint return, and both halves of FICA are charged (same treatment as
+   * the Spouse on Payroll strategy — leave at 0 if that strategy is used).
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var amt = params.annualMedicalReimbursed || 0;
+    var first = yearIndex === 0;
+    var tb = (state && state.tables) || TSIQ.TABLES_2026;
     if (!(p.scheduleCNet > 0)) {
-      notes.push('Requires a Schedule C (sole proprietorship) with net profit — the spouse-employee §105 plan does not work for S-corp >2% shareholders. No benefit modeled.');
+      if (first) notes.push('Requires a Schedule C (sole proprietorship) with net profit — the spouse-employee §105 plan does not work for S-corp >2% shareholders. No benefit modeled.');
       return { profile: p, notes: notes };
     }
+    if (p.filingStatus !== 'mfj' && p.filingStatus !== 'mfs') {
+      if (first) notes.push('Requires a spouse: the plan covers the owner only as the family member of a spouse who is a real employee of the business. This client is not filing as married. No benefit modeled.');
+      return { profile: p, notes: notes };
+    }
+    var health = TSIQ.health.year(state);
+    var amt = Math.min(Math.max(0, params.annualMedicalReimbursed || 0), p.scheduleCNet);
+    var moved = Math.min(Math.max(0, params.alreadyDeducted || 0), amt);
+    var wage = Math.max(0, params.spouseCashWage || 0);
+    if (state && state.applied && state.applied['spouse-payroll']) wage = 0;
+
     p.scheduleCNet = p.scheduleCNet - amt;
-    if (yearIndex === 0) {
+    if (moved > 0) p.adjustments = (p.adjustments || 0) - moved; // deduction moves from Schedule 1 to Schedule C
+    health.covered += amt;
+
+    var fica = 0;
+    if (wage > 0) {
+      var f = tb.fica;
+      var half = (Math.min(wage, f.ssWageBase) * f.ssRate + wage * f.medicareRate) / 2;
+      fica = half * 2;
+      p.scheduleCNet = p.scheduleCNet - wage - half;      // wage + employer FICA deducted
+      p.spouseWages = (p.spouseWages || 0) + wage;         // taxed on the joint return
+      p.otherTaxes = (p.otherTaxes || 0) + fica;           // both halves of FICA are a real cost
+    }
+    if (first) {
       notes.push(TSIQ.fmt.usd(amt) + ' family medical costs reimbursed under the §105 plan and deducted on Schedule C — saves income tax AND SE tax.');
-      notes.push('Requires bona fide spouse employment (payroll, time records) and a written plan adopted before reimbursements. Do not also model the same premiums under SE Health Insurance.');
+      if (moved > 0) {
+        notes.push(TSIQ.fmt.usd(moved) + ' of that is premiums the return already deducts above the line. Moving them to Schedule C saves SE tax only — no new income tax saving on that part.');
+      } else {
+        notes.push('If the return already deducts the health premiums as self-employed health insurance, enter that amount in "premiums the return already deducts" — otherwise the income tax saving on them is counted twice.');
+      }
+      if (wage > 0) {
+        notes.push(TSIQ.fmt.usd(wage) + ' of new cash wages to the spouse costs ' + TSIQ.fmt.usd(fica) + ' in Social Security and Medicare tax (both halves), included above.');
+      }
+      notes.push('Requires bona fide spouse employment (payroll, time records) and a written plan adopted before reimbursements.');
     }
     return { profile: p, notes: notes };
   }

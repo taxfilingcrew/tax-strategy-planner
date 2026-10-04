@@ -110,7 +110,12 @@ TSIQ.strategyModules.push({
 
   inputs: [
     { key: 'ownerAllocation', label: 'Owner profit-sharing allocation', type: 'currency', default: 40000 },
-    { key: 'staffCost', label: 'Required staff contribution (gateway)', type: 'currency', default: 8000 }
+    // defaultFrom: 5% of staff payroll from Section 1 when payroll is entered.
+    { key: 'staffCost', label: 'Required staff contribution (gateway)', type: 'currency', default: 8000,
+      defaultFrom: function (profile) {
+        var staff = Math.max(0, (profile.entityW2Wages || 0) - (profile.ownerWages || 0));
+        return staff > 0 ? Math.round(0.05 * staff) : 8000;
+      } }
   ],
 
   appliesTo: function (profile) {
@@ -118,47 +123,82 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Owner allocation: above-the-line deduction that also reduces QBI
-   * (adjustments + qbiReduction), capped at §415(c) $72,000. Staff gateway
-   * cost: a business expense — routed against scheduleCNet if present (also
-   * saves SE tax) else passthroughK1. Interaction with deferrals/other
-   * employer money inside the same §415(c) limit is the TPA's math — flagged,
-   * not modeled.
+   * Owner allocation is an employer contribution: 25% of W-2 wages (S corp
+   * owner — entity deduction against passthroughK1) or 20% of earned income
+   * (self-employed — above-the-line, reduces QBI), within the §415(c) limit
+   * (lesser of $72,000 or 100% of pay), net of 401(k)/SEP amounts already in
+   * the scenario. A K-1 share of profit is not compensation. Staff gateway
+   * contribution: deducted from business income and shown as a plan cost.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var lim = TSIQ.TABLES_2026.limits.retirement;
+    var first = yearIndex === 0;
+    var o = TSIQ.plan.owner(p, state), ret = TSIQ.plan.year(state), lim = o.lim;
 
-    var hasBusiness = p.scheduleCNet > 0 || p.passthroughK1 > 0;
-    if (!hasBusiness) {
-      if (yearIndex === 0) {
-        notes.push('Requires business income (Schedule C or pass-through K-1) — none present. ' +
-          'No benefit modeled.');
+    if (!o.route) {
+      if (first) {
+        notes.push('Requires self-employment profit (Schedule C) or W-2 wages from the client\'s ' +
+          'own corporation. A K-1 share of profit is not compensation — an S corp owner with no ' +
+          'salary cannot receive an allocation. No benefit modeled.');
       }
       return { profile: p, notes: notes };
     }
-
-    var owner = Math.min(params.ownerAllocation || 0, lim.dcAnnualAdditions);
-    if ((params.ownerAllocation || 0) > lim.dcAnnualAdditions && yearIndex === 0) {
-      notes.push('Owner allocation capped at ' + TSIQ.fmt.usd(lim.dcAnnualAdditions) +
-        ' (§415(c) annual additions, 2026). The cap includes any 401(k) deferrals and ' +
-        'other employer contributions — the TPA computes the real headroom.');
+    if (ret.simple) {
+      if (first) {
+        notes.push('Not modeled: a SIMPLE IRA is in this scenario, and a business with a SIMPLE ' +
+          'cannot have any other plan in the same year (§408(p)(2)(D)).');
+      }
+      return { profile: p, notes: notes };
     }
-    var staff = params.staffCost || 0;
+    if (ret.stack) {
+      if (first) {
+        notes.push('Not modeled separately: the 401(k) + cash balance stack in this scenario ' +
+          'already includes the profit sharing layer.');
+      }
+      return { profile: p, notes: notes };
+    }
+    var isSE = o.route === 'se';
+    var want = params.ownerAllocation || 0;
+    var room = TSIQ.plan.employerRoom(o, ret);
+    var owner = Math.min(want, room);
+    if (want > room && first) {
+      notes.push('Owner allocation capped at ' + TSIQ.fmt.usd(owner) + ' — the lesser of ' +
+        (isSE ? '20% of earned income (net profit less half of SE tax)' : '25% of owner W-2 wages') +
+        ' and the §415(c) limit (' + TSIQ.fmt.usd(lim.dcAnnualAdditions) + ' or 100% of pay)' +
+        (ret.deferral + ret.employer > 0
+          ? ', less the ' + TSIQ.fmt.usd(ret.deferral - ret.catchUp + ret.employer) +
+            ' of 401(k)/SEP contributions already in this scenario'
+          : '') + '.');
+    }
 
-    p.adjustments = (p.adjustments || 0) + owner;
-    p.qbiReduction = (p.qbiReduction || 0) + owner; // owner retirement deduction reduces §199A QBI
-    if (p.scheduleCNet > 0) {
-      p.scheduleCNet = p.scheduleCNet - staff; // staff cost is a business expense (also saves SE tax)
+    ret.employer += owner;
+    ret.names.push('Profit sharing');
+    // With a pension in the scenario: employer money above 6% of pay (§404(a)(7)).
+    var lost = Math.min(owner, Math.max(0, TSIQ.plan.combinedDisallowed(ret, o) - ret.disallowed));
+    ret.disallowed += lost;
+    if (lost > 0 && first) {
+      notes.push(TSIQ.fmt.usd(lost) + ' of the allocation is not deducted: with a pension in the same ' +
+        'scenario, employer profit sharing above 6% of pay falls under the combined deduction ' +
+        'limit of §404(a)(7).');
+    }
+    var deduct = owner - lost;
+    var staff = Math.max(0, params.staffCost || 0);
+
+    if (isSE) {
+      p.adjustments = (p.adjustments || 0) + deduct;
+      p.qbiReduction = (p.qbiReduction || 0) + deduct; // owner retirement deduction reduces §199A QBI
     } else {
-      p.passthroughK1 = p.passthroughK1 - staff;
+      p.passthroughK1 = (p.passthroughK1 || 0) - deduct; // entity deduction (also reduces QBI)
     }
-    if (yearIndex === 0) {
+    TSIQ.plan.staffCost(p, staff);
+    if (first) {
       notes.push(TSIQ.fmt.usd(owner) + ' owner allocation + ' + TSIQ.fmt.usd(staff) +
-        ' staff gateway contribution modeled. Cross-testing (Reg. §1.401(a)(4)-8) must be ' +
-        'run on the actual census annually — the gateway minimum (lesser of 5% of pay or ' +
-        '1/3 of the highest HCE rate) is mandatory in any year the owner is funded.');
+        ' staff gateway contribution modeled. The staff contribution is deducted from business ' +
+        'income and shown under "Cost of running the plan" — it is money out of the owner\'s ' +
+        'pocket, not a saving. Cross-testing (Reg. §1.401(a)(4)-8) must be run on the actual ' +
+        'census annually — the gateway minimum (lesser of 5% of pay or 1/3 of the highest HCE ' +
+        'rate) is mandatory in any year the owner is funded.');
     }
     return { profile: p, notes: notes };
   }

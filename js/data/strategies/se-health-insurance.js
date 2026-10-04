@@ -115,12 +115,13 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'annualPremiums', label: 'Annual health/dental/LTC premiums', type: 'currency', default: 18000 }
+    { key: 'annualPremiums', label: 'Annual health/dental/LTC premiums', type: 'currency', default: 18000 },
+    { key: 'alreadyDeducted', label: 'Premiums the return already deducts above the line', type: 'currency', default: 0 }
   ],
 
   suggest: function (p) {
     if (!(p.scheduleCNet > 0)) return null;
-    return { reason: 'Self-employed with Schedule C profit — confirm health premiums are being deducted above the line.' };
+    return { reason: 'Self-employed with Schedule C profit — confirm health premiums are being deducted above the line. Enter what the return already deducts so only the missed amount is counted.' };
   },
 
   appliesTo: function (profile) {
@@ -129,32 +130,61 @@ TSIQ.strategyModules.push({
 
   /**
    * Above-the-line §162(l) deduction via `adjustments` (income tax only — no
-   * SE tax effect, correct per §1402). Capped at earned income from the
-   * business: Schedule C net profit plus the owner's W-2 wages from their own
-   * S corporation. K-1 ordinary income is NOT earned income for a >2% S-corp
-   * shareholder and does not raise the cap. Also reduces QBI (Form 8995
-   * instructions) via `qbiReduction`. Baseline is assumed NOT to already
-   * include the deduction — use for clients not currently claiming it.
+   * SE tax effect, correct per §1402). Only the part of the premiums that is
+   * NOT already deducted counts: less the "already deducted" input, and less
+   * premiums an earlier strategy in the scenario deducted (S-corp owner
+   * health insurance, §105 plan).
+   * Cap (§162(l)(2)(A)): earned income from the business — Schedule C profit
+   * less half of SE tax and less the owner's retirement plan deductions —
+   * plus the owner's W-2 wages from their own S corporation. K-1 ordinary
+   * income is NOT earned income for a >2% S-corp shareholder. Also reduces
+   * QBI (Form 8995 instructions) via `qbiReduction`.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
+    var tb = (state && state.tables) || TSIQ.TABLES_2026;
     var premiums = params.annualPremiums || 0;
-    var earnedCap = Math.max(0, p.scheduleCNet || 0) +
-                    Math.max(0, p.ownerWages || 0);
+    var already = Math.max(0, params.alreadyDeducted || 0);
+    var health = TSIQ.health.year(state);
+    var ret = TSIQ.plan.year(state);
+
+    var seEarned = 0, planUsed = 0;
+    if ((p.scheduleCNet || 0) > 0) {
+      var o = TSIQ.plan.owner(p, state);
+      planUsed = o.route === 'se' ? TSIQ.plan.total(ret) : 0;
+      seEarned = Math.max(0, p.scheduleCNet - TSIQ.plan.halfSeTax(p, tb) - planUsed);
+    }
+    var earnedCap = seEarned + Math.max(0, p.ownerWages || 0);
     if (earnedCap <= 0) {
-      notes.push((p.passthroughK1 > 0)
-        ? '§162(l) for an S-corp owner is limited to their W-2 wages from the corporation (premiums run through the W-2 per Notice 2008-1) — K-1 income does not count. Enter owner W-2 wages in Section 1, or pair with the S-Corp Election strategy. Partners: the limit is K-1 self-employment earnings, which this profile does not carry. No benefit modeled.'
-        : '§162(l) is limited to earned income from the business — no business earnings found in this profile. No benefit modeled.');
+      if (first) {
+        notes.push((p.passthroughK1 > 0)
+          ? '§162(l) for an S-corp owner is limited to their W-2 wages from the corporation (premiums run through the W-2 per Notice 2008-1) — K-1 income does not count. Enter owner W-2 wages in Section 1, or pair with the S-Corp Election strategy. Partners: the limit is K-1 self-employment earnings, which this profile does not carry. No benefit modeled.'
+          : '§162(l) is limited to earned income from the business — no business earnings found in this profile. No benefit modeled.');
+      }
       return { profile: p, notes: notes };
     }
-    var deductible = Math.min(premiums, earnedCap);
+    var taken = already + health.covered;
+    var remaining = Math.max(0, premiums - taken);
+    var room = Math.max(0, earnedCap - already - health.sehi);
+    var deductible = Math.min(remaining, room);
     p.adjustments = (p.adjustments || 0) + deductible;
     p.qbiReduction = (p.qbiReduction || 0) + deductible;
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(deductible) + ' self-employed health insurance deducted above the line (§162(l)); also reduces QBI. Saves income tax only — no SE tax effect.');
-      if (deductible < premiums) {
-        notes.push('Premiums capped at business earned income of ' + TSIQ.fmt.usd(earnedCap) + ' (Schedule C profit plus owner W-2 wages — K-1 income excluded); excess falls to Schedule A (7.5% AGI floor, not modeled).');
+    health.covered += deductible;
+    health.sehi += deductible;
+    if (first) {
+      notes.push(TSIQ.fmt.usd(deductible) + ' of health premiums counted as a NEW above-the-line deduction (§162(l)); also reduces QBI. Saves income tax only — no SE tax effect.');
+      if (already <= 0 && health.covered === deductible && deductible > 0) {
+        notes.push('This assumes the return deducts none of these premiums today. If it already does (Schedule 1, line 17), enter that amount in "Premiums the return already deducts" — otherwise the saving shown is not real.');
+      }
+      if (health.covered > deductible) {
+        notes.push(TSIQ.fmt.usd(health.covered - deductible) + ' of premiums is already deducted by another strategy in this scenario (S-corp owner health insurance or the §105 plan) and is not counted again.');
+      }
+      if (deductible < remaining) {
+        notes.push('Deduction capped at business earned income of ' + TSIQ.fmt.usd(earnedCap) +
+          ' (Schedule C profit less half of SE tax' + (planUsed > 0 ? ' and ' + TSIQ.fmt.usd(planUsed) + ' of retirement plan deductions' : '') +
+          ', plus owner W-2 wages — K-1 income excluded); the excess falls to Schedule A (7.5% AGI floor, not modeled).');
       }
       notes.push('No deduction for months eligible for a subsidized employer plan (either spouse); PTC interplay per Rev. Proc. 2014-41 not modeled.');
     }

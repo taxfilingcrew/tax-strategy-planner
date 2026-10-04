@@ -39,8 +39,9 @@ TSIQ.strategyModules.push({
       'OBBBA changes: §45S is permanent; employers may elect to compute the ' +
       'credit as a percentage of PREMIUMS paid for paid family and medical ' +
       'leave insurance (making the benefit insurable rather than self-funded); ' +
-      'verify the OBBBA details on shortened employee-tenure elections and ' +
-      'aggregation before relying on them.',
+      'the employer may elect to treat employees with 6 months of service ' +
+      '(instead of 1 year) as qualifying; and a qualifying employee must be ' +
+      'customarily employed at least 20 hours a week.',
       'No double-dip: leave paid by a state or required by state/local law ' +
       'is not "paid family and medical leave" for the credit — only the ' +
       'employer\'s voluntary program counts. Wages used for this credit ' +
@@ -51,7 +52,7 @@ TSIQ.strategyModules.push({
     ],
     authority: [
       { type: 'IRC', cite: 'IRC §45S', note: 'Employer credit for paid family and medical leave: 12.5%–25% of wages paid during up to 12 weeks of qualifying leave; written-policy and qualifying-employee requirements.' },
-      { type: 'Admin', cite: 'OBBBA (P.L. 119-21), July 2025', note: 'Made §45S permanent and added the insurance-premium computation option (effective for tax years beginning after 2025). Verify secondary OBBBA details (tenure election, aggregation) before relying on them.' },
+      { type: 'Admin', cite: 'OBBBA (P.L. 119-21), July 2025', note: 'Made §45S permanent and added the insurance-premium computation option (effective for tax years beginning after 2025). Also allows an election to cover employees after 6 months of service and requires qualifying employees to be customarily employed at least 20 hours a week.' },
       { type: 'Admin', cite: 'IRS Notice 2018-71', note: 'Q&A guidance on §45S: written policy requirements, qualifying leave types, wage-replacement computation, and the exclusion of state-mandated leave.' },
       { type: 'IRC', cite: 'IRC §280C(a)', note: 'Wage deduction reduced by the credit claimed — no double benefit.' },
       { type: 'Admin', cite: 'Form 8994 / Form 3800', note: 'Credit computation and general business credit reporting.' }
@@ -67,7 +68,7 @@ TSIQ.strategyModules.push({
       'Policy-first rule: leave paid before the written policy\'s effective date earns no credit — the document must precede the leave.',
       'State paid-leave programs (now common) crowd out the credit: only employer-paid amounts above/outside the state mandate can qualify — analyze state-by-state.',
       'Misclassified leave (ordinary PTO relabeled at year-end) fails the designation requirement.',
-      'Nonrefundable general business credit — low-tax years strand it in carryforward (not modeled here).',
+      'Nonrefundable general business credit — low-tax years push it into carryforward (the tool carries it forward within the projection).',
       'For small employers, the dollars are modest — typically thousands, not tens of thousands; weigh administration against benefit.'
     ],
     bestFit: [
@@ -112,7 +113,12 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'creditAmount', label: '§45S credit (per leave wages × rate)', type: 'currency', default: 10000 }
+    // defaultFrom: 2% of staff payroll (about one week of leave per employee).
+    { key: 'leaveWages', label: 'Wages paid to staff on family/medical leave', type: 'currency', default: 0,
+      defaultFrom: function (profile) {
+        return Math.round(0.02 * Math.max(0, (profile.entityW2Wages || 0) - (profile.ownerWages || 0)));
+      } },
+    { key: 'replacementPct', label: 'Share of normal pay the policy pays (%)', type: 'percent', default: 100 }
   ],
 
   appliesTo: function (profile) {
@@ -120,21 +126,45 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Adds the advisor-computed §45S credit to otherCredits (engine applies it
-   * nonrefundably after the child tax credit). §280C(a) reduces the wage
-   * deduction by the credit — enter the net figure; the model does not
-   * separately reduce business income. §39 carryovers not modeled.
+   * Credit = leave wages × rate, where the rate is 12.5% plus 0.25 point for
+   * each point the policy pays above 50% of normal wages (25% at full pay).
+   * Needs non-owner staff. §280C(a): the wage deduction is reduced by the
+   * credit, so business income is raised by it. The leave wages themselves
+   * are ordinary payroll and are not treated as a new cost.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
-    var amt = Math.max(0, params.creditAmount || 0);
+    var first = yearIndex === 0;
+    if (!TSIQ.credit.hasBusiness(p)) {
+      if (first) notes.push('The paid family and medical leave credit is a business credit — no business found in this profile. No benefit modeled.');
+      return { profile: p, notes: notes };
+    }
+    if (!(TSIQ.staffBenefit.payroll(p) > 0)) {
+      if (first) {
+        notes.push('No benefit modeled: Section 1 shows no W-2 payroll for anyone other than the owner. The credit is for leave wages paid to employees — owners do not count. ' +
+          'Enter the staff payroll in "W-2 wages paid by the business" if the business has employees.');
+      }
+      return { profile: p, notes: notes };
+    }
+    var wages = Math.max(0, params.leaveWages || 0);
+    var repl = params.replacementPct === undefined ? 100 : params.replacementPct;
+    if (repl < 50) {
+      if (first) notes.push('No credit: the policy must pay at least 50% of normal wages during leave.');
+      return { profile: p, notes: notes };
+    }
+    var rate = (12.5 + 0.25 * (Math.min(100, repl) - 50)) / 100;
+    var amt = wages * rate;
     p.otherCredits = (p.otherCredits || 0) + amt;
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(amt) + ' §45S paid-leave credit applied (nonrefundable). ' +
-        'Wage deduction is reduced by the credit (§280C(a)) — enter the net figure.');
-      notes.push('Projection assumes similar qualifying leave wages each year; actual ' +
-        'credit varies with who takes leave. State-mandated paid leave does not count.');
+    TSIQ.credit.addBack(p, amt);
+    if (first) {
+      notes.push(TSIQ.fmt.usd(amt) + ' §45S paid-leave credit applied (' + TSIQ.fmt.pct(rate) + ' of ' +
+        TSIQ.fmt.usd(wages) + ' of leave wages; nonrefundable), net of the wage deduction it cancels (§280C(a)).');
+      notes.push('The leave-wage figure starts at 2% of staff payroll (about one week per employee) — replace ' +
+        'it with the wages actually paid to employees on qualifying leave, up to 12 weeks each. Only ' +
+        'employees paid no more than 60% of the highly-compensated threshold count. Leave that is paid ' +
+        'by a state program or required by state law does not count — in California, that removes ' +
+        'state disability and paid family leave benefits and mandated sick pay.');
     }
     return { profile: p, notes: notes };
   }

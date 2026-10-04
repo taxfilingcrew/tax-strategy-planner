@@ -116,38 +116,55 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'annualReimbursement', label: 'Total annual reimbursements to employees', type: 'currency', default: 8000 }
+    { key: 'annualReimbursement', label: 'Total annual reimbursements to employees', type: 'currency', default: 8000 },
+    TSIQ.staffBenefit.modeInput
   ],
 
   appliesTo: function (profile) {
-    return true; // needs business income; validated with a note in apply()
+    return true; // needs a business with non-owner staff; validated with a note in apply()
   },
 
   /**
-   * Models the EMPLOYER deduction only: reimbursements reduce business income.
-   * Against scheduleCNet this also saves SE tax; against passthroughK1 it
-   * does not. Owner-side tax-free participation (C-corp only) is not modeled.
+   * A benefit for non-owner staff. Needs W-2 payroll other than the owner's.
+   * See TSIQ.staffBenefit for the two comparison modes. Owner-side tax-free
+   * participation (C-corp only) is not modeled.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
     var amt = params.annualReimbursement || 0;
-    if (p.scheduleCNet > 0) {
-      p.scheduleCNet = p.scheduleCNet - amt;
-      if (yearIndex === 0) {
-        notes.push(TSIQ.fmt.usd(amt) + ' ICHRA reimbursements deducted against Schedule C income (also reduces SE tax).');
+    var hasBusiness = p.scheduleCNet > 0 || p.passthroughK1 > 0 || p.ownerWages > 0;
+    var staffPayroll = TSIQ.staffBenefit.payroll(p);
+    if (!hasBusiness || !(staffPayroll > 0)) {
+      if (first) {
+        notes.push(hasBusiness
+          ? 'No benefit modeled: Section 1 shows no W-2 payroll for anyone other than the owner. ' +
+            'A self-employed owner or more-than-2% S corporation shareholder cannot take part in an ICHRA tax-free. Enter the staff payroll in "W-2 wages paid by the business" if the business has employees.'
+          : 'ICHRA needs an operating business with employees — no business income found. No benefit modeled.');
       }
-    } else if (p.passthroughK1 > 0) {
-      p.passthroughK1 = p.passthroughK1 - amt;
-      if (yearIndex === 0) {
-        notes.push(TSIQ.fmt.usd(amt) + ' ICHRA reimbursements deducted against pass-through income.');
-      }
-    } else {
-      notes.push('ICHRA requires an operating business with employees — no business income found in this profile. No benefit modeled.');
       return { profile: p, notes: notes };
     }
-    if (yearIndex === 0) {
-      notes.push('Employees must maintain individual-market coverage; >2% S-corp shareholders cannot participate tax-free. Employer deduction only is modeled.');
+    if (state && state.applied && state.applied.qsehra) {
+      if (first) {
+        notes.push('Not modeled: a QSEHRA is in this scenario. A QSEHRA is allowed only when the ' +
+          'employer offers no group health plan, and an ICHRA is a group health plan — pick one.');
+      }
+      return { profile: p, notes: notes };
+    }
+    var mode = params.replaces === 'new' ? 'new' : 'wages';
+    var out = TSIQ.staffBenefit.apply(p, amt, mode, state);
+    if (first) {
+      notes.push(mode === 'new'
+        ? TSIQ.fmt.usd(amt) + ' of ICHRA reimbursements modeled as a NEW benefit: deducted from business income and ' +
+          'shown under "Cost of running the plan". The result is the owner\'s net cost after tax — this is ' +
+          'a benefit for staff, not a tax saving for the owner.'
+        : TSIQ.fmt.usd(amt) + ' of ICHRA reimbursements modeled in place of the same amount of taxable pay. The ' +
+          'business deducts it either way; the owner\'s saving is the ' + TSIQ.fmt.usd(out.ficaSaved) +
+          ' of employer payroll tax no longer due (shown as a negative "Other payroll taxes" line). ' +
+          'The employees also stop paying income and payroll tax on it — that part is their saving, ' +
+          'not the owner\'s.');
+      notes.push('Employees must maintain individual-market coverage; >2% S-corp shareholders cannot participate tax-free.');
     }
     return { profile: p, notes: notes };
   }

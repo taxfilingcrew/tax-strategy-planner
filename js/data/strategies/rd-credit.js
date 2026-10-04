@@ -57,7 +57,8 @@ TSIQ.strategyModules.push({
       { type: 'IRC', cite: 'IRC §174A', note: 'OBBBA (P.L. 119-21): immediate expensing of domestic research or experimental expenditures restored for tax years beginning after 12/31/2024; foreign R&E remains 15-year under §174.' },
       { type: 'Reg', cite: 'Reg. §1.41-4', note: 'Qualified research requirements, process-of-experimentation standard, and recordkeeping — contemporaneous documentation is expected.' },
       { type: 'Case', cite: 'Siemer Milling Co. v. Comm\'r, T.C. Memo 2019-37', note: 'Credit denied for failure to document a process of experimentation — activities described only in general terms. The documentation cautionary tale.' },
-      { type: 'Admin', cite: 'Form 6765 (and instructions)', note: 'Credit computation, ASC and §280C elections, and expanded qualitative reporting requirements for business components on recent revisions of the form.' }
+      { type: 'Admin', cite: 'Form 6765 (and instructions)', note: 'Credit computation, ASC and §280C elections. Section G (project-by-project business component detail) is mandatory for tax years beginning after 12/31/2025, except for qualified small businesses electing the payroll offset and taxpayers with total QREs of $1.5 million or less and gross receipts of $50 million or less.' },
+      { type: 'IRC', cite: 'IRC §41(g)', note: 'Pass-through limit: an individual may use the credit from a sole proprietorship, partnership or S corporation only against the tax attributable to taxable income from that business. The excess carries back 1 year and forward 20 (§39).' }
     ],
     requirements: [
       'Domestic research activities that satisfy all four prongs of §41(d) — documented at the business-component level.',
@@ -69,7 +70,7 @@ TSIQ.strategyModules.push({
     risks: [
       'The IRS actively targets credit mills that sell studies claiming inflated wage percentages with no experimentation evidence — R&D claims have appeared in IRS Dirty Dozen warnings. Exam risk is documentation risk.',
       'Recent Form 6765 revisions demand more granular business-component reporting; thin studies that could hide behind a single number no longer can.',
-      'The credit is nonrefundable against income tax (this tool applies it after the child tax credit); unused amounts carry back 1 year and forward 20 under §39 — carryovers are not modeled here.',
+      'The credit is nonrefundable against income tax (this tool applies it after the child tax credit); unused amounts carry back 1 year and forward 20 under §39 (the tool carries unused credit forward within the projection). For a pass-through owner the credit is further limited to the tax on income from that business (§41(g)).',
       'Funded research (paid by a customer or grant with rights/payment contingencies) and research after commercial production do not qualify — common overclaim areas.',
       'Missing the §280C(c) election on the original return forces the deduction add-back, which is generally worse for pass-through owners in top brackets.'
     ],
@@ -116,7 +117,10 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'creditAmount', label: 'Net R&D credit (after §280C, per study)', type: 'currency', default: 25000 }
+    { key: 'creditAmount', label: 'Net R&D credit (after §280C, per study)', type: 'currency', default: 0 },
+    { key: 'qres', label: 'Or: qualified research expenses, for a rough estimate', type: 'currency', default: 0 },
+    { key: 'payrollOffset', label: 'Use against payroll tax (new business under $5M receipts)', type: 'select', default: 'no',
+      options: [{ value: 'no', label: 'No — against income tax' }, { value: 'yes', label: 'Yes — §41(h) payroll offset' }] }
   ],
 
   appliesTo: function (profile) {
@@ -124,25 +128,81 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Adds the advisor-entered NET credit (after the §280C(c) reduced-credit
-   * election or deduction add-back — computed in the credit study, not here)
-   * to otherCredits. The engine applies otherCredits nonrefundably after the
-   * child tax credit. §39 carryback/carryforward of unused credit not modeled.
-   * The same credit is applied in each projection year — reduce or zero it
-   * if the research spend is not expected to recur.
+   * Credit: the advisor's NET figure from the study (after the §280C(c)
+   * reduced-credit election). With no study yet, a rough estimate from
+   * qualified research expenses: 5.53% (14% simplified method × half of QREs
+   * above the base when spending is level × 79% reduced credit).
+   * §41(g): an individual can use a pass-through's research credit only
+   * against the tax on income from that business — income tax × (business
+   * income ÷ taxable income). The rest carries forward (tracked here) and is
+   * used in later years under the same limit.
+   * §41(h) payroll offset: a qualified small business applies the credit
+   * against the employer's Social Security and Medicare tax instead, up to
+   * $500,000 — limited here to 7.65% of W-2 payroll from Section 1.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
+    state = state || {};
+    if (!TSIQ.credit.hasBusiness(p)) {
+      if (first) notes.push('The research credit is a business credit — no business found in this profile. No benefit modeled.');
+      return { profile: p, notes: notes };
+    }
     var amt = Math.max(0, params.creditAmount || 0);
-    p.otherCredits = (p.otherCredits || 0) + amt;
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(amt) + ' R&D credit applied (nonrefundable). ' +
-        'Enter the NET figure after the §280C(c) reduced-credit election or ' +
-        'deduction add-back — the model does not separately adjust the wage deduction.');
-      notes.push('Projection applies the same credit each year — adjust if the ' +
-        'qualified research spend is one-time or variable. Unused credit ' +
-        'carryovers (§39) are not modeled.');
+    var estimated = false;
+    if (amt <= 0 && (params.qres || 0) > 0) {
+      amt = params.qres * 0.14 * 0.5 * 0.79;
+      estimated = true;
+    }
+    if (amt <= 0) {
+      if (first) notes.push('No credit entered. Enter the net credit from the credit study, or the qualified research expenses for a rough estimate.');
+      return { profile: p, notes: notes };
+    }
+    if (first && estimated) {
+      notes.push('Estimate only: ' + TSIQ.fmt.usd(amt) + ' is 5.53% of ' + TSIQ.fmt.usd(params.qres) +
+        ' of qualified research expenses (simplified method with level spending, reduced credit ' +
+        'under §280C(c)). A first-time claimant with no prior research spending gets 6% × 79% = 4.74%. ' +
+        'Replace it with the study figure before quoting.');
+    }
+
+    var tb = state.tables || TSIQ.TABLES_2026;
+    var offset = 0;
+    if (params.payrollOffset === 'yes') {
+      var employerTax = (p.entityW2Wages || 0) * (tb.fica.ssRate + tb.fica.medicareRate) / 2;
+      offset = Math.min(amt, 500000, employerTax);
+      p.otherTaxes = (p.otherTaxes || 0) - offset;
+      if (first) {
+        notes.push(TSIQ.fmt.usd(offset) + ' of the credit applied against the employer\'s payroll tax (§41(h)), ' +
+          'limited to 7.65% of the ' + TSIQ.fmt.usd(p.entityW2Wages || 0) + ' of W-2 payroll in Section 1. ' +
+          'Available only to a business with under $5 million of gross receipts and no gross receipts ' +
+          'more than five years back. Shown as a negative "Other payroll taxes" line.');
+      }
+    }
+
+    // §41(g): income-tax use limited to the tax on this business's income.
+    var available = (amt - offset) + (state.rdCreditCarry || 0);
+    var probe = TSIQ.computeYear(p, Object.assign({}, state), tb);
+    var bizIncome = Math.max(0, (p.scheduleCNet || 0) + (p.passthroughK1 || 0));
+    var share = probe.taxableIncome > 0 ? Math.min(1, bizIncome / probe.taxableIncome) : 0;
+    var limit = Math.max(0, probe.incomeTaxBeforeCredits * share);
+    var used = Math.min(available, limit);
+    state.rdCreditCarry = available - used;
+    p.otherCredits = (p.otherCredits || 0) + used;
+
+    if (first) {
+      notes.push(TSIQ.fmt.usd(used) + ' of R&D credit used against ' + TSIQ.TABLES_2026.taxYear +
+        ' income tax (nonrefundable). Enter the NET figure after the §280C(c) reduced-credit ' +
+        'election — the model does not separately adjust the wage deduction.');
+      if (available > used) {
+        notes.push(TSIQ.fmt.usd(available - used) + ' cannot be used this year: an owner can use a ' +
+          'pass-through research credit only against the tax on income from that business (§41(g)) — ' +
+          'here ' + TSIQ.fmt.usd(limit) + '. Tax on wages, a spouse\'s income or investments does not ' +
+          'count. The unused credit carries forward (20 years) and is used in later projection years ' +
+          'under the same limit.');
+      }
+      notes.push('Projection applies the same credit each year — adjust if the qualified research ' +
+        'spend is one-time or variable.');
     }
     return { profile: p, notes: notes };
   }

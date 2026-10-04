@@ -65,7 +65,7 @@ TSIQ.strategyModules.push({
       'Recapture exposure for facility owners: selling the building or shutting the center within 10 years claws back part of the credit — calendar the exposure.',
       'Licensing failures disqualify the facility; contract arrangements should warrant the provider\'s licensed status.',
       'Nondiscrimination: a program effectively limited to owners\' or executives\' children fails; document broad employee eligibility.',
-      'Nonrefundable — a low-tax year strands the credit in carryforward (carryovers not modeled in this tool).',
+      'Nonrefundable — a low-tax year pushes the credit into carryforward (the tool carries it forward within the projection).',
       'For owner-employees, childcare provided to the owner\'s own children raises reasonable-compensation and discrimination questions — structure with counsel.'
     ],
     bestFit: [
@@ -120,19 +120,34 @@ TSIQ.strategyModules.push({
 
   /**
    * Adds the advisor-computed §45F credit to otherCredits (engine applies it
-   * nonrefundably after the child tax credit). The §45F no-double-benefit
-   * deduction/basis reduction is not separately modeled — enter the net
-   * figure or handle the deduction side in the business income inputs.
+   * nonrefundably and carries any unused part forward). Needs a business with
+   * non-owner employees. §45F(f): no deduction for the credited amount, so
+   * business income is raised by the credit.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
+    if (!TSIQ.credit.hasBusiness(p)) {
+      if (first) notes.push('The employer childcare credit is a business credit — no business found in this profile. No benefit modeled.');
+      return { profile: p, notes: notes };
+    }
+    if (!(TSIQ.staffBenefit.payroll(p) > 0)) {
+      if (first) {
+        notes.push('No benefit modeled: Section 1 shows no W-2 payroll for anyone other than the owner. The credit is for childcare provided to employees; a plan that mainly serves the owner\'s family does not qualify. ' +
+          'Enter the staff payroll in "W-2 wages paid by the business" if the business has employees.');
+      }
+      return { profile: p, notes: notes };
+    }
     var amt = Math.max(0, params.creditAmount || 0);
     p.otherCredits = (p.otherCredits || 0) + amt;
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(amt) + ' §45F employer childcare credit applied ' +
-        '(nonrefundable). Deduction/basis reduction for the credited expenses is ' +
-        'not separately modeled — enter the net figure.');
+    TSIQ.credit.addBack(p, amt);
+    if (first) {
+      notes.push(TSIQ.fmt.usd(amt) + ' §45F employer childcare credit applied (nonrefundable), net of the ' +
+        'deduction it cancels — the credited amount cannot also be deducted (§45F(f)). To earn it ' +
+        'the business spends about ' + TSIQ.fmt.usd(amt / 0.5) + ' on childcare (50% rate, eligible small ' +
+        'business) or ' + TSIQ.fmt.usd(amt / 0.4) + ' (40% rate). That spending is a cost of the business ' +
+        'and is NOT shown here — weigh the credit against it.');
       notes.push('Projection assumes the childcare benefit (and credit) recurs ' +
         'annually. OBBBA rates/caps apply to amounts paid after 12/31/2025.');
     }

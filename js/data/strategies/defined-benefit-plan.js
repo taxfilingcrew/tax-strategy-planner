@@ -113,12 +113,28 @@ TSIQ.strategyModules.push({
   },
 
   inputs: [
-    { key: 'annualContribution', label: 'Actuarially determined contribution', type: 'currency', default: 150000 }
+    { key: 'annualContribution', label: 'Actuarially determined contribution', type: 'currency', default: 150000,
+      // defaultFrom: no more than the rough ceiling the owner's pay supports.
+      defaultFrom: function (profile) {
+        var o = TSIQ.plan.owner(profile, null);
+        if (!o.route) return 150000;
+        var cap = TSIQ.plan.dbCeiling(o);
+        if (o.route === 'se') cap = Math.min(cap, o.pay);
+        return Math.min(150000, Math.floor(cap / 1000) * 1000);
+      } }
   ],
 
+  // Needs high business income AND pay that can carry a pension.
   suggest: function (p) {
-    var biz = (p.scheduleCNet || 0) + (p.passthroughK1 || 0);
+    var biz = (p.scheduleCNet || 0) + (p.passthroughK1 || 0) + (p.ownerWages || 0);
     if (!(biz >= 250000)) return null;
+    var o = TSIQ.plan.owner(p, null);
+    if (!o.route) return null;
+    if (o.route === 'w2' && o.pay < 100000) {
+      return { reason: TSIQ.fmt.usd(biz) + ' of business income, but owner wages of ' + TSIQ.fmt.usd(o.pay) +
+        ' support only about ' + TSIQ.fmt.usd(TSIQ.plan.dbCeiling(o)) + ' a year of pension funding — a ' +
+        'higher salary is needed for a six-figure deduction.' };
+    }
     return { reason: TSIQ.fmt.usd(biz) + ' of business income — a DB/cash-balance plan can support six-figure deductions for an older owner.' };
   },
 
@@ -127,53 +143,99 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Contribution is advisor-entered (the real number comes from an actuary —
-   * we never invent it). Self-employed: above-the-line deduction that also
-   * reduces QBI, sanity-capped at scheduleCNet (a SE owner's DB deduction
-   * cannot exceed earned income). S corp owner: entity deduction against
-   * passthroughK1 (can drive it negative — a real possibility with DB funding,
-   * flagged in a note). Staff benefit cost, if any, must be included by the
-   * advisor in the entered amount.
+   * Contribution is advisor-entered (the real number comes from an actuary).
+   * Two sanity limits are applied:
+   *   1. Pay: the §415(b) benefit cannot exceed 100% of 3-year average pay
+   *      (max $290,000), so the yearly funding is held to about 1.28 × pay
+   *      (TSIQ.plan.dbCeiling). A K-1 share of profit is not pay.
+   *   2. Self-employed: the deduction cannot exceed earned income (net profit
+   *      less half of SE tax), net of other plan contributions already modeled.
+   * Self-employed: above-the-line deduction that also reduces QBI. S corp
+   * owner: entity deduction against passthroughK1. With a 401(k)/SEP in the
+   * same scenario, employer money above 6% of pay is not deductible on top of
+   * the pension (§404(a)(7)) — the deduction here is reduced by that amount.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
+    var o = TSIQ.plan.owner(p, state), ret = TSIQ.plan.year(state);
 
-    var isSE = p.scheduleCNet > 0;
-    var isW2Owner = !isSE && p.ownerWages > 0;
-    if (!isSE && !isW2Owner) {
-      if (yearIndex === 0) {
-        notes.push('Requires self-employment income (Schedule C) or W-2 wages from the ' +
-          'client\'s own entity — neither is present. No benefit modeled.');
+    if (!o.route) {
+      if (first) {
+        notes.push('Requires self-employment profit (Schedule C) or W-2 wages from the client\'s ' +
+          'own corporation. A K-1 share of profit is not compensation for plan purposes. ' +
+          'No benefit modeled.');
       }
       return { profile: p, notes: notes };
     }
+    if (ret.simple) {
+      if (first) {
+        notes.push('Not modeled: a SIMPLE IRA is in this scenario, and a business with a SIMPLE ' +
+          'cannot have any other plan in the same year (§408(p)(2)(D)).');
+      }
+      return { profile: p, notes: notes };
+    }
+    if (ret.stack) return { profile: p, notes: notes };
+    var isSE = o.route === 'se';
 
-    var amt = params.annualContribution || 0;
-    if (isSE && amt > p.scheduleCNet) {
-      amt = p.scheduleCNet; // SE owner's deduction limited to earned income
-      if (yearIndex === 0) {
-        notes.push('Contribution capped at ' + TSIQ.fmt.usd(amt) +
-          ' — a self-employed owner\'s DB deduction cannot exceed net earned income.');
+    var want = params.annualContribution || 0;
+    var ceiling = TSIQ.plan.dbCeiling(o);
+    var amt = Math.min(want, ceiling);
+    if (want > ceiling && first) {
+      notes.push('Contribution held to ' + TSIQ.fmt.usd(ceiling) + '. A pension benefit cannot exceed 100% ' +
+        'of the owner\'s 3-year average pay (maximum ' + TSIQ.fmt.usd(o.lim.dbAnnualBenefit) + '), which ' +
+        'supports roughly 1.28 times pay per year of funding. Owner pay here is ' + TSIQ.fmt.usd(o.pay) +
+        (isSE ? '' : ' of W-2 wages (K-1 profit does not count) — a higher salary supports more') +
+        '. This is a planning ceiling; the actuary sets the real number.');
+    }
+    if (isSE) {
+      var earnedLeft = Math.max(0, o.pay - ret.deferral - ret.employer);
+      if (amt > earnedLeft) {
+        amt = earnedLeft;
+        if (first) {
+          notes.push('Contribution capped at ' + TSIQ.fmt.usd(amt) + ' — a self-employed owner\'s plan ' +
+            'deductions cannot exceed earned income (net profit less half of SE tax' +
+            (ret.deferral + ret.employer > 0 ? ', less the other plan contributions in this scenario' : '') + ').');
+        }
       }
     }
 
+    // §404(a)(7): employer 401(k)/SEP money above 6% of pay, on top of the pension.
+    ret.db += amt;
+    var lost = Math.max(0, TSIQ.plan.combinedDisallowed(ret, o) - ret.disallowed);
+    lost = Math.min(lost, amt);
+    ret.disallowed += lost;
+    ret.names.push('Defined benefit plan');
+    var deduct = amt - lost;
+    if (lost > 0 && first) {
+      notes.push(TSIQ.fmt.usd(lost) + ' of the employer 401(k)/SEP contribution in this scenario is not ' +
+        'deductible alongside the pension: when both plans exist (and the pension is not PBGC-covered), ' +
+        'employer contributions to the 401(k)/SEP above 6% of pay fall under the combined limit of ' +
+        '§404(a)(7). The total deduction is reduced by that amount — cut the employer contribution ' +
+        'to 6% of pay (deferrals are not affected).');
+    }
+
     if (isSE) {
-      p.adjustments = (p.adjustments || 0) + amt;
-      p.qbiReduction = (p.qbiReduction || 0) + amt; // SE retirement deduction reduces §199A QBI
+      p.adjustments = (p.adjustments || 0) + deduct;
+      p.qbiReduction = (p.qbiReduction || 0) + deduct; // SE retirement deduction reduces §199A QBI
     } else {
-      p.passthroughK1 = p.passthroughK1 - amt; // entity deduction (also reduces QBI)
-      if (yearIndex === 0 && p.passthroughK1 < 0) {
+      p.passthroughK1 = (p.passthroughK1 || 0) - deduct; // entity deduction (also reduces QBI)
+      if (first && p.passthroughK1 < 0) {
         notes.push('DB funding drives the entity below zero — confirm basis and ' +
           'reasonable-compensation support for a deduction of this size.');
       }
     }
-    if (yearIndex === 0) {
+    if (first) {
       notes.push(TSIQ.fmt.usd(amt) + ' defined benefit contribution modeled. This amount ' +
         'MUST come from an actuarial design study (§404(o)) — the tool does not compute it. ' +
         'Funding is mandatory each year (§412/§430); treat this as a multi-year commitment.');
       notes.push('Projection assumes the same contribution every year — the actuary will ' +
         'recertify annually and the real number will drift.');
+      if (o.staffPayroll > 0) {
+        notes.push('Section 1 shows ' + TSIQ.fmt.usd(o.staffPayroll) + ' of staff payroll. Benefits for ' +
+          'eligible staff are required and are NOT modeled — include them in the design study.');
+      }
     }
     return { profile: p, notes: notes };
   }

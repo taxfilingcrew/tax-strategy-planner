@@ -38,8 +38,11 @@ TSIQ.strategyModules.push({
       'interpreters, readers, and similar services; acquiring or modifying ' +
       'equipment or devices for individuals with disabilities; accessible ' +
       'formats (braille, audio, large print). Must be reasonable and meet ADA ' +
-      'accessibility standards. New construction does NOT qualify — the ' +
-      'credit targets modifications to existing facilities.',
+      'accessibility standards. Barrier removal counts only for a facility ' +
+      'FIRST PLACED IN SERVICE ON OR BEFORE NOVEMBER 5, 1990 (§44(c)(4)) — ' +
+      'removing barriers in a newer building does not qualify, even though ' +
+      'the building is \'existing\'. Interpreters, readers, accessible formats ' +
+      'and adaptive equipment are not tied to the age of the building.',
       'No double benefit (§44(d)(7)): the credited amount cannot also be ' +
       'deducted, depreciated, or claimed under another credit — reduce the ' +
       'deduction/basis by the credit taken.',
@@ -56,15 +59,15 @@ TSIQ.strategyModules.push({
     ],
     requirements: [
       'Eligible small business status in the year claimed: prior-year gross receipts ≤ $1M or ≤ 30 full-time employees.',
-      'Expenditures made to comply with the ADA for an existing facility or service — not new construction.',
+      'Expenditures made to comply with the ADA. Barrier-removal expenditures qualify only for a facility first placed in service on or before 11/5/1990; services, accessible formats and equipment qualify regardless of the building\'s age.',
       'Costs must be reasonable and the modifications must meet applicable accessibility standards.',
       'Records: invoices, before/after documentation of the barrier removed or accommodation provided, and the deduction reduction for the credited amount.'
     ],
     risks: [
-      'New construction and general remodeling do not qualify — the expenditure must remove a barrier or provide access in an existing facility.',
+      'Barrier removal in any facility first placed in service after 11/5/1990 does not qualify (§44(c)(4)), nor does general remodeling — confirm the building\'s placed-in-service date before quoting the credit.',
       'The IRS has litigated abusive prepackaged schemes (e.g., pay-phone and ATM "accessibility" investments marketed purely for the credit) — the expenditure must serve the taxpayer\'s actual business and customers.',
       'Forgetting the §44(d)(7) deduction reduction is a common exam adjustment — the same dollars cannot be credited and depreciated.',
-      'Nonrefundable; a no-tax year strands the credit in carryforward (carryovers not modeled in this tool).'
+      'Nonrefundable; a no-tax year pushes the credit into carryforward (the tool carries it forward within the projection).'
     ],
     bestFit: [
       'Small practices and storefronts (medical/dental offices, restaurants, retail) making ADA improvements — ramps, restrooms, door hardware, signage.',
@@ -102,13 +105,14 @@ TSIQ.strategyModules.push({
       'We claim the credit and keep the records that support it'
     ],
     considerations: [
-      'Brand-new construction does not qualify — this is for improving existing spaces and services.',
+      'Physical changes to the building count only if the building was first in use by November 5, 1990 — newer buildings do not qualify for that part. Interpreters, accessible materials and adaptive equipment qualify either way.',
       'The same dollars cannot be both credited and deducted, so we do the coordination to keep the return clean.'
     ]
   },
 
   inputs: [
-    { key: 'creditAmount', label: '§44 credit (max $5,000)', type: 'currency', default: 5000, max: 5000 }
+    { key: 'creditAmount', label: '§44 credit per year (max $5,000)', type: 'currency', default: 5000, max: 5000 },
+    { key: 'years', label: 'Years the access spending recurs', type: 'number', default: 1 }
   ],
 
   appliesTo: function (profile) {
@@ -116,26 +120,34 @@ TSIQ.strategyModules.push({
   },
 
   /**
-   * Adds the advisor-computed §44 credit (capped at the $5,000 statutory
-   * maximum) to otherCredits; engine applies it nonrefundably after the
-   * child tax credit. The §44(d)(7) deduction reduction is not separately
-   * modeled — coordinate it in the business income inputs.
+   * Adds the advisor-computed §44 credit (max $5,000) to otherCredits for the
+   * number of years entered (default: year 1 only). §44(d)(7): the credited
+   * amount cannot also be deducted, so business income is raised by the credit.
    */
   apply: function (profile, params, yearIndex, state) {
     var p = Object.assign({}, profile);
     var notes = [];
+    var first = yearIndex === 0;
+    if (!TSIQ.credit.hasBusiness(p)) {
+      if (first) notes.push('The disabled access credit is a business credit — no business found in this profile. No benefit modeled.');
+      return { profile: p, notes: notes };
+    }
+    var years = Math.max(1, Math.round(params.years || 1));
+    if (yearIndex >= years) return { profile: p, notes: notes };
     var amt = Math.max(0, params.creditAmount || 0);
     if (amt > 5000) {
       amt = 5000;
-      notes.push('§44 credit capped at the $5,000 statutory maximum (50% of expenditures between $250 and $10,250).');
+      if (first) notes.push('§44 credit capped at the $5,000 statutory maximum (50% of expenditures between $250 and $10,250).');
     }
     p.otherCredits = (p.otherCredits || 0) + amt;
-    if (yearIndex === 0) {
-      notes.push(TSIQ.fmt.usd(amt) + ' disabled access credit applied (nonrefundable). ' +
-        'No deduction for the credited amount (§44(d)(7)) — coordinate the deduction ' +
-        'reduction outside this model.');
-      notes.push('Projection repeats the credit each year — appropriate only if ' +
-        'eligible access spending recurs (the annual band resets); otherwise zero it after year 1.');
+    TSIQ.credit.addBack(p, amt);
+    if (first) {
+      notes.push(TSIQ.fmt.usd(amt) + ' disabled access credit applied (nonrefundable) for ' +
+        (years === 1 ? TSIQ.TABLES_2026.taxYear + ' only' : years + ' years') + ', net of the deduction it ' +
+        'cancels (§44(d)(7) — the credited ' + TSIQ.fmt.usd(amt) + ' cannot also be deducted).');
+      notes.push('Eligible small business only: prior-year gross receipts of $1 million or less, or no ' +
+        'more than 30 full-time employees. Barrier-removal work counts only for a facility first ' +
+        'placed in service on or before November 5, 1990.');
     }
     return { profile: p, notes: notes };
   }

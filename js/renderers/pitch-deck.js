@@ -82,6 +82,11 @@ TSIQ.render = TSIQ.render || {};
             '<div class="big-label">Improves cash flow — not a permanent saving</div>') +
           '<p class="sub" style="margin-top:2vh">Moves ' + usd(step.firstYear) +
           ' of tax out of ' + TSIQ.TABLES_2026.taxYear + ' into later years</p>';
+      } else if (step.kind === 'cost') {
+        // A benefit the business pays for (staff health, retirement for the team).
+        numberBlock = '<div class="big">' + usd(-step.firstYear) + '</div>' +
+          '<div class="big-label">Net cost per year, after tax savings</div>' +
+          '<p class="sub" style="margin-top:2vh">An investment in your team — not a tax saving</p>';
       } else {
         numberBlock = '<div class="big" style="font-size:6vh">Foundation</div>' +
           '<div class="big-label">Structural — powers the strategies that follow</div>';

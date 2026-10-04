@@ -322,5 +322,178 @@ is('incremental: bracket management is timing', steps[0].kind, 'timing');
 is('incremental: first-year figure is large', steps[0].firstYear > 10000, true);
 is('incremental: projection total is not', steps[0].cumulative < 1000, true);
 
+/* ---------------------------------------------------------------------------
+ * Retirement, health/fringe and credit strategies (second fix round).
+ * ------------------------------------------------------------------------- */
+function runMany(profile, list, years, growth, infl) {
+  return TSIQ.computeScenario(profile, list.map(function (x) { return { strategy: S(x[0]), params: x[1] }; }),
+    years || 1, growth || 0, infl || 0);
+}
+function defaults(id, over) {
+  var out = {};
+  S(id).inputs.forEach(function (i) { out[i.key] = i.default; });
+  return Object.assign(out, over || {});
+}
+
+/* 24. Solo 401(k), self-employed. Single, Sch C 150,000.
+ *     SE tax 138,525 × 15.3% = 21,194.33; half 10,597.16; earned income
+ *     139,402.84. Employer limit 20% = 27,880.57. Deferral 24,500 + 8,000
+ *     catch-up. Total 60,380.57 (catch-up is deductible for the self-employed). */
+var k1 = run({ filingStatus: 'single', scheduleCNet: 150000 }, 'solo-401k',
+  { employeeDeferral: 32500, employerContribution: 60000, age50Plus: 'yes' });
+near('solo 401k SE: employer limited to 20% of earned income', k1.years[0].profile.adjustments, 60380.57, 0.01);
+near('solo 401k SE: reduces QBI', k1.years[0].profile.qbiReduction, 60380.57, 0.01);
+
+/* 25. Solo 401(k), S-corp owner over $150,000 of wages: catch-up is Roth.
+ *     Wages 200,000: employer 25% = 50,000; §415(c) 72,000 − 24,500 = 47,500.
+ *     Deducted: 24,500 deferral (no catch-up) + 47,500 off K-1. */
+var k2 = run({ filingStatus: 'mfj', ownerWages: 200000, passthroughK1: 300000, entityW2Wages: 200000 },
+  'solo-401k', { employeeDeferral: 32500, employerContribution: 60000, age50Plus: 'yes' });
+near('solo 401k W-2: Roth catch-up not deducted', k2.years[0].profile.adjustments, 24500);
+near('solo 401k W-2: employer held to §415(c)', k2.years[0].profile.passthroughK1, 252500);
+
+/* 26. 100%-of-pay limit. Wages 30,000: employer 25% = 7,500, but deferral +
+ *     employer cannot exceed 30,000 → employer 5,500. K-1 profit is not pay. */
+var k3 = run({ filingStatus: 'mfj', ownerWages: 30000, passthroughK1: 200000, entityW2Wages: 30000 },
+  'solo-401k', { employeeDeferral: 24500, employerContribution: 20000, age50Plus: 'no' });
+near('solo 401k: 100% of pay limit', k3.years[0].profile.passthroughK1, 194500);
+var k4 = run({ filingStatus: 'mfj', passthroughK1: 200000 }, 'solo-401k', defaults('solo-401k'));
+near('solo 401k: K-1 alone is not compensation', k4.years[0].profile.adjustments || 0, 0);
+
+/* 27. One employer, one set of limits. Wages 80,000, K-1 150,000.
+ *     401(k) employer 20,000 = the full 25% of wages → SEP adds nothing.
+ *     SIMPLE cannot be combined with another plan at all. */
+var sP = { filingStatus: 'mfj', ownerWages: 80000, passthroughK1: 150000, entityW2Wages: 80000 };
+var both = runMany(sP, [['solo-401k', defaults('solo-401k')], ['sep-ira', defaults('sep-ira')]]);
+near('401k + SEP: SEP adds nothing', both.years[0].profile.passthroughK1, 130000);
+var withSimple = runMany(sP, [['solo-401k', defaults('solo-401k')], ['simple-ira', defaults('simple-ira')]]);
+near('401k + SIMPLE: SIMPLE not modeled', withSimple.years[0].profile.adjustments, 24500);
+near('401k + SIMPLE: no SIMPLE match', withSimple.years[0].profile.passthroughK1, 130000);
+
+/* 28. SEP with staff. Owner wages 100,000, staff payroll 200,000.
+ *     Owner limit 25% = 25,000 → staff must get 25% × 200,000 = 50,000.
+ *     K-1 200,000 − 25,000 − 50,000 = 125,000; 50,000 is a plan cost. */
+var staffP = { filingStatus: 'mfj', ownerWages: 100000, passthroughK1: 200000, entityW2Wages: 300000 };
+var sep = run(staffP, 'sep-ira', { contribution: 30000, staffEligiblePct: 100 });
+near('SEP: staff contribution deducted', sep.years[0].profile.passthroughK1, 125000);
+near('SEP: staff contribution is a cost', sep.years[0].planCosts, 50000);
+
+/* 29. SIMPLE IRA, 25 or fewer employees, age 60–63: 18,100 + 5,250 = 23,350.
+ *     Match 3% × 100,000 = 3,000. Staff match 6,000 deducted and costed. */
+var simp = run(staffP, 'simple-ira', { deferral: 25000, matchAmount: 5000, smallEmployer: 'yes', age: '60to63', staffMatch: 6000 });
+near('SIMPLE: small-employer limit + 60–63 catch-up', simp.years[0].profile.adjustments, 23350);
+near('SIMPLE: match and staff match off K-1', simp.years[0].profile.passthroughK1, 191000);
+near('SIMPLE: staff match is a cost', simp.years[0].planCosts, 6000);
+
+/* 30. Defined benefit tied to pay. Wages 30,000 → ceiling 1.28 × 30,000 =
+ *     38,400 (K-1 300,000 → 261,600). Sch C 150,000 → earned income 139,402.84. */
+var db1 = run({ filingStatus: 'mfj', ownerWages: 30000, passthroughK1: 300000, entityW2Wages: 30000 },
+  'defined-benefit-plan', { annualContribution: 150000 });
+near('DB: held to 1.28 × owner wages', db1.years[0].profile.passthroughK1, 261600);
+var db2 = run({ filingStatus: 'single', scheduleCNet: 150000 }, 'defined-benefit-plan', { annualContribution: 150000 });
+near('DB: self-employed held to earned income', db2.years[0].profile.adjustments, 139402.84, 0.01);
+is('DB: AGI not negative', db2.years[0].agi >= 0, true);
+
+/* 31. §404(a)(7). 401(k) employer 20,000 on wages 80,000; 6% = 4,800, so
+ *     15,200 is not deductible beside a 100,000 pension.
+ *     K-1 150,000 − 20,000 − (100,000 − 15,200) = 45,200. */
+var combo = runMany(sP, [['solo-401k', defaults('solo-401k')], ['defined-benefit-plan', { annualContribution: 100000 }]]);
+near('401k + DB: employer money over 6% disallowed', combo.years[0].profile.passthroughK1, 45200);
+
+/* 32. Cash balance stack is the owner's TOTAL. With a 44,500 401(k) already
+ *     modeled, a 131,000 stack adds 86,500 (ceiling 24,500 + 4,800 + 102,400). */
+var stack = runMany(sP, [['solo-401k', defaults('solo-401k')], ['cash-balance-stack', { combinedContribution: 131000, age50Plus: 'no' }]]);
+near('stack: only the difference is added', stack.years[0].profile.passthroughK1, 43500);
+near('stack: deferral not doubled', stack.years[0].profile.adjustments, 24500);
+
+/* 33. Profit sharing: employer money needs pay; staff contribution is a cost. */
+var ps0 = run({ filingStatus: 'mfj', passthroughK1: 200000 }, 'profit-sharing-new-comparability', { ownerAllocation: 40000, staffCost: 8000 });
+near('profit sharing: nothing for a K-1-only owner', ps0.years[0].profile.passthroughK1, 200000);
+var ps1 = run(staffP, 'profit-sharing-new-comparability', { ownerAllocation: 40000, staffCost: 10000 });
+near('profit sharing: owner held to 25% of wages', ps1.years[0].profile.passthroughK1, 165000);
+near('profit sharing: staff contribution is a cost', ps1.years[0].planCosts, 10000);
+
+/* 34. Self-employed health insurance. Single, Sch C 50,000: half SE tax
+ *     3,532.39 → earned 46,467.61, less a 24,500 deferral = 21,967.61 cap.
+ *     Premiums already deducted on the return are not counted again. */
+var seP = { filingStatus: 'single', scheduleCNet: 50000 };
+var sehi = runMany(seP, [['solo-401k', { employeeDeferral: 24500, employerContribution: 0, age50Plus: 'no' }],
+  ['se-health-insurance', { annualPremiums: 30000, alreadyDeducted: 0 }]]);
+near('SEHI: capped at earned income after retirement', sehi.years[0].profile.adjustments, 46467.61, 0.01);
+var sehi0 = run({ filingStatus: 'single', scheduleCNet: 150000 }, 'se-health-insurance', { annualPremiums: 18000, alreadyDeducted: 18000 });
+near('SEHI: already deducted → nothing new', sehi0.years[0].profile.adjustments || 0, 0);
+
+/* 35. §105 plan. Needs a spouse. MFJ Sch C 150,000: 15,000 reimbursed, 12,000
+ *     of it already deducted above the line (moved, not added), 6,000 cash
+ *     wage (FICA both halves 918, employer half 459 deducted).
+ *     Sch C = 150,000 − 15,000 − 6,000 − 459 = 128,541. */
+var merpS = run({ filingStatus: 'single', scheduleCNet: 150000 }, 'section-105-merp', defaults('section-105-merp'));
+near('MERP: not for an unmarried owner', merpS.years[0].profile.scheduleCNet, 150000);
+var mfjC = { filingStatus: 'mfj', scheduleCNet: 150000 };
+var merp = run(mfjC, 'section-105-merp', { annualMedicalReimbursed: 15000, alreadyDeducted: 12000, spouseCashWage: 6000 });
+near('MERP: Schedule C', merp.years[0].profile.scheduleCNet, 128541);
+near('MERP: existing deduction moved', merp.years[0].profile.adjustments, -12000);
+near('MERP: FICA on spouse wage', merp.years[0].otherTaxes, 918);
+var merpSehi = runMany(mfjC, [['section-105-merp', defaults('section-105-merp')], ['se-health-insurance', defaults('se-health-insurance')]]);
+near('MERP + SEHI: only the uncovered 3,000', merpSehi.years[0].profile.adjustments, 3000);
+var shs = runMany(sP, [['spouse-health-s-corp', defaults('spouse-health-s-corp')], ['se-health-insurance', defaults('se-health-insurance')]]);
+near('S-corp health + SEHI: premiums counted once', shs.years[0].profile.adjustments, 18000);
+near('S-corp health: reduces QBI', shs.years[0].profile.qbiReduction, 18000);
+
+/* 36. Staff benefits. No staff → nothing. In place of pay: employer FICA
+ *     saved 8,000 × 7.65% = 612. As a new benefit: 8,000 deducted and costed.
+ *     QSEHRA and ICHRA cannot be combined. §127: 5,250 per recipient. */
+var ich0 = run(sP, 'ichra', defaults('ichra'));
+near('ICHRA: no staff, no benefit', ich0.years[0].profile.passthroughK1, 150000);
+var ich1 = run(staffP, 'ichra', { annualReimbursement: 8000, replaces: 'wages' });
+near('ICHRA in place of pay: payroll tax saved', ich1.years[0].otherTaxes, -612);
+near('ICHRA in place of pay: profit up by the same', ich1.years[0].profile.passthroughK1, 200612);
+var ich2 = run(staffP, 'ichra', { annualReimbursement: 8000, replaces: 'new' });
+near('ICHRA new benefit: cost shown', ich2.years[0].planCosts, 8000);
+is('ICHRA new benefit: a net cost', ich2.years[0].totalBurden > run(staffP).years[0].totalBurden, true);
+var hra2 = runMany(staffP, [['qsehra', { annualReimbursement: 6000, replaces: 'wages' }], ['ichra', { annualReimbursement: 8000, replaces: 'wages' }]]);
+near('QSEHRA + ICHRA: ICHRA not modeled', hra2.years[0].profile.passthroughK1, 200459);
+var edu = run(staffP, 'section-127-education', { annualAssistance: 20000, recipients: 2, replaces: 'wages' });
+near('§127: 5,250 per recipient', edu.years[0].otherTaxes, -803.25, 0.01);
+
+/* 37. Dependent care FSA nets the §21 credit given up. MFJ wages 180,000,
+ *     two children: rate 35 − ceil(30,000 / 4,000) = 27%; 27% × 6,000 = 1,620.
+ *     Single 100,000, one child: 35 − ceil(25,000 / 2,000) = 22%; × 3,000 = 660. */
+var dc1 = run({ filingStatus: 'mfj', wages: 180000, kidsCTC: 2 }, 'dependent-care-fsa', { annualElection: 7500 });
+near('DCFSA: credit given up, two children', dc1.years[0].otherTaxes, 1620);
+var dc2 = run({ filingStatus: 'single', wages: 100000, kidsCTC: 1 }, 'dependent-care-fsa', { annualElection: 7500 });
+near('DCFSA: credit given up, one child', dc2.years[0].otherTaxes, 660);
+is('HSA: self-only default for a single filer with no dependents',
+  S('hsa-contributions').inputs[0].defaultFrom({ filingStatus: 'single' }), 'self');
+
+/* 38. R&D credit, §41(g). Founder with a business loss and wage income: no
+ *     tax on business income → nothing usable. MFJ wages 150,000, K-1 100,000:
+ *     taxable 197,800, tax 32,940, business share 100,000 / 197,800 → 16,653.19.
+ *     Payroll offset: 7.65% × 120,000 payroll = 9,180. */
+var founder = { filingStatus: 'mfj', wages: 250000, passthroughK1: -50000, entityW2Wages: 120000 };
+var rd0 = run(founder, 'rd-credit', { creditAmount: 25000, qres: 0, payrollOffset: 'no' });
+near('R&D: no use against tax on other income', rd0.years[0].otherCreditsAllowed, 0);
+var rd1 = run(founder, 'rd-credit', { creditAmount: 25000, qres: 0, payrollOffset: 'yes' });
+near('R&D: payroll offset', rd1.years[0].otherTaxes, -9180);
+var rd2 = run({ filingStatus: 'mfj', wages: 150000, passthroughK1: 100000, entityW2Wages: 60000 },
+  'rd-credit', { creditAmount: 0, qres: 400000, payrollOffset: 'no' });
+near('R&D: limited to tax on business income', rd2.years[0].otherCreditsAllowed, 16653.19, 0.01);
+near('R&D: nothing by default', run(founder, 'rd-credit', defaults('rd-credit')).years[0].otherCreditsAllowed, 0);
+
+/* 39. Other credits: one year by default, net of the deduction they cancel,
+ *     and only for a business with staff where the credit is for staff. */
+var da = run(staffP, 'disabled-access-credit', defaults('disabled-access-credit'), 2);
+near('§44: applied in year 1', da.years[0].otherCreditsAllowed, 5000);
+near('§44: deduction added back', da.years[0].profile.passthroughK1, 205000);
+near('§44: not repeated', da.years[1].otherCreditsAllowed, 0);
+near('§45F: no staff, no credit', run(sP, 'childcare-credit-45f', defaults('childcare-credit-45f')).years[0].otherCreditsAllowed, 0);
+var cc45 = run(staffP, 'childcare-credit-45f', { creditAmount: 20000 });
+near('§45F: deduction added back', cc45.years[0].profile.passthroughK1, 220000);
+var pf = run(staffP, 'pfml-credit-45s', { leaveWages: 4000, replacementPct: 100 });
+near('§45S: 25% at full pay', pf.years[0].otherCreditsAllowed, 1000);
+near('§45S: wage deduction added back', pf.years[0].profile.passthroughK1, 201000);
+near('§45S: 12.5% at half pay', run(staffP, 'pfml-credit-45s', { leaveWages: 4000, replacementPct: 50 }).years[0].otherCreditsAllowed, 500);
+near('energy credit: needs a business or rental', run({ filingStatus: 'single', wages: 150000 }, 'energy-credits', { creditAmount: 30000 }).years[0].otherCreditsAllowed, 0);
+
 console.log('Engine tests: ' + passed + ' passed, ' + failures + ' failed.');
 if (failures) process.exit(1);

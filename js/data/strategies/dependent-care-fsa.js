@@ -161,15 +161,35 @@ TSIQ.strategyModules.push({
       notes.push('Election capped at the 2026 §129 limit of ' + TSIQ.fmt.usd(limit) + '.');
     }
     p.adjustments = (p.adjustments || 0) + election;
+    // Dependent care credit given up (§21, 2026 rates): every excluded dollar
+    // comes off the expenses the credit is figured on ($3,000 for one
+    // qualifying person, $6,000 for two or more). Rate: 50%, less 1 point per
+    // $2,000 of AGI over $15,000 (floor 35%), then less 1 point per $2,000
+    // ($4,000 joint) over $75,000 ($150,000 joint), floor 20%. Married filing
+    // separately cannot claim the credit, so nothing is given up.
+    var agiEst = Math.max(0, (p.wages || 0) + (p.ownerWages || 0) + (p.spouseWages || 0) +
+      (p.scheduleCNet || 0) + (p.passthroughK1 || 0) + Math.max(0, p.rentalNet || 0) +
+      (p.ltcg || 0) + (p.qualDiv || 0) + (p.interest || 0) + (p.otherIncome || 0) -
+      (p.adjustments || 0) + election);
+    var joint = p.filingStatus === 'mfj';
+    var pct = 50 - Math.min(15, Math.ceil(Math.max(0, agiEst - 15000) / 2000));
+    pct = Math.max(20, pct - Math.ceil(Math.max(0, agiEst - (joint ? 150000 : 75000)) / (joint ? 4000 : 2000)));
+    var expenseLimit = ((p.kidsCTC || 0) + (p.otherDeps || 0) >= 2) ? 6000 : 3000;
+    var creditLost = p.filingStatus === 'mfs' ? 0 : (pct / 100) * Math.min(expenseLimit, election);
+    p.otherTaxes = (p.otherTaxes || 0) + creditLost;
     // California kept its exclusion at $5,000 ($2,500 separate).
     var caLimit = TSIQ.TABLES_2026.california.dcfsaLimit / (p.filingStatus === 'mfs' ? 2 : 1);
     TSIQ.stateAddBack(p, Math.max(0, election - caLimit));
     if (yearIndex === 0) {
       notes.push(TSIQ.fmt.usd(election) + ' dependent care election modeled as a deduction (§129; $7,500 for 2026, $3,750 married filing separately). The actual mechanism is a pre-tax wage exclusion that also avoids FICA, which is not modeled.');
-      notes.push('Not netted out: every excluded dollar reduces the expenses eligible for the ' +
-        'dependent care credit (§21), which for 2026 is 20% to 50% of up to $3,000 (one child) ' +
-        'or $6,000 (two or more). Subtract the credit given up before quoting this figure — ' +
-        'for many families under about $200,000 of income the credit is worth as much or more.');
+      if (creditLost > 0) {
+        notes.push('Netted out: ' + TSIQ.fmt.usd(creditLost) + ' of dependent care credit given up (§21: ' +
+          pct + '% of ' + TSIQ.fmt.usd(Math.min(expenseLimit, election)) + ' of expenses at this income). ' +
+          'Every excluded dollar comes off the expenses the credit is figured on, so the saving ' +
+          'shown is the income tax on the election less that credit. It assumes the family ' +
+          'would otherwise claim the credit; the count of children under 13 is taken from the ' +
+          'dependents in Section 1.');
+      }
       notes.push('Applies only while a child is under 13 — the projection repeats it every year.');
       if (p.caRules && election > caLimit) {
         notes.push('California excludes only ' + TSIQ.fmt.usd(caLimit) + ' — the rest is taxed by the state.');

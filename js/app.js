@@ -216,7 +216,7 @@
       if (el.getAttribute('data-touched')) return;
       profile = profile || readProfile();
       var v = inp.defaultFrom(profile);
-      if (v !== undefined && v !== null && isFinite(v)) el.value = v;
+      if (v !== undefined && v !== null && (inp.type === 'select' || isFinite(v))) el.value = v;
     });
   }
 
@@ -291,7 +291,7 @@
       ['Child tax credit / ODC', function (r) { return -r.ctcAllowed; }],
       ['Other credits (R&D, WOTC, etc.)', function (r) { return -r.otherCreditsAllowed; }],
       ['C-corp tax (entity level)', function (r) { return r.corpTaxPaid; }],
-      ['Other payroll taxes (family wages)', function (r) { return r.otherTaxes; }],
+      ['Other payroll taxes and credits given up', function (r) { return r.otherTaxes; }],
       ['SE tax', function (r) { return r.seTax; }],
       ['Payroll tax (owner W-2)', function (r) { return r.ownerPayrollTax; }],
       ['Additional Medicare (0.9%)', function (r) { return r.addlMedicare; }],
