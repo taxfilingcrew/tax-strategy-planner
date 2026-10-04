@@ -6,7 +6,7 @@ Checked October 4, 2026. Scope: the legal claims added or changed in the 40 advi
 
 - **Confirmed** — the primary source says what the write-up says.
 - **Corrected** — the write-up was wrong or loose; text changed in this commit.
-- **Secondary only** — confirmed from law-firm alerts or a code publisher; the primary document was not opened.
+- **Secondary only** — supported by law-firm alerts or common knowledge only; the primary document was not opened.
 - **Not verified** — no source opened; treat as unconfirmed.
 
 **Totals:** 97 claims. 86 confirmed, 4 corrected, 5 secondary only, 2 not verified.
@@ -20,7 +20,6 @@ California code sections: the Legislature's site blocks automated reading, so co
 | Self-rental recharacterization | Cited *Williams* (T.C. Memo. 2015-76) for "owners could not group the rental with their C corporation; rental losses stayed passive." The case is not about grouping or losses. | *Williams*: rental **income** from a building leased to the owner's C corporation was nonpassive under the self-rental rule and could not absorb other passive losses. The no-grouping point now rests on the regulation alone. | T.C. Memo. 2015-76 (opinion text); 5th Cir. affirmance (CourtListener); Reg. §1.469-4(d)(5)(ii) |
 | Like-kind equipment | Said a California taxpayer under $250,000 AGI ($500,000 joint) could still defer an equipment exchange for state purposes. | That exception covered only exchanges completed before 2025. For tax years beginning on or after January 1, 2025 California limits like-kind exchanges to real property for everyone. | 2025 FTB 3840 instructions ("What's New"; General Information; R&TC §18031.5) |
 | Excess business loss | Said California "did not adopt the federal suspension for 2018–2020" and its threshold "can differ." | California's limit has applied since 2019 with no suspension; its threshold is indexed separately and is higher than federal ($313,000 / $626,000 for 2025; no OBBBA reset). | R&TC §17560.5 (Justia); 2025 FTB 3461 and instructions |
-
 | Late S election relief | Listed missing shareholder consents and officer signatures among the Form 2553 errors Rev. Proc. 2022-19 treats as harmless. | Those two are carved out: the procedure routes them to existing late-consent and Rev. Proc. 2013-30 relief. Still no letter ruling needed. | Rev. Proc. 2022-19 (IRB 2022-41) |
 
 Two small additions to State Credits Review: the PTET citation now separates 2021–2025 (§17052.10) from 2026–2030 (§17052.11, §19914), and the New Employment Credit line notes that a reinstatement bill (AB 2205) was pending in 2026.
