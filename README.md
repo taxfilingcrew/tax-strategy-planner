@@ -15,7 +15,12 @@ taskbar icon, no browser tabs or address bar. (Under the hood it uses the
 Edge/Chrome app mode already on every Windows machine — nothing to install,
 no security warnings, and it travels with the folder when shared.)
 
-**Or in a browser:** double-click **`index.html`**. Same app either way.
+**On a Mac:** the `.cmd` files are Windows-only. Double-click **`index.html`**,
+or double-click **`Launch Tax Strategy Planner (Mac).command`** for the
+standalone window (the first time, right-click it and choose Open, since macOS
+blocks a downloaded script on a plain double-click).
+
+**Or in a browser (any computer):** double-click **`index.html`**. Same app either way.
 
 ## White-labeling (sharing with other firms)
 
