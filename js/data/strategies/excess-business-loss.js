@@ -46,9 +46,11 @@ TSIQ.strategyModules.push({
       'California: the state has its own excess business loss limit, computed ' +
       'on FTB 3461, and it works differently — the disallowed amount is NOT ' +
       'turned into an NOL; it is carried forward as an excess business loss ' +
-      'and re-tested against the limit in the following year. California did ' +
-      'not adopt the federal suspension for 2018–2020, its threshold for the ' +
-      'year can differ from the federal figure, and its NOL deduction is ' +
+      'and re-tested against the limit in the following year. California\'s ' +
+      'limit has applied since 2019 with no CARES Act suspension, its ' +
+      'threshold is indexed separately and is higher than the federal ' +
+      'figure ($313,000 / $626,000 for 2025 — California did not adopt the ' +
+      'OBBBA reset), and its NOL deduction is ' +
       'separately suspended for 2024–2026 for taxpayers with $1 million or ' +
       'more of income. Keep a separate California carryforward schedule.',
       'Ordering: §461(l) applies AFTER basis, at-risk (§465), and passive ' +

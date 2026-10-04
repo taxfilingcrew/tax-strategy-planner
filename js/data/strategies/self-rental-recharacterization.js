@@ -48,8 +48,10 @@ TSIQ.strategyModules.push({
       'activity conducted through a C corporation can be grouped with the ' +
       'owner\'s other activity only to test material participation in that ' +
       'other activity, not to merge the rental into the business (Reg. ' +
-      '§1.469-4(d)(5)(ii)). The owner\'s rental loss stays passive (Williams ' +
-      'v. Commissioner, T.C. Memo. 2015-76, affirmed by the Fifth Circuit). ' +
+      '§1.469-4(d)(5)(ii)). So a rental LOSS stays passive, while rental ' +
+      'INCOME from the same building is still nonpassive: the self-rental ' +
+      'rule applies to a C-corp tenant the owner works in (Williams v. ' +
+      'Commissioner, T.C. Memo. 2015-76, affirmed by the Fifth Circuit). ' +
       'With a C-corp tenant the only levers are the rent level and timing of ' +
       'depreciation.',
       'Rent-setting levers (within arm\'s-length bounds, supported by ' +
@@ -76,7 +78,7 @@ TSIQ.strategyModules.push({
       { type: 'Case', cite: 'Krukowski v. Comm\'r, 279 F.3d 547 (7th Cir. 2002)', note: 'Upheld the self-rental recharacterization regulation against a validity challenge — attorney renting an office building to his own firm.' },
       { type: 'Reg', cite: 'Reg. §1.469-4(d)(1)', note: 'When a rental may be grouped with a trade-or-business activity (insubstantiality or proportionate ownership) — the main structural fix.' },
       { type: 'Reg', cite: 'Reg. §1.469-4(d)(5)(ii)', note: 'An activity conducted through a C corporation may be grouped with another activity of the taxpayer only for determining material or significant participation in that other activity.' },
-      { type: 'Case', cite: 'Williams v. Comm\'r, T.C. Memo. 2015-76, aff\'d (5th Cir. 2016)', note: 'Owners could not group their rental of a building with the C-corporation medical practice that leased it; the self-rental rule applied and the rental losses stayed passive.' },
+      { type: 'Case', cite: 'Williams v. Comm\'r, T.C. Memo. 2015-76, aff\'d (5th Cir. 2016)', note: 'Rental income from a building leased to the owner\'s C corporation, in which he worked full time, was nonpassive under the self-rental rule and could not absorb other passive losses. The rule is applied at the individual level even though an S corporation held the building.' },
       { type: 'Reg', cite: 'Reg. §1.199A-1(b)(14)', note: 'Self-rented property leased to a 50%-commonly-controlled business is treated as a trade or business for QBI purposes.' },
       { type: 'Admin', cite: 'Rev. Proc. 2010-13', note: 'Disclosure requirements if the grouping fix is elected.' }
     ],

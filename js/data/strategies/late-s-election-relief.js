@@ -51,7 +51,9 @@ TSIQ.strategyModules.push({
       'several common S-election problems without a private letter ruling — ' +
       'non-identical governing provisions (operating-agreement language that ' +
       'looks like a second class of stock but was never acted on), missing ' +
-      'shareholder consents or officer signature on Form 2553, a missing ' +
+      'shareholder consents or officer signature on Form 2553 (these are ' +
+      'not treated as harmless — the procedure sends them to the existing ' +
+      'late-consent and Rev. Proc. 2013-30 relief), a missing ' +
       'administrative acceptance letter, disproportionate distributions ' +
       'under identical governing provisions, and inconsistent filings. Check ' +
       'it before assuming an eligibility problem needs a PLR.',
@@ -73,7 +75,7 @@ TSIQ.strategyModules.push({
     ],
     authority: [
       { type: 'Admin', cite: 'Rev. Proc. 2013-30', note: 'The streamlined relief: eligibility tests, the 3-year-75-day window, required reasonable-cause and shareholder-consistency statements, no user fee. Supersedes Rev. Procs. 2003-43, 2004-48, 2007-62.' },
-      { type: 'Admin', cite: 'Rev. Proc. 2022-19', note: 'Taxpayer-assistance procedures for S-election defects that do not need a letter ruling: non-identical governing provisions, missing consents or signatures, disproportionate distributions, missing acceptance letter, inconsistent returns.' },
+      { type: 'Admin', cite: 'Rev. Proc. 2022-19', note: 'Taxpayer-assistance procedures for S-election defects that do not need a letter ruling: non-identical governing provisions, disproportionate distributions, inadvertent Form 2553 errors, missing acceptance letter, inconsistent returns. Missing consents and officer signatures are routed to existing relief procedures.' },
       { type: 'IRC', cite: 'IRC §1362(b)(5)', note: 'Statutory authority for the IRS to treat a late S election as timely upon a showing of reasonable cause.' },
       { type: 'IRC', cite: 'IRC §1362(a)–(b)', note: 'Election mechanics and the 2-month-15-day deadline the client missed.' },
       { type: 'Admin', cite: 'Form 2553', note: 'The election form; for relief, completed with the Rev. Proc. 2013-30 legend, reasonable-cause statement, and shareholder consistency statements.' },

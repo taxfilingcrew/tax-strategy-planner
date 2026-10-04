@@ -87,7 +87,7 @@ TSIQ.strategyModules.push({
     ],
     authority: [
       { type: 'Admin', cite: 'IRS Notice 2020-75', note: 'Entity-level state taxes imposed on pass-throughs are deductible in computing non-separately-stated income — the federal foundation for every state PTET credit regime.' },
-      { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §19900 et seq.; §17052.10, §17052.11', note: 'California pass-through entity elective tax and the owner credit: 9.3% of qualified net income, election on a timely original return, June 15 prepayment, 5-year credit carryover; extended through 2030 with the reduced-credit rule for short prepayments from 2026.' },
+      { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §19900 et seq. and §17052.10 (2021–2025); §19914 and §17052.11 (2026–2030)', note: 'California pass-through entity elective tax and the owner credit: 9.3% of qualified net income, election on a timely original return, June 15 prepayment, 5-year credit carryover; extended through 2030 with the reduced-credit rule for short prepayments from 2026.' },
       { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §17052.12, §23609; FTB 3523', note: 'California research credit: 15% regular credit (24% basic research for corporations); alternative simplified credit of 3% / 1.3% from 2025 under SB 711; alternative incremental credit repealed; indefinite carryforward.' },
       { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §17059.2, §23689', note: 'California Competes Tax Credit — negotiated, application windows set each fiscal year by GO-Biz, recapture for missed milestones.' },
       { type: 'Admin', cite: 'Cal. Rev. & Tax. Code §17053.73, §23626; FTB 3554', note: 'New Employment Credit — qualified full-time employees hired before January 1, 2026; credit for 60 months from hire; tentative credit reservation required.' },
@@ -104,7 +104,7 @@ TSIQ.strategyModules.push({
       'Owner-level coordination: the other-state tax credit for income taxed elsewhere, and K-1 reporting of each owner\'s PTET credit (FTB 3804-CR).'
     ],
     risks: [
-      'Sunsets and windows move annually: the New Employment Credit closed to new hires after 2025, the Homeless Hiring Tax Credit and the credit cap run through 2026, and California Competes windows are a few weeks long. Verify each year.',
+      'Sunsets and windows move annually: the New Employment Credit closed to new hires after 2025 (a bill to reinstate it, AB 2205, was pending in 2026 — check whether it passed), the Homeless Hiring Tax Credit and the credit cap run through 2026, and California Competes windows are a few weeks long. Verify each year.',
       'A PTET election can hurt owners in credit-mismatch situations (nonresident owners, a home state that gives no credit for the California tax) and gives no federal benefit to an owner already under the SALT cap who itemizes — model per owner before electing.',
       'Missed procedural deadlines (the 30-day hiring reservation, the June 15 PTET payment, pre-approval windows) are the leading cause of forfeited state credits; they are rarely recoverable.',
       'The $5 million credit cap and the NOL suspension can defer benefits a projection assumed — material only for larger clients, but check.',

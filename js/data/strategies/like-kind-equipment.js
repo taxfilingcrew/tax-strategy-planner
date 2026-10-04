@@ -52,12 +52,14 @@ TSIQ.strategyModules.push({
       'cap (see Heavy Vehicle §179).',
       'California: no bonus depreciation and a $25,000 §179 limit, so for the ' +
       'state the recapture is taxed now and the replacement is depreciated ' +
-      'over its life. California also adopted the real-property-only rule ' +
-      'for exchanges after January 10, 2019 only for taxpayers above ' +
-      '$250,000 of AGI ($500,000 joint or head of household); a taxpayer ' +
-      'below that could still defer an equipment exchange for California, ' +
-      'leaving different federal and state basis. Confirm that exception is ' +
-      'still in the current FTB instructions before relying on it.',
+      'over its life. California now follows the real-property-only rule for ' +
+      'everyone: for taxable years beginning on or after January 1, 2025 a ' +
+      'like-kind exchange is limited to real property (FTB 3840 ' +
+      'instructions). The older exception that let taxpayers under $250,000 ' +
+      'of AGI ($500,000 joint or head of household) keep deferring equipment ' +
+      'exchanges covered only exchanges completed before 2025 (R&TC ' +
+      '§18031.5) — those clients may still carry a lower California basis ' +
+      'in equipment acquired that way.',
       'The offset FAILS at the state level in nonconformity states: several ' +
       'states disallow or severely limit bonus depreciation (and some cap §179), ' +
       'so the recapture is taxed currently while the replacement deduction ' +

@@ -164,6 +164,9 @@ problems, California treatment, shared limits, eligibility checks, defaults
 that assumed amounts the client may not have, costs shown as costs, and timing
 strategies shown as timing). All 40 advisory write-ups the review flagged
 have been corrected and given their California points. Nothing from the
-review remains open. The law in these files is as of October 2026 — sunsets,
+review remains open. The legal claims added to those 40 write-ups were then
+checked against the Code, regulations and IRS, FTB, BOE, EDD and CDTFA
+sources; `docs/verification-log.md` lists each claim with its source and marks
+the few that could not be confirmed from a primary source. The law in these files is as of October 2026 — sunsets,
 indexed amounts and pending cases (noted in the text where they matter) need
 an annual re-check.
